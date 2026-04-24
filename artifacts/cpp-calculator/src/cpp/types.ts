@@ -54,6 +54,11 @@ export interface ScenarioInputs {
   postRetirementBenefit?: PostRetirementBenefit;
   /** Ages at which to compute starting CPP. Fractional values supported (e.g. 65.5). */
   startAges: number[];
+  /**
+   * Optional survivor benefit scenario (treats the contributor as deceased and
+   * computes the surviving spouse's benefit). See `survivor.ts`.
+   */
+  survivor?: import("./survivor").SurvivorInputs;
 }
 
 /**

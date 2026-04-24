@@ -257,6 +257,41 @@ components:
           type: integer
       required: [continuesWorkingAfterStart]
 
+    SurvivorInputs:
+      type: object
+      description: Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).
+      properties:
+        enabled:
+          type: boolean
+        startYear:
+          type: integer
+          description: Calendar year that survivor benefits begin (typically year of death).
+        survivorAge:
+          type: integer
+          description: Survivor's age in whole years when survivor benefits begin.
+        hasDependentChildren:
+          type: boolean
+        survivorDisabled:
+          type: boolean
+        numEligibleChildren:
+          type: integer
+          minimum: 0
+        survivorOwnBaseTier1Monthly:
+          type: number
+          description: Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).
+        survivorOwnTier2Monthly:
+          type: number
+          description: Survivor's own monthly Tier 2 CPP retirement.
+      required:
+        - enabled
+        - startYear
+        - survivorAge
+        - hasDependentChildren
+        - survivorDisabled
+        - numEligibleChildren
+        - survivorOwnBaseTier1Monthly
+        - survivorOwnTier2Monthly
+
     ScenarioInputs:
       type: object
       properties:
@@ -289,6 +324,8 @@ components:
           description: Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)
           items:
             type: number
+        survivor:
+          $ref: "#/components/schemas/SurvivorInputs"
       required:
         - birthYear
         - birthMonth

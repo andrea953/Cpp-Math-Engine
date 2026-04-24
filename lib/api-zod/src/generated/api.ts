@@ -24,6 +24,8 @@ export const listScenariosResponseInputsDropoutPeriodsItemStartMonthMax = 12;
 
 export const listScenariosResponseInputsDropoutPeriodsItemEndMonthMax = 12;
 
+export const listScenariosResponseInputsSurvivorNumEligibleChildrenMin = 0;
+
 export const ListScenariosResponseItem = zod.object({
   id: zod.string(),
   title: zod.string(),
@@ -120,6 +122,37 @@ export const ListScenariosResponseItem = zod.object({
       .describe(
         "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
       ),
+    survivor: zod
+      .object({
+        enabled: zod.boolean(),
+        startYear: zod
+          .number()
+          .describe(
+            "Calendar year that survivor benefits begin (typically year of death).",
+          ),
+        survivorAge: zod
+          .number()
+          .describe(
+            "Survivor's age in whole years when survivor benefits begin.",
+          ),
+        hasDependentChildren: zod.boolean(),
+        survivorDisabled: zod.boolean(),
+        numEligibleChildren: zod
+          .number()
+          .min(listScenariosResponseInputsSurvivorNumEligibleChildrenMin),
+        survivorOwnBaseTier1Monthly: zod
+          .number()
+          .describe(
+            "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+          ),
+        survivorOwnTier2Monthly: zod
+          .number()
+          .describe("Survivor's own monthly Tier 2 CPP retirement."),
+      })
+      .optional()
+      .describe(
+        "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
+      ),
   }),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
@@ -134,6 +167,8 @@ export const createScenarioBodyInputsBirthMonthMax = 12;
 export const createScenarioBodyInputsDropoutPeriodsItemStartMonthMax = 12;
 
 export const createScenarioBodyInputsDropoutPeriodsItemEndMonthMax = 12;
+
+export const createScenarioBodyInputsSurvivorNumEligibleChildrenMin = 0;
 
 export const CreateScenarioBody = zod
   .object({
@@ -231,6 +266,37 @@ export const CreateScenarioBody = zod
         .describe(
           "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
         ),
+      survivor: zod
+        .object({
+          enabled: zod.boolean(),
+          startYear: zod
+            .number()
+            .describe(
+              "Calendar year that survivor benefits begin (typically year of death).",
+            ),
+          survivorAge: zod
+            .number()
+            .describe(
+              "Survivor's age in whole years when survivor benefits begin.",
+            ),
+          hasDependentChildren: zod.boolean(),
+          survivorDisabled: zod.boolean(),
+          numEligibleChildren: zod
+            .number()
+            .min(createScenarioBodyInputsSurvivorNumEligibleChildrenMin),
+          survivorOwnBaseTier1Monthly: zod
+            .number()
+            .describe(
+              "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+            ),
+          survivorOwnTier2Monthly: zod
+            .number()
+            .describe("Survivor's own monthly Tier 2 CPP retirement."),
+        })
+        .optional()
+        .describe(
+          "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
+        ),
     }),
   })
   .describe("Payload for creating or updating a scenario");
@@ -247,6 +313,8 @@ export const getScenarioResponseInputsBirthMonthMax = 12;
 export const getScenarioResponseInputsDropoutPeriodsItemStartMonthMax = 12;
 
 export const getScenarioResponseInputsDropoutPeriodsItemEndMonthMax = 12;
+
+export const getScenarioResponseInputsSurvivorNumEligibleChildrenMin = 0;
 
 export const GetScenarioResponse = zod.object({
   id: zod.string(),
@@ -341,6 +409,37 @@ export const GetScenarioResponse = zod.object({
       .describe(
         "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
       ),
+    survivor: zod
+      .object({
+        enabled: zod.boolean(),
+        startYear: zod
+          .number()
+          .describe(
+            "Calendar year that survivor benefits begin (typically year of death).",
+          ),
+        survivorAge: zod
+          .number()
+          .describe(
+            "Survivor's age in whole years when survivor benefits begin.",
+          ),
+        hasDependentChildren: zod.boolean(),
+        survivorDisabled: zod.boolean(),
+        numEligibleChildren: zod
+          .number()
+          .min(getScenarioResponseInputsSurvivorNumEligibleChildrenMin),
+        survivorOwnBaseTier1Monthly: zod
+          .number()
+          .describe(
+            "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+          ),
+        survivorOwnTier2Monthly: zod
+          .number()
+          .describe("Survivor's own monthly Tier 2 CPP retirement."),
+      })
+      .optional()
+      .describe(
+        "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
+      ),
   }),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
@@ -358,6 +457,8 @@ export const updateScenarioBodyInputsBirthMonthMax = 12;
 export const updateScenarioBodyInputsDropoutPeriodsItemStartMonthMax = 12;
 
 export const updateScenarioBodyInputsDropoutPeriodsItemEndMonthMax = 12;
+
+export const updateScenarioBodyInputsSurvivorNumEligibleChildrenMin = 0;
 
 export const UpdateScenarioBody = zod
   .object({
@@ -455,6 +556,37 @@ export const UpdateScenarioBody = zod
         .describe(
           "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
         ),
+      survivor: zod
+        .object({
+          enabled: zod.boolean(),
+          startYear: zod
+            .number()
+            .describe(
+              "Calendar year that survivor benefits begin (typically year of death).",
+            ),
+          survivorAge: zod
+            .number()
+            .describe(
+              "Survivor's age in whole years when survivor benefits begin.",
+            ),
+          hasDependentChildren: zod.boolean(),
+          survivorDisabled: zod.boolean(),
+          numEligibleChildren: zod
+            .number()
+            .min(updateScenarioBodyInputsSurvivorNumEligibleChildrenMin),
+          survivorOwnBaseTier1Monthly: zod
+            .number()
+            .describe(
+              "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+            ),
+          survivorOwnTier2Monthly: zod
+            .number()
+            .describe("Survivor's own monthly Tier 2 CPP retirement."),
+        })
+        .optional()
+        .describe(
+          "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
+        ),
     }),
   })
   .describe("Payload for creating or updating a scenario");
@@ -464,6 +596,8 @@ export const updateScenarioResponseInputsBirthMonthMax = 12;
 export const updateScenarioResponseInputsDropoutPeriodsItemStartMonthMax = 12;
 
 export const updateScenarioResponseInputsDropoutPeriodsItemEndMonthMax = 12;
+
+export const updateScenarioResponseInputsSurvivorNumEligibleChildrenMin = 0;
 
 export const UpdateScenarioResponse = zod.object({
   id: zod.string(),
@@ -560,6 +694,37 @@ export const UpdateScenarioResponse = zod.object({
       .array(zod.number())
       .describe(
         "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
+      ),
+    survivor: zod
+      .object({
+        enabled: zod.boolean(),
+        startYear: zod
+          .number()
+          .describe(
+            "Calendar year that survivor benefits begin (typically year of death).",
+          ),
+        survivorAge: zod
+          .number()
+          .describe(
+            "Survivor's age in whole years when survivor benefits begin.",
+          ),
+        hasDependentChildren: zod.boolean(),
+        survivorDisabled: zod.boolean(),
+        numEligibleChildren: zod
+          .number()
+          .min(updateScenarioResponseInputsSurvivorNumEligibleChildrenMin),
+        survivorOwnBaseTier1Monthly: zod
+          .number()
+          .describe(
+            "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+          ),
+        survivorOwnTier2Monthly: zod
+          .number()
+          .describe("Survivor's own monthly Tier 2 CPP retirement."),
+      })
+      .optional()
+      .describe(
+        "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
       ),
   }),
   createdAt: zod.coerce.date(),

@@ -1,4 +1,5 @@
 import type { ScenarioInputs } from "./types";
+import { buildDefaultSurvivorInputs } from "./survivor";
 
 /** Default assumptions matching common Canadian planner conventions. */
 export const DEFAULT_ASSUMPTIONS = {
@@ -28,5 +29,6 @@ export function buildDefaultInputs(): ScenarioInputs {
     assumptions: { ...DEFAULT_ASSUMPTIONS },
     postRetirementBenefit: { continuesWorkingAfterStart: false },
     startAges: [60, 65, 70],
+    survivor: buildDefaultSurvivorInputs(today.getFullYear()),
   };
 }

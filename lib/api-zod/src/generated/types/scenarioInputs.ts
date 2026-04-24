@@ -10,6 +10,7 @@ import type { DropoutPeriod } from "./dropoutPeriod";
 import type { EarningsRecord } from "./earningsRecord";
 import type { PostRetirementBenefit } from "./postRetirementBenefit";
 import type { ScenarioInputsSex } from "./scenarioInputsSex";
+import type { SurvivorInputs } from "./survivorInputs";
 
 export interface ScenarioInputs {
   birthYear: number;
@@ -27,4 +28,5 @@ export interface ScenarioInputs {
   postRetirementBenefit?: PostRetirementBenefit;
   /** Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5) */
   startAges: number[];
+  survivor?: SurvivorInputs;
 }

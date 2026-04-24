@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   calculateCpp,
+  calculateSurvivor,
   formatMoney,
   formatPercent,
   YMPE_HISTORY,
@@ -28,7 +29,9 @@ import {
   exportToCsv,
   type ScenarioInputs,
   type StartAgeResult,
+  type SurvivorResult,
 } from "@/cpp";
+import { HeartHandshake, Users, Wallet, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -162,7 +165,165 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
       </Tabs>
 
       <DiagnosticsPanel sortedAges={sortedAges} />
+
+      {inputs.survivor?.enabled ? <SurvivorCard inputs={inputs} /> : null}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Survivor benefit card
+// ---------------------------------------------------------------------------
+
+function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
+  const survivor: SurvivorResult | null = useMemo(() => {
+    if (!inputs.survivor?.enabled) return null;
+    try {
+      return calculateSurvivor(inputs, inputs.survivor);
+    } catch {
+      return null;
+    }
+  }, [inputs]);
+
+  if (!survivor) return null;
+
+  return (
+    <Card className="border-[hsl(var(--chart-3))]/40 bg-gradient-to-br from-card to-[hsl(var(--chart-3))]/5">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <HeartHandshake className="h-5 w-5 text-[hsl(var(--chart-3))]" />
+          <CardTitle className="text-base">Survivor benefits ({survivor.startYear})</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <SurvivorTile
+            icon={<HeartHandshake className="h-4 w-4" />}
+            label="Survivor's pension"
+            primary={formatMoney(survivor.survivorMonthlyTotal, true)}
+            secondary={`per month · ${formatMoney(survivor.survivorAnnualTotal)} per year`}
+          />
+          <SurvivorTile
+            icon={<Wallet className="h-4 w-4" />}
+            label="Death benefit"
+            primary={formatMoney(survivor.deathBenefit, true)}
+            secondary="one-time lump sum"
+          />
+          <SurvivorTile
+            icon={<Users className="h-4 w-4" />}
+            label="Children's benefit"
+            primary={formatMoney(survivor.childrensBenefitMonthlyTotal, true)}
+            secondary={
+              survivor.childrensBenefitMonthlyTotal > 0
+                ? `${formatMoney(survivor.childrensBenefitPerChild, true)}/mo × ${(survivor.childrensBenefitMonthlyTotal / survivor.childrensBenefitPerChild).toFixed(0)} child(ren)`
+                : "no eligible children"
+            }
+          />
+        </div>
+
+        <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-xs">
+          <div className="font-semibold uppercase tracking-wide text-muted-foreground">Breakdown (monthly)</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 tabular-nums">
+            <SurvivorRow
+              label={`Deceased's calc'd retirement at 65 (base + Tier 1)`}
+              value={formatMoney(survivor.deceasedCalculatedRetirementBaseTier1, true)}
+            />
+            <SurvivorRow
+              label={`Deceased's calc'd retirement at 65 (Tier 2)`}
+              value={formatMoney(survivor.deceasedCalculatedRetirementTier2, true)}
+            />
+            <SurvivorRow
+              label={`× ${survivor.survivorAge >= 65 ? "60%" : "37.5%"} (survivor rate, age ${survivor.survivorAge})`}
+              value={formatMoney(survivor.survivorPensionBaseTier1, true)}
+            />
+            <SurvivorRow
+              label="× 37.5% Tier 2 enhancement"
+              value={formatMoney(survivor.survivorPensionTier2, true)}
+            />
+            {survivor.survivorFlatRate > 0 ? (
+              <SurvivorRow
+                label="+ flat-rate component (under-65)"
+                value={formatMoney(survivor.survivorFlatRate, true)}
+              />
+            ) : null}
+            {survivor.combinedCapReduction > 0 ? (
+              <SurvivorRow
+                label={`− combined-benefit cap (max @65 = ${formatMoney(survivor.combinedBenefitCap, true)})`}
+                value={`-${formatMoney(survivor.combinedCapReduction, true)}`}
+                negative
+              />
+            ) : null}
+            <SurvivorRow
+              label="= survivor pension payable"
+              value={formatMoney(survivor.survivorMonthlyTotal, true)}
+              bold
+            />
+            {survivor.combinedMonthlyTotal !== survivor.survivorMonthlyTotal ? (
+              <SurvivorRow
+                label="combined: own retirement + survivor pension"
+                value={formatMoney(survivor.combinedMonthlyTotal, true)}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        {survivor.notes.length > 0 ? (
+          <div className="space-y-1.5">
+            {survivor.notes.map((n, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-2.5 text-xs text-blue-900"
+              >
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>{n}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SurvivorTile({
+  icon,
+  label,
+  primary,
+  secondary,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  primary: string;
+  secondary: string;
+}) {
+  return (
+    <div className="rounded-md border bg-card p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1.5 font-mono text-2xl font-semibold tabular-nums tracking-tight">{primary}</div>
+      <div className="text-xs text-muted-foreground">{secondary}</div>
+    </div>
+  );
+}
+
+function SurvivorRow({
+  label,
+  value,
+  bold,
+  negative,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+  negative?: boolean;
+}) {
+  return (
+    <>
+      <div className={`text-muted-foreground ${bold ? "font-semibold text-foreground" : ""}`}>{label}</div>
+      <div className={`text-right ${bold ? "font-semibold" : ""} ${negative ? "text-red-600" : ""}`}>{value}</div>
+    </>
   );
 }
 

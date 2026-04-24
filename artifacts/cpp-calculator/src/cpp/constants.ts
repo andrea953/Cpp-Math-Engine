@@ -78,6 +78,89 @@ export const MAX_BENEFIT_AT_65: Record<number, number> = {
   2026: 1497.36,
 };
 
+// ---------------------------------------------------------------------------
+// Survivor / death / children's benefit constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Survivor's pension flat-rate component (paid in addition to 37.5% of the
+ * deceased's calculated retirement pension when the survivor is under 65).
+ * Monthly amount, indexed annually with CPI.
+ */
+export const SURVIVOR_FLAT_RATE_HISTORY: Record<number, number> = {
+  2019: 193.66,
+  2020: 197.34,
+  2021: 199.31,
+  2022: 204.68,
+  2023: 217.99,
+  2024: 227.81,
+  2025: 232.30,
+  2026: 238.34,
+};
+
+/** One-time CPP death benefit (lump sum). Fixed at $2,500 since 2019. */
+export const DEATH_BENEFIT_AMOUNT = 2500;
+
+/** CPP children's benefit — flat monthly amount per eligible child. */
+export const CHILDREN_BENEFIT_HISTORY: Record<number, number> = {
+  2019: 250.27,
+  2020: 255.03,
+  2021: 257.58,
+  2022: 264.53,
+  2023: 281.72,
+  2024: 294.12,
+  2025: 301.77,
+  2026: 309.62,
+};
+
+/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is 65+. */
+export const SURVIVOR_RATE_65_PLUS = 0.60;
+
+/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is under 65. */
+export const SURVIVOR_RATE_UNDER_65 = 0.375;
+
+/** Enhanced survivor's pension: 37.5% of deceased's enhanced (Tier 1 + Tier 2) retirement amount, regardless of survivor age. */
+export const SURVIVOR_ENHANCED_RATE = 0.375;
+
+/** Survivor's pension is unavailable to childless, non-disabled survivors under this age (deferred to 65). */
+export const SURVIVOR_MIN_ELIGIBLE_AGE = 35;
+
+/** At ages 35–44 (no children, not disabled), the under-65 base is reduced by 1/120 per month under this age. */
+export const SURVIVOR_FULL_RATE_AGE = 45;
+
+/** Look up the survivor flat rate for a year. Projects unknown years from the latest known value. */
+export function getSurvivorFlatRate(year: number, indexingRate: number): number {
+  if (SURVIVOR_FLAT_RATE_HISTORY[year] !== undefined) return SURVIVOR_FLAT_RATE_HISTORY[year];
+  const knownYears = Object.keys(SURVIVOR_FLAT_RATE_HISTORY).map(Number).sort((a, b) => a - b);
+  const lastKnown = knownYears[knownYears.length - 1];
+  const lastValue = SURVIVOR_FLAT_RATE_HISTORY[lastKnown];
+  if (year > lastKnown) return lastValue * Math.pow(1 + indexingRate, year - lastKnown);
+  const firstKnown = knownYears[0];
+  return SURVIVOR_FLAT_RATE_HISTORY[firstKnown] / Math.pow(1 + indexingRate, firstKnown - year);
+}
+
+/** Look up the children's benefit for a year. Projects unknown years from the latest known value. */
+export function getChildrensBenefit(year: number, indexingRate: number): number {
+  if (CHILDREN_BENEFIT_HISTORY[year] !== undefined) return CHILDREN_BENEFIT_HISTORY[year];
+  const knownYears = Object.keys(CHILDREN_BENEFIT_HISTORY).map(Number).sort((a, b) => a - b);
+  const lastKnown = knownYears[knownYears.length - 1];
+  const lastValue = CHILDREN_BENEFIT_HISTORY[lastKnown];
+  if (year > lastKnown) return lastValue * Math.pow(1 + indexingRate, year - lastKnown);
+  const firstKnown = knownYears[0];
+  return CHILDREN_BENEFIT_HISTORY[firstKnown] / Math.pow(1 + indexingRate, firstKnown - year);
+}
+
+/** Look up the maximum CPP retirement pension at 65 for a year. Projects unknown years using the supplied indexing rate. */
+export function getMaxBenefitAt65(year: number, indexingRate: number): number {
+  if (MAX_BENEFIT_AT_65[year] !== undefined) return MAX_BENEFIT_AT_65[year];
+  const knownYears = Object.keys(MAX_BENEFIT_AT_65).map(Number).sort((a, b) => a - b);
+  const lastKnown = knownYears[knownYears.length - 1];
+  const lastValue = MAX_BENEFIT_AT_65[lastKnown];
+  if (year > lastKnown) return lastValue * Math.pow(1 + indexingRate, year - lastKnown);
+  const firstKnown = knownYears[0];
+  return MAX_BENEFIT_AT_65[firstKnown] / Math.pow(1 + indexingRate, firstKnown - year);
+}
+
 /** Earliest year for which CPP earnings exist */
 export const CPP_START_YEAR = 1966;
 

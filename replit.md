@@ -32,7 +32,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 A planner-grade Canada Pension Plan calculator for financial advisors.
 - **Routes**: `/` (marketing/redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`
 - **Auth**: Clerk (cookie-based; api-server proxies to Clerk middleware)
-- **Engine**: Pure-client TypeScript CPP engine in `src/cpp/` — base + Tier 1 + Tier 2 enhancement, CRDO, disability dropout, general 17% dropout, AMPE/AYMPE, breakeven projection, PRB. Constants tables for YMPE 1966–2026 and YAMPE 2024–2026.
+- **Engine**: Pure-client TypeScript CPP engine in `src/cpp/` — base + Tier 1 + Tier 2 enhancement, CRDO, disability dropout, general 17% dropout, AMPE/AYMPE, breakeven projection, PRB, and full survivor-side benefits (survivor's pension with combined-benefit cap, $2,500 death benefit, children's benefit). Constants tables for YMPE 1966–2026, YAMPE 2024–2026, survivor flat rate and children's benefit 2019–2026.
 - **Persistence**: scenarios stored as JSONB in PostgreSQL (`scenariosTable`, see `lib/db/src/schema.ts`); CRUD + duplicate via `/api/scenarios` exposed in OpenAPI spec.
 - **API hooks**: `useListScenarios`, `useGetScenario`, `useCreateScenario`, `useUpdateScenario`, `useDeleteScenario`, `useDuplicateScenario` from `@workspace/api-client-react`.
 

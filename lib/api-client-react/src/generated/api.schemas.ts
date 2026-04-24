@@ -78,6 +78,25 @@ export interface PostRetirementBenefit {
   stopAge?: number;
 }
 
+/**
+ * Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).
+ */
+export interface SurvivorInputs {
+  enabled: boolean;
+  /** Calendar year that survivor benefits begin (typically year of death). */
+  startYear: number;
+  /** Survivor's age in whole years when survivor benefits begin. */
+  survivorAge: number;
+  hasDependentChildren: boolean;
+  survivorDisabled: boolean;
+  /** @minimum 0 */
+  numEligibleChildren: number;
+  /** Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis). */
+  survivorOwnBaseTier1Monthly: number;
+  /** Survivor's own monthly Tier 2 CPP retirement. */
+  survivorOwnTier2Monthly: number;
+}
+
 export type ScenarioInputsSex =
   (typeof ScenarioInputsSex)[keyof typeof ScenarioInputsSex];
 
@@ -103,6 +122,7 @@ export interface ScenarioInputs {
   postRetirementBenefit?: PostRetirementBenefit;
   /** Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5) */
   startAges: number[];
+  survivor?: SurvivorInputs;
 }
 
 export interface Scenario {

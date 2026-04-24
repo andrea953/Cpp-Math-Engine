@@ -11,9 +11,11 @@ import {
 import {
   parseSoc,
   YMPE_HISTORY,
+  buildDefaultSurvivorInputs,
   type EarningsRecord,
   type DropoutPeriod,
   type ScenarioInputs,
+  type SurvivorInputs,
 } from "@/cpp";
 import { extractPdfText } from "@/cpp/pdfText";
 import { Button } from "@/components/ui/button";
@@ -77,12 +79,13 @@ export function InputsPanel({ inputs, onChange }: InputsPanelProps) {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="personal">Person</TabsTrigger>
           <TabsTrigger value="earnings">Earnings</TabsTrigger>
           <TabsTrigger value="dropouts">Dropouts</TabsTrigger>
           <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
           <TabsTrigger value="takeup">Take-up</TabsTrigger>
+          <TabsTrigger value="survivor">Survivor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal" className="mt-4">
@@ -99,6 +102,9 @@ export function InputsPanel({ inputs, onChange }: InputsPanelProps) {
         </TabsContent>
         <TabsContent value="takeup" className="mt-4">
           <TakeUpForm inputs={inputs} onChange={onChange} />
+        </TabsContent>
+        <TabsContent value="survivor" className="mt-4">
+          <SurvivorForm inputs={inputs} onChange={onChange} />
         </TabsContent>
       </Tabs>
     </div>
@@ -778,6 +784,160 @@ function TakeUpForm({ inputs, onChange }: InputsPanelProps) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Survivor tab
+// ---------------------------------------------------------------------------
+
+function SurvivorForm({ inputs, onChange }: InputsPanelProps) {
+  const survivor: SurvivorInputs = inputs.survivor ?? buildDefaultSurvivorInputs(new Date().getFullYear());
+
+  function set(partial: Partial<SurvivorInputs>) {
+    onChange(patch(inputs, { survivor: { ...survivor, ...partial } }));
+  }
+
+  return (
+    <div className="space-y-4 rounded-lg border bg-card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight">Survivor benefits</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Treats this contributor as deceased and computes the surviving spouse&rsquo;s pension, plus the death benefit and any children&rsquo;s benefits.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Label htmlFor="survivor-enabled" className="text-sm">Enable</Label>
+          <Switch
+            id="survivor-enabled"
+            checked={survivor.enabled}
+            onCheckedChange={(v) => set({ enabled: Boolean(v) })}
+          />
+        </div>
+      </div>
+
+      {survivor.enabled ? (
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="survivor-start-year">Year benefits begin</Label>
+              <Input
+                id="survivor-start-year"
+                type="number"
+                value={survivor.startYear}
+                onChange={(e) => set({ startYear: Number(e.target.value) || survivor.startYear })}
+                className="tabular-nums"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Typically the year of death.</p>
+            </div>
+            <div>
+              <Label htmlFor="survivor-age">Survivor&rsquo;s age at start</Label>
+              <Input
+                id="survivor-age"
+                type="number"
+                min={18}
+                max={110}
+                value={survivor.survivorAge}
+                onChange={(e) => set({ survivorAge: Number(e.target.value) || survivor.survivorAge })}
+                className="tabular-nums"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex items-start gap-2 rounded-md border bg-muted/30 p-3">
+              <Switch
+                id="survivor-children"
+                checked={survivor.hasDependentChildren}
+                onCheckedChange={(v) => set({ hasDependentChildren: Boolean(v) })}
+              />
+              <div className="-mt-0.5">
+                <Label htmlFor="survivor-children" className="text-sm">Survivor has dependent children</Label>
+                <p className="text-xs text-muted-foreground">Removes the under-45 reduction.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 rounded-md border bg-muted/30 p-3">
+              <Switch
+                id="survivor-disabled"
+                checked={survivor.survivorDisabled}
+                onCheckedChange={(v) => set({ survivorDisabled: Boolean(v) })}
+              />
+              <div className="-mt-0.5">
+                <Label htmlFor="survivor-disabled" className="text-sm">Survivor is disabled</Label>
+                <p className="text-xs text-muted-foreground">Removes the under-45 reduction.</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="survivor-num-children">Eligible dependent children of the deceased</Label>
+            <Input
+              id="survivor-num-children"
+              type="number"
+              min={0}
+              max={20}
+              value={survivor.numEligibleChildren}
+              onChange={(e) => set({ numEligibleChildren: Math.max(0, Number(e.target.value) || 0) })}
+              className="tabular-nums max-w-[120px]"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Each receives the children&rsquo;s benefit (under 18, or 18&ndash;25 in school full-time).
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Survivor&rsquo;s own CPP retirement (for combined-cap analysis)</h4>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="survivor-own-base">Own base + Tier 1 ($/mo)</Label>
+                <div className="relative">
+                  <Input
+                    id="survivor-own-base"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={survivor.survivorOwnBaseTier1Monthly}
+                    onChange={(e) => set({ survivorOwnBaseTier1Monthly: Math.max(0, Number(e.target.value) || 0) })}
+                    className="pl-6 tabular-nums"
+                  />
+                  <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="survivor-own-tier2">Own Tier 2 ($/mo)</Label>
+                <div className="relative">
+                  <Input
+                    id="survivor-own-tier2"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={survivor.survivorOwnTier2Monthly}
+                    onChange={(e) => set({ survivorOwnTier2Monthly: Math.max(0, Number(e.target.value) || 0) })}
+                    className="pl-6 tabular-nums"
+                  />
+                  <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Leave at zero if the survivor isn&rsquo;t collecting their own CPP yet. The combined-benefit cap only limits the base + Tier 1 portion.
+            </p>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              The deceased&rsquo;s &ldquo;calculated retirement pension at 65&rdquo; (used as the base for the 60% / 37.5% formula) is computed from the earnings history truncated to the year benefits begin.
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Enable to model survivor pension, death benefit, and children&rsquo;s benefits payable on the contributor&rsquo;s death.
+        </p>
+      )}
     </div>
   );
 }
