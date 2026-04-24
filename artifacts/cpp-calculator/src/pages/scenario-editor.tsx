@@ -143,21 +143,28 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   }
 
   return (
-    <div className="container mx-auto p-4 lg:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/scenarios")}>
+    <div className="container mx-auto p-3 sm:p-4 lg:p-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={() => setLocation("/scenarios")}
+            title="Back to scenarios"
+            aria-label="Back to scenarios"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Input
             value={title}
             onChange={(e) => setTitleAndDirty(e.target.value)}
-            className="h-9 w-72 border-transparent text-lg font-semibold tracking-tight focus-visible:border-input"
+            className="h-9 w-full min-w-0 sm:w-72 border-transparent text-base sm:text-lg font-semibold tracking-tight focus-visible:border-input"
             placeholder="Scenario title"
           />
-          {dirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
+          {dirty && <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">Unsaved changes</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
           {!isNew && (
             <>
               <Button
@@ -165,15 +172,30 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
                 size="sm"
                 onClick={() => setShareOpen(true)}
                 data-testid="button-share"
+                title={scenario?.shareToken ? "Sharing" : "Share"}
               >
-                <Share2 className="mr-2 h-4 w-4" />
-                {scenario?.shareToken ? "Sharing" : "Share"}
+                <Share2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{scenario?.shareToken ? "Sharing" : "Share"}</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
-                <Copy className="mr-2 h-4 w-4" /> Duplicate
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDuplicate}
+                disabled={duplicateMutation.isPending}
+                title="Duplicate"
+              >
+                <Copy className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Duplicate</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                className="text-destructive hover:text-destructive"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </>
           )}
@@ -181,6 +203,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
             <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : isNew ? "Create" : "Save"}
           </Button>
         </div>
+        {dirty && <span className="sm:hidden text-xs text-muted-foreground">Unsaved changes</span>}
       </div>
 
       {!isNew && id && scenario && (

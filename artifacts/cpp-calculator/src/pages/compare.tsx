@@ -86,27 +86,32 @@ export default function Compare() {
   // Build a comparison-table view: pick one start age per scenario (the first)
   // OR: show full breakdowns for each scenario in columns
   return (
-    <div className="container mx-auto p-4 lg:p-6">
-      <div className="mb-4 flex items-center gap-3">
+    <div className="container mx-auto p-3 sm:p-4 lg:p-6">
+      <div className="mb-4 flex items-center gap-2 sm:gap-3">
         <Link href="/scenarios">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Compare scenarios</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Compare scenarios</h1>
           <p className="text-xs text-muted-foreground">
             {computed.length} scenarios · totals shown in start-year dollars
           </p>
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4">
+        {computed.map((c, i) => (
+          <ScenarioColumn key={c.id} index={i} title={c.title} inputs={c.inputs} result={c.result} />
+        ))}
+      </div>
       <div
-        className="grid gap-4"
+        className="hidden lg:grid gap-4"
         style={{ gridTemplateColumns: `repeat(${computed.length}, minmax(0, 1fr))` }}
       >
         {computed.map((c, i) => (
-          <ScenarioColumn key={c.id} index={i} title={c.title} inputs={c.inputs} result={c.result} />
+          <ScenarioColumn key={`lg-${c.id}`} index={i} title={c.title} inputs={c.inputs} result={c.result} />
         ))}
       </div>
 

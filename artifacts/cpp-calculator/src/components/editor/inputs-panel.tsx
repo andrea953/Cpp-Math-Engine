@@ -79,13 +79,13 @@ export function InputsPanel({ inputs, onChange }: InputsPanelProps) {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="personal">Person</TabsTrigger>
-          <TabsTrigger value="earnings">Earnings</TabsTrigger>
-          <TabsTrigger value="dropouts">Dropouts</TabsTrigger>
-          <TabsTrigger value="assumptions">Assumptions</TabsTrigger>
-          <TabsTrigger value="takeup">Take-up</TabsTrigger>
-          <TabsTrigger value="survivor">Survivor</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1 p-1">
+          <TabsTrigger value="personal" className="text-xs sm:text-sm py-1.5">Person</TabsTrigger>
+          <TabsTrigger value="earnings" className="text-xs sm:text-sm py-1.5">Earnings</TabsTrigger>
+          <TabsTrigger value="dropouts" className="text-xs sm:text-sm py-1.5">Dropouts</TabsTrigger>
+          <TabsTrigger value="assumptions" className="text-xs sm:text-sm py-1.5">Assumptions</TabsTrigger>
+          <TabsTrigger value="takeup" className="text-xs sm:text-sm py-1.5">Take-up</TabsTrigger>
+          <TabsTrigger value="survivor" className="text-xs sm:text-sm py-1.5">Survivor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal" className="mt-4">
@@ -261,8 +261,8 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
           No earnings entered yet. Add years manually or import from a Service Canada Statement of Contributions.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border bg-card">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border bg-card">
+          <table className="w-full min-w-[480px] text-sm">
             <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Year</th>

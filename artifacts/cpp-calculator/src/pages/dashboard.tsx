@@ -63,20 +63,29 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Scenarios</h1>
-          <p className="text-muted-foreground mt-1">Manage client CPP analyses.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Scenarios</h1>
+          <p className="text-muted-foreground text-sm sm:text-base mt-1">Manage client CPP analyses.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {selectedIds.size >= 2 && (
-            <Button variant="secondary" onClick={() => setLocation(`/compare?ids=${Array.from(selectedIds).join(",")}`)}>
-              <GitCompare className="mr-2 h-4 w-4" /> Compare Selected ({selectedIds.size})
+            <Button
+              variant="secondary"
+              size="sm"
+              className="sm:h-10 sm:px-4 sm:text-sm"
+              onClick={() => setLocation(`/compare?ids=${Array.from(selectedIds).join(",")}`)}
+            >
+              <GitCompare className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Compare Selected ({selectedIds.size})</span>
+              <span className="sm:hidden">Compare ({selectedIds.size})</span>
             </Button>
           )}
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> New Scenario
+          <Button onClick={handleCreate} size="sm" className="sm:h-10 sm:px-4 sm:text-sm">
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">New Scenario</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
       </div>

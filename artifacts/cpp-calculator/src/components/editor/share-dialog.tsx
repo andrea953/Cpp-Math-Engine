@@ -122,12 +122,12 @@ export function ShareDialog({
 
         {token ? (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 value={url}
                 readOnly
                 onFocus={(e) => e.currentTarget.select()}
-                className="font-mono text-xs"
+                className="font-mono text-xs min-w-0"
                 data-testid="input-share-url"
               />
               <Button
@@ -136,6 +136,7 @@ export function ShareDialog({
                 size="sm"
                 onClick={handleCopy}
                 data-testid="button-copy-share"
+                className="w-full sm:w-auto shrink-0"
               >
                 {copied ? (
                   <>

@@ -148,10 +148,16 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
       </div>
 
       <Tabs defaultValue="comparison" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="comparison">Monthly comparison</TabsTrigger>
-          <TabsTrigger value="breakeven">Breakeven</TabsTrigger>
-          <TabsTrigger value="earnings">Earnings vs YMPE</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-auto gap-1 p-1">
+          <TabsTrigger value="comparison" className="text-xs sm:text-sm py-1.5">
+            <span className="hidden sm:inline">Monthly comparison</span>
+            <span className="sm:hidden">Monthly</span>
+          </TabsTrigger>
+          <TabsTrigger value="breakeven" className="text-xs sm:text-sm py-1.5">Breakeven</TabsTrigger>
+          <TabsTrigger value="earnings" className="text-xs sm:text-sm py-1.5">
+            <span className="hidden sm:inline">Earnings vs YMPE</span>
+            <span className="sm:hidden">Earnings</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="comparison" className="mt-3">
           <ComparisonChart sortedAges={sortedAges} />
