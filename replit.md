@@ -28,7 +28,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ## Artifacts
 
-### Plannerly CPP — `artifacts/cpp-calculator`
+### Modern CENTS — `artifacts/cpp-calculator`
 A planner-grade Canada Pension Plan calculator for financial advisors.
 - **Routes**: `/` (marketing/redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`
 - **Auth**: Clerk (cookie-based; api-server proxies to Clerk middleware)

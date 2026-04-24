@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useClerk, useUser } from "@clerk/react";
-import { LogOut, User as UserIcon, Calculator, Settings, Menu } from "lucide-react";
+import { LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import {
@@ -11,19 +11,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const { signOut } = useClerk();
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gray-50/50">
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto flex h-14 items-center justify-between">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-[hsl(215_85%_97%)] via-[hsl(248_70%_98%)] to-[hsl(28_90%_97%)]">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
-            <Link href="/scenarios" className="flex items-center gap-2 font-semibold text-primary">
-              <Calculator className="h-5 w-5" />
-              <span>Plannerly CPP</span>
+            <Link href="/scenarios" className="flex items-center gap-2.5 font-semibold text-foreground">
+              <img src={logoUrl} alt="Modern CENTS" className="h-8 w-8 rounded-md object-cover" />
+              <span className="tracking-tight">Modern CENTS</span>
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-muted-foreground">
               <Link href="/scenarios" className="hover:text-foreground transition-colors">

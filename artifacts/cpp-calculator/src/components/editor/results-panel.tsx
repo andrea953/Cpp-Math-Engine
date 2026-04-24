@@ -182,15 +182,15 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
   return (
     <Card className={isOptimal ? "border-primary shadow-md ring-1 ring-primary/30" : ""}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <CardTitle className="text-base">Age {result.startAge}</CardTitle>
-            <Badge variant="outline" className="font-normal tabular-nums">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
+          <div className="flex items-baseline gap-2 shrink-0">
+            <CardTitle className="text-base whitespace-nowrap">Age {result.startAge}</CardTitle>
+            <Badge variant="outline" className="font-normal tabular-nums whitespace-nowrap">
               {adjLabel}
             </Badge>
           </div>
           {isOptimal && (
-            <Badge className="gap-1">
+            <Badge className="gap-1 shrink-0 whitespace-nowrap">
               <Sparkles className="h-3 w-3" /> Highest lifetime
             </Badge>
           )}
