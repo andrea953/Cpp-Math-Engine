@@ -524,19 +524,67 @@ function DropoutsForm({ inputs, onChange }: InputsPanelProps) {
               </div>
               <div className="md:col-span-2">
                 <Label className="text-xs">Start year</Label>
-                <Input type="number" value={d.startYear} onChange={(e) => update(idx, { startYear: Number(e.target.value) || d.startYear })} className="h-8" />
+                <Input
+                  type="number"
+                  value={d.startYear}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") return;
+                    const n = Number(v);
+                    if (Number.isFinite(n)) update(idx, { startYear: Math.trunc(n) });
+                  }}
+                  className="h-8"
+                />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-xs">Start month</Label>
-                <Input type="number" min={1} max={12} value={d.startMonth} onChange={(e) => update(idx, { startMonth: Number(e.target.value) || 1 })} className="h-8" />
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={d.startMonth}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") return;
+                    const n = Number(v);
+                    if (Number.isFinite(n)) update(idx, { startMonth: Math.min(12, Math.max(1, Math.trunc(n))) });
+                  }}
+                  className="h-8"
+                />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-xs">End year</Label>
-                <Input type="number" value={d.endYear} onChange={(e) => update(idx, { endYear: Number(e.target.value) || d.endYear })} className="h-8" />
+                <Input
+                  type="number"
+                  value={d.endYear}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") return;
+                    const n = Number(v);
+                    if (Number.isFinite(n)) update(idx, { endYear: Math.trunc(n) });
+                  }}
+                  className="h-8"
+                />
               </div>
               <div className="md:col-span-2">
                 <Label className="text-xs">End month</Label>
-                <Input type="number" min={1} max={12} value={d.endMonth} onChange={(e) => update(idx, { endMonth: Number(e.target.value) || 12 })} className="h-8" />
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={d.endMonth}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "") return;
+                    const n = Number(v);
+                    if (Number.isFinite(n)) update(idx, { endMonth: Math.min(12, Math.max(1, Math.trunc(n))) });
+                  }}
+                  className="h-8"
+                />
               </div>
               <div className="md:col-span-2 flex justify-end">
                 <Button variant="ghost" size="icon" onClick={() => remove(idx)}>
