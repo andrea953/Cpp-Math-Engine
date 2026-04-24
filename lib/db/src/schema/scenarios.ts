@@ -6,6 +6,7 @@ export const scenariosTable = pgTable("scenarios", {
   title: text("title").notNull(),
   notes: text("notes"),
   inputs: jsonb("inputs").notNull(),
+  shareToken: text("share_token").unique(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

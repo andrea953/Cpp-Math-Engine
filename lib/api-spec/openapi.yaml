@@ -145,6 +145,62 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /scenarios/{id}/share:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: createScenarioShare
+      tags: [scenarios]
+      summary: Create or refresh a public share link for a scenario
+      responses:
+        "200":
+          description: Share token issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareScenarioResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: revokeScenarioShare
+      tags: [scenarios]
+      summary: Revoke any existing share link for a scenario
+      responses:
+        "204":
+          description: Share link revoked
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /shared/{token}:
+    parameters:
+      - in: path
+        name: token
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getSharedScenario
+      tags: [scenarios]
+      summary: Public, read-only view of a shared scenario
+      security: []
+      responses:
+        "200":
+          description: Shared scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedScenario"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
   responses:
     Unauthorized:
@@ -344,6 +400,10 @@ components:
           type: string
         inputs:
           $ref: "#/components/schemas/ScenarioInputs"
+        shareToken:
+          type: string
+          nullable: true
+          description: If non-null, this scenario can be viewed publicly at /shared/{shareToken}
         createdAt:
           type: string
           format: date-time
@@ -351,6 +411,32 @@ components:
           type: string
           format: date-time
       required: [id, title, inputs, createdAt, updatedAt]
+
+    ShareScenarioResponse:
+      type: object
+      properties:
+        shareToken:
+          type: string
+        sharePath:
+          type: string
+          description: Relative path the planner can append to the app origin to share with a client.
+      required: [shareToken, sharePath]
+
+    SharedScenario:
+      type: object
+      description: Public, read-only view of a shared scenario (no user identifiers).
+      properties:
+        title:
+          type: string
+        notes:
+          type: string
+        inputs:
+          $ref: "#/components/schemas/ScenarioInputs"
+        sharedAt:
+          type: string
+          format: date-time
+          description: Timestamp the scenario was last updated by its owner.
+      required: [title, inputs, sharedAt]
 
     ScenarioInput:
       type: object

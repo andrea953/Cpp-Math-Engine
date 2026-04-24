@@ -22,6 +22,8 @@ import type {
   NotFoundResponse,
   Scenario,
   ScenarioInput,
+  ShareScenarioResponse,
+  SharedScenario,
   UnauthorizedResponse,
 } from "./api.schemas";
 
@@ -626,3 +628,263 @@ export const useDuplicateScenario = <
 > => {
   return useMutation(getDuplicateScenarioMutationOptions(options));
 };
+
+/**
+ * @summary Create or refresh a public share link for a scenario
+ */
+export const getCreateScenarioShareUrl = (id: string) => {
+  return `/api/scenarios/${id}/share`;
+};
+
+export const createScenarioShare = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ShareScenarioResponse> => {
+  return customFetch<ShareScenarioResponse>(getCreateScenarioShareUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCreateScenarioShareMutationOptions = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createScenarioShare>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createScenarioShare>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["createScenarioShare"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createScenarioShare>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return createScenarioShare(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateScenarioShareMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createScenarioShare>>
+>;
+
+export type CreateScenarioShareMutationError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Create or refresh a public share link for a scenario
+ */
+export const useCreateScenarioShare = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createScenarioShare>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createScenarioShare>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getCreateScenarioShareMutationOptions(options));
+};
+
+/**
+ * @summary Revoke any existing share link for a scenario
+ */
+export const getRevokeScenarioShareUrl = (id: string) => {
+  return `/api/scenarios/${id}/share`;
+};
+
+export const revokeScenarioShare = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRevokeScenarioShareUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getRevokeScenarioShareMutationOptions = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeScenarioShare>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeScenarioShare>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["revokeScenarioShare"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeScenarioShare>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return revokeScenarioShare(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeScenarioShareMutationResult = NonNullable<
+  Awaited<ReturnType<typeof revokeScenarioShare>>
+>;
+
+export type RevokeScenarioShareMutationError = ErrorType<
+  UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Revoke any existing share link for a scenario
+ */
+export const useRevokeScenarioShare = <
+  TError = ErrorType<UnauthorizedResponse | NotFoundResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeScenarioShare>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof revokeScenarioShare>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getRevokeScenarioShareMutationOptions(options));
+};
+
+/**
+ * @summary Public, read-only view of a shared scenario
+ */
+export const getGetSharedScenarioUrl = (token: string) => {
+  return `/api/shared/${token}`;
+};
+
+export const getSharedScenario = async (
+  token: string,
+  options?: RequestInit,
+): Promise<SharedScenario> => {
+  return customFetch<SharedScenario>(getGetSharedScenarioUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSharedScenarioQueryKey = (token: string) => {
+  return [`/api/shared/${token}`] as const;
+};
+
+export const getGetSharedScenarioQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSharedScenario>>,
+  TError = ErrorType<NotFoundResponse>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSharedScenario>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSharedScenarioQueryKey(token);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSharedScenario>>
+  > = ({ signal }) => getSharedScenario(token, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!token,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSharedScenario>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSharedScenarioQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSharedScenario>>
+>;
+export type GetSharedScenarioQueryError = ErrorType<NotFoundResponse>;
+
+/**
+ * @summary Public, read-only view of a shared scenario
+ */
+
+export function useGetSharedScenario<
+  TData = Awaited<ReturnType<typeof getSharedScenario>>,
+  TError = ErrorType<NotFoundResponse>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSharedScenario>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSharedScenarioQueryOptions(token, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

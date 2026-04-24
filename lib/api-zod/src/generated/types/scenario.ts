@@ -12,6 +12,8 @@ export interface Scenario {
   title: string;
   notes?: string;
   inputs: ScenarioInputs;
+  /** If non-null, this scenario can be viewed publicly at /shared/{shareToken} */
+  shareToken?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

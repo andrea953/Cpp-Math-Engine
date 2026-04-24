@@ -154,6 +154,12 @@ export const ListScenariosResponseItem = zod.object({
         "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
       ),
   }),
+  shareToken: zod
+    .string()
+    .nullish()
+    .describe(
+      "If non-null, this scenario can be viewed publicly at \/shared\/{shareToken}",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -441,6 +447,12 @@ export const GetScenarioResponse = zod.object({
         "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
       ),
   }),
+  shareToken: zod
+    .string()
+    .nullish()
+    .describe(
+      "If non-null, this scenario can be viewed publicly at \/shared\/{shareToken}",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -727,6 +739,12 @@ export const UpdateScenarioResponse = zod.object({
         "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
       ),
   }),
+  shareToken: zod
+    .string()
+    .nullish()
+    .describe(
+      "If non-null, this scenario can be viewed publicly at \/shared\/{shareToken}",
+    ),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -744,3 +762,181 @@ export const DeleteScenarioParams = zod.object({
 export const DuplicateScenarioParams = zod.object({
   id: zod.coerce.string(),
 });
+
+/**
+ * @summary Create or refresh a public share link for a scenario
+ */
+export const CreateScenarioShareParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const CreateScenarioShareResponse = zod.object({
+  shareToken: zod.string(),
+  sharePath: zod
+    .string()
+    .describe(
+      "Relative path the planner can append to the app origin to share with a client.",
+    ),
+});
+
+/**
+ * @summary Revoke any existing share link for a scenario
+ */
+export const RevokeScenarioShareParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Public, read-only view of a shared scenario
+ */
+export const GetSharedScenarioParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const getSharedScenarioResponseInputsBirthMonthMax = 12;
+
+export const getSharedScenarioResponseInputsDropoutPeriodsItemStartMonthMax = 12;
+
+export const getSharedScenarioResponseInputsDropoutPeriodsItemEndMonthMax = 12;
+
+export const getSharedScenarioResponseInputsSurvivorNumEligibleChildrenMin = 0;
+
+export const GetSharedScenarioResponse = zod
+  .object({
+    title: zod.string(),
+    notes: zod.string().optional(),
+    inputs: zod.object({
+      birthYear: zod.number(),
+      birthMonth: zod
+        .number()
+        .min(1)
+        .max(getSharedScenarioResponseInputsBirthMonthMax),
+      sex: zod.enum(["unspecified", "female", "male"]).optional(),
+      province: zod
+        .string()
+        .optional()
+        .describe("Two-letter province code (used to flag QPP)"),
+      earningsHistory: zod.array(
+        zod
+          .object({
+            year: zod.number().describe("Calendar year"),
+            pensionableEarnings: zod
+              .number()
+              .describe(
+                "Total pensionable earnings reported to CPP for the year (capped at YMPE\/YAMPE for contributions)",
+              ),
+          })
+          .describe("Pensionable earnings for a single year"),
+      ),
+      dropoutPeriods: zod
+        .array(
+          zod
+            .object({
+              kind: zod.enum(["crdo", "disability"]),
+              startYear: zod.number(),
+              startMonth: zod
+                .number()
+                .min(1)
+                .max(
+                  getSharedScenarioResponseInputsDropoutPeriodsItemStartMonthMax,
+                ),
+              endYear: zod.number(),
+              endMonth: zod
+                .number()
+                .min(1)
+                .max(
+                  getSharedScenarioResponseInputsDropoutPeriodsItemEndMonthMax,
+                ),
+              notes: zod.string().optional(),
+            })
+            .describe(
+              "A period to be dropped from the contribution history (CRDO or disability)",
+            ),
+        )
+        .optional(),
+      assumptions: zod
+        .object({
+          ympeGrowthRate: zod
+            .number()
+            .describe(
+              "Annual growth rate of the YMPE before CPP starts (e.g. 0.031 for 3.1%)",
+            ),
+          yampeGrowthRate: zod
+            .number()
+            .describe("Annual growth rate of the YAMPE (Tier 2 enhanced CPP)"),
+          indexingRate: zod
+            .number()
+            .describe(
+              "Annual indexing rate applied to CPP after benefits start (e.g. 0.021 for 2.1%)",
+            ),
+          futureEarningsGrowthRate: zod
+            .number()
+            .describe(
+              "Annual growth rate to project future pensionable earnings",
+            ),
+          assumedFutureEarnings: zod
+            .number()
+            .describe(
+              "Assumed pensionable earnings for the next future year (used until projected earnings stop)",
+            ),
+          stopWorkAge: zod
+            .number()
+            .describe("Age at which the person stops contributing to CPP"),
+        })
+        .describe(
+          "Forward-looking assumptions used to project YMPE, YAMPE, indexing, and future earnings",
+        ),
+      postRetirementBenefit: zod
+        .object({
+          continuesWorkingAfterStart: zod.boolean(),
+          annualEarningsAfterStart: zod.number().optional(),
+          stopAge: zod.number().optional(),
+        })
+        .optional()
+        .describe(
+          "Optional Post-Retirement Benefit (PRB) configuration if the person works after CPP starts",
+        ),
+      startAges: zod
+        .array(zod.number())
+        .describe(
+          "Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)",
+        ),
+      survivor: zod
+        .object({
+          enabled: zod.boolean(),
+          startYear: zod
+            .number()
+            .describe(
+              "Calendar year that survivor benefits begin (typically year of death).",
+            ),
+          survivorAge: zod
+            .number()
+            .describe(
+              "Survivor's age in whole years when survivor benefits begin.",
+            ),
+          hasDependentChildren: zod.boolean(),
+          survivorDisabled: zod.boolean(),
+          numEligibleChildren: zod
+            .number()
+            .min(getSharedScenarioResponseInputsSurvivorNumEligibleChildrenMin),
+          survivorOwnBaseTier1Monthly: zod
+            .number()
+            .describe(
+              "Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis).",
+            ),
+          survivorOwnTier2Monthly: zod
+            .number()
+            .describe("Survivor's own monthly Tier 2 CPP retirement."),
+        })
+        .optional()
+        .describe(
+          "Optional survivor benefit scenario (treats the contributor as deceased and computes the surviving spouse's benefit).",
+        ),
+    }),
+    sharedAt: zod.coerce
+      .date()
+      .describe("Timestamp the scenario was last updated by its owner."),
+  })
+  .describe(
+    "Public, read-only view of a shared scenario (no user identifiers).",
+  );

@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 import { db, scenariosTable, type ScenarioRow } from "@workspace/db";
 import {
   CreateScenarioBody,
@@ -19,9 +20,14 @@ function toScenarioResponse(row: ScenarioRow) {
     title: row.title,
     notes: row.notes ?? undefined,
     inputs: row.inputs as Record<string, unknown>,
+    shareToken: row.shareToken ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function generateShareToken(): string {
+  return randomBytes(24).toString("base64url");
 }
 
 router.get("/scenarios", requireAuth, async (req, res): Promise<void> => {
@@ -149,6 +155,79 @@ router.post("/scenarios/:id/duplicate", requireAuth, async (req, res): Promise<v
     .returning();
 
   res.status(201).json(toScenarioResponse(row));
+});
+
+router.post("/scenarios/:id/share", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as AuthedRequest).userId;
+  const params = GetScenarioParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  // Atomic + idempotent: only sets share_token if currently NULL, so concurrent
+  // POSTs by the same owner cannot rotate each other's tokens.
+  const candidate = generateShareToken();
+  const [row] = await db
+    .update(scenariosTable)
+    .set({ shareToken: sql`COALESCE(${scenariosTable.shareToken}, ${candidate})` })
+    .where(and(eq(scenariosTable.id, params.data.id), eq(scenariosTable.userId, userId)))
+    .returning({ shareToken: scenariosTable.shareToken });
+
+  if (!row || !row.shareToken) {
+    res.status(404).json({ error: "Scenario not found" });
+    return;
+  }
+
+  res.json({
+    shareToken: row.shareToken,
+    sharePath: `/shared/${row.shareToken}`,
+  });
+});
+
+router.delete("/scenarios/:id/share", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as AuthedRequest).userId;
+  const params = GetScenarioParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [row] = await db
+    .update(scenariosTable)
+    .set({ shareToken: null })
+    .where(and(eq(scenariosTable.id, params.data.id), eq(scenariosTable.userId, userId)))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: "Scenario not found" });
+    return;
+  }
+  res.sendStatus(204);
+});
+
+router.get("/shared/:token", async (req, res): Promise<void> => {
+  const token = req.params.token;
+  if (!token || typeof token !== "string" || token.length < 8 || token.length > 128) {
+    res.status(404).json({ error: "Shared scenario not found" });
+    return;
+  }
+
+  const [row] = await db
+    .select()
+    .from(scenariosTable)
+    .where(eq(scenariosTable.shareToken, token));
+  if (!row) {
+    res.status(404).json({ error: "Shared scenario not found" });
+    return;
+  }
+
+  res.json({
+    title: row.title,
+    notes: row.notes ?? undefined,
+    inputs: row.inputs as Record<string, unknown>,
+    sharedAt: row.updatedAt.toISOString(),
+  });
 });
 
 export default router;

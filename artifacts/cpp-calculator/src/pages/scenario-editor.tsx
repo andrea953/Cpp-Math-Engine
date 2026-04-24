@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Copy, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Save, Share2, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetScenario,
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buildDefaultInputs, type ScenarioInputs } from "@/cpp";
 import { InputsPanel } from "@/components/editor/inputs-panel";
 import { ResultsPanel } from "@/components/editor/results-panel";
+import { ShareDialog } from "@/components/editor/share-dialog";
 
 interface ScenarioEditorProps {
   params: { id?: string };
@@ -36,6 +37,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   const [title, setTitle] = useState("Untitled Scenario");
   const [inputs, setInputs] = useState<ScenarioInputs>(() => buildDefaultInputs());
   const [dirty, setDirty] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (scenario) {
@@ -158,6 +160,15 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
         <div className="flex items-center gap-2">
           {!isNew && (
             <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShareOpen(true)}
+                data-testid="button-share"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                {scenario?.shareToken ? "Sharing" : "Share"}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
                 <Copy className="mr-2 h-4 w-4" /> Duplicate
               </Button>
@@ -171,6 +182,16 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           </Button>
         </div>
       </div>
+
+      {!isNew && id && scenario && (
+        <ShareDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          scenarioId={id}
+          scenarioTitle={title}
+          currentToken={scenario.shareToken ?? null}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div>

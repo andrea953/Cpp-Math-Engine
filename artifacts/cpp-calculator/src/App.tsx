@@ -12,6 +12,7 @@ import Home from "./pages/home";
 import Dashboard from "./pages/dashboard";
 import ScenarioEditor from "./pages/scenario-editor";
 import Compare from "./pages/compare";
+import SharedScenarioPage from "./pages/shared";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -142,7 +143,10 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
-          
+          <Route path="/shared/:token">
+            {(params) => <SharedScenarioPage params={params} />}
+          </Route>
+
           <ProtectedRoute path="/scenarios" component={Dashboard} />
           <ProtectedRoute path="/scenarios/new" component={ScenarioEditor} />
           <ProtectedRoute path="/scenarios/:id" component={ScenarioEditor} />

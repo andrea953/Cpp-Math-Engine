@@ -19,5 +19,7 @@ export * from "./scenario";
 export * from "./scenarioInput";
 export * from "./scenarioInputs";
 export * from "./scenarioInputsSex";
+export * from "./sharedScenario";
+export * from "./shareScenarioResponse";
 export * from "./survivorInputs";
 export * from "./unauthorizedResponse";

@@ -130,8 +130,27 @@ export interface Scenario {
   title: string;
   notes?: string;
   inputs: ScenarioInputs;
+  /** If non-null, this scenario can be viewed publicly at /shared/{shareToken} */
+  shareToken?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ShareScenarioResponse {
+  shareToken: string;
+  /** Relative path the planner can append to the app origin to share with a client. */
+  sharePath: string;
+}
+
+/**
+ * Public, read-only view of a shared scenario (no user identifiers).
+ */
+export interface SharedScenario {
+  title: string;
+  notes?: string;
+  inputs: ScenarioInputs;
+  /** Timestamp the scenario was last updated by its owner. */
+  sharedAt: string;
 }
 
 /**
