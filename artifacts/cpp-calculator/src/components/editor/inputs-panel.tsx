@@ -6,6 +6,7 @@ import {
   Upload,
   Info,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import {
   parseSoc,
@@ -14,6 +15,7 @@ import {
   type DropoutPeriod,
   type ScenarioInputs,
 } from "@/cpp";
+import { extractPdfText } from "@/cpp/pdfText";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -322,11 +324,37 @@ function SocImportDialog({
   onCancel: () => void;
 }) {
   const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const parsed = useMemo(() => (text.trim() ? parseSoc(text) : null), [text]);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
+    setFileError(null);
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+    if (isPdf) {
+      setLoading(true);
+      try {
+        const extracted = await extractPdfText(file);
+        setText(extracted);
+        if (!extracted.trim()) {
+          setFileError(
+            "We could not read any text from that PDF. If it is a scanned image, please paste the table manually.",
+          );
+        }
+      } catch (err) {
+        setFileError(
+          err instanceof Error ? err.message : "Failed to read PDF.",
+        );
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => setText(String(reader.result ?? ""));
+    reader.onerror = () => setFileError("Failed to read file.");
     reader.readAsText(file);
   }
 
@@ -335,7 +363,7 @@ function SocImportDialog({
       <DialogHeader>
         <DialogTitle>Import Statement of Contributions</DialogTitle>
         <DialogDescription>
-          Paste the earnings table from your Service Canada SOC, or upload a CSV with two columns: <code>year, pensionable_earnings</code>.
+          Upload the SOC PDF from your Service Canada account, paste the earnings table, or upload a CSV with two columns: <code>year, pensionable_earnings</code>.
         </DialogDescription>
       </DialogHeader>
 
@@ -343,22 +371,38 @@ function SocImportDialog({
         <div className="flex items-center gap-2">
           <Label
             htmlFor="soc-file"
-            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium hover:bg-accent"
+            data-disabled={loading || undefined}
+            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium hover:bg-accent data-[disabled]:cursor-not-allowed data-[disabled]:opacity-60"
           >
-            <Upload className="h-4 w-4" /> Upload file
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Reading PDF…
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" /> Upload PDF or CSV
+              </>
+            )}
           </Label>
           <input
             id="soc-file"
             type="file"
-            accept=".csv,.txt,text/plain,text/csv"
+            accept=".pdf,.csv,.txt,application/pdf,text/plain,text/csv"
             className="sr-only"
+            disabled={loading}
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleFile(file);
+              e.target.value = "";
             }}
           />
           <span className="text-xs text-muted-foreground">…or paste below</span>
         </div>
+        {fileError && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            {fileError}
+          </div>
+        )}
 
         <Textarea
           rows={10}
