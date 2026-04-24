@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for the CPP Calculator
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: scenarios
+    description: Saved CPP calculation scenarios
 paths:
   /healthz:
     get:
@@ -24,13 +26,303 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /scenarios:
+    get:
+      operationId: listScenarios
+      tags: [scenarios]
+      summary: List the signed-in user's saved scenarios
+      responses:
+        "200":
+          description: List of scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scenario"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createScenario
+      tags: [scenarios]
+      summary: Create a new scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /scenarios/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getScenario
+      tags: [scenarios]
+      summary: Get a single scenario
+      responses:
+        "200":
+          description: Scenario found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateScenario
+      tags: [scenarios]
+      summary: Update an existing scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScenarioInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteScenario
+      tags: [scenarios]
+      summary: Delete a scenario
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /scenarios/{id}/duplicate:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: duplicateScenario
+      tags: [scenarios]
+      summary: Duplicate a scenario
+      responses:
+        "201":
+          description: Duplicated scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scenario"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
+  responses:
+    Unauthorized:
+      description: Not signed in
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    EarningsRecord:
+      type: object
+      description: Pensionable earnings for a single year
+      properties:
+        year:
+          type: integer
+          description: Calendar year
+        pensionableEarnings:
+          type: number
+          description: Total pensionable earnings reported to CPP for the year (capped at YMPE/YAMPE for contributions)
+      required: [year, pensionableEarnings]
+
+    DropoutPeriod:
+      type: object
+      description: A period to be dropped from the contribution history (CRDO or disability)
+      properties:
+        kind:
+          type: string
+          enum: [crdo, disability]
+        startYear:
+          type: integer
+        startMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        endYear:
+          type: integer
+        endMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        notes:
+          type: string
+      required: [kind, startYear, startMonth, endYear, endMonth]
+
+    Assumptions:
+      type: object
+      description: Forward-looking assumptions used to project YMPE, YAMPE, indexing, and future earnings
+      properties:
+        ympeGrowthRate:
+          type: number
+          description: Annual growth rate of the YMPE before CPP starts (e.g. 0.031 for 3.1%)
+        yampeGrowthRate:
+          type: number
+          description: Annual growth rate of the YAMPE (Tier 2 enhanced CPP)
+        indexingRate:
+          type: number
+          description: Annual indexing rate applied to CPP after benefits start (e.g. 0.021 for 2.1%)
+        futureEarningsGrowthRate:
+          type: number
+          description: Annual growth rate to project future pensionable earnings
+        assumedFutureEarnings:
+          type: number
+          description: Assumed pensionable earnings for the next future year (used until projected earnings stop)
+        stopWorkAge:
+          type: integer
+          description: Age at which the person stops contributing to CPP
+      required:
+        - ympeGrowthRate
+        - yampeGrowthRate
+        - indexingRate
+        - futureEarningsGrowthRate
+        - assumedFutureEarnings
+        - stopWorkAge
+
+    PostRetirementBenefit:
+      type: object
+      description: Optional Post-Retirement Benefit (PRB) configuration if the person works after CPP starts
+      properties:
+        continuesWorkingAfterStart:
+          type: boolean
+        annualEarningsAfterStart:
+          type: number
+        stopAge:
+          type: integer
+      required: [continuesWorkingAfterStart]
+
+    ScenarioInputs:
+      type: object
+      properties:
+        birthYear:
+          type: integer
+        birthMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        sex:
+          type: string
+          enum: [unspecified, female, male]
+        province:
+          type: string
+          description: Two-letter province code (used to flag QPP)
+        earningsHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/EarningsRecord"
+        dropoutPeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/DropoutPeriod"
+        assumptions:
+          $ref: "#/components/schemas/Assumptions"
+        postRetirementBenefit:
+          $ref: "#/components/schemas/PostRetirementBenefit"
+        startAges:
+          type: array
+          description: Ages at which to compute starting CPP (months supported as fractional values, e.g. 65.5)
+          items:
+            type: number
+      required:
+        - birthYear
+        - birthMonth
+        - earningsHistory
+        - assumptions
+        - startAges
+
+    Scenario:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        notes:
+          type: string
+        inputs:
+          $ref: "#/components/schemas/ScenarioInputs"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, inputs, createdAt, updatedAt]
+
+    ScenarioInput:
+      type: object
+      description: Payload for creating or updating a scenario
+      properties:
+        title:
+          type: string
+        notes:
+          type: string
+        inputs:
+          $ref: "#/components/schemas/ScenarioInputs"
+      required: [title, inputs]
