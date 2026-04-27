@@ -170,6 +170,48 @@ export const TIER1_START_YEAR = 2019;
 /** Year that the second additional contributions started */
 export const TIER2_START_YEAR = 2024;
 
+// ---------------------------------------------------------------------------
+// Contribution rates (used to display annual contribution amount, not benefits)
+// ---------------------------------------------------------------------------
+
+/**
+ * Base CPP employee contribution rate (the portion withheld from a T4
+ * paycheque). Self-employed people pay 2× this rate (employee + employer).
+ * Applied to (pensionable earnings ∩ [YBE, YMPE]).
+ */
+export const BASE_EMPLOYEE_CONTRIBUTION_RATE = 0.0495;
+
+/**
+ * Tier 1 enhancement employee contribution rate by year. Phased in 2019–2023;
+ * full rate from 2023 onwards is 1.00%. Applied to the same band as the base
+ * (earnings ∩ [YBE, YMPE]). Self-employed pay 2×.
+ */
+export const TIER1_EMPLOYEE_CONTRIBUTION_RATE_HISTORY: Record<number, number> = {
+  2019: 0.0015,
+  2020: 0.003,
+  2021: 0.005,
+  2022: 0.0075,
+  2023: 0.01,
+};
+
+/** Tier 1 fully accrued employee rate (2023+). */
+export const TIER1_EMPLOYEE_CONTRIBUTION_RATE_FULL = 0.01;
+
+/**
+ * Tier 2 enhancement employee contribution rate (started 2024). Applied to
+ * (pensionable earnings ∩ (YMPE, YAMPE]). Self-employed pay 2×.
+ */
+export const TIER2_EMPLOYEE_CONTRIBUTION_RATE = 0.04;
+
+/** Look up the Tier 1 employee contribution rate for a year. */
+export function getTier1ContributionRate(year: number): number {
+  if (year < TIER1_START_YEAR) return 0;
+  if (TIER1_EMPLOYEE_CONTRIBUTION_RATE_HISTORY[year] !== undefined) {
+    return TIER1_EMPLOYEE_CONTRIBUTION_RATE_HISTORY[year];
+  }
+  return TIER1_EMPLOYEE_CONTRIBUTION_RATE_FULL;
+}
+
 /** Earliest age at which CPP retirement can begin */
 export const MIN_START_AGE = 60;
 

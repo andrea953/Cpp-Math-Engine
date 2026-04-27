@@ -41,6 +41,12 @@ export const ListScenariosResponseItem = zod.object({
       .string()
       .optional()
       .describe("Two-letter province code (used to flag QPP)"),
+    isSelfEmployed: zod
+      .boolean()
+      .optional()
+      .describe(
+        "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+      ),
     earningsHistory: zod.array(
       zod
         .object({
@@ -191,6 +197,12 @@ export const CreateScenarioBody = zod
         .string()
         .optional()
         .describe("Two-letter province code (used to flag QPP)"),
+      isSelfEmployed: zod
+        .boolean()
+        .optional()
+        .describe(
+          "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+        ),
       earningsHistory: zod.array(
         zod
           .object({
@@ -334,6 +346,12 @@ export const GetScenarioResponse = zod.object({
       .string()
       .optional()
       .describe("Two-letter province code (used to flag QPP)"),
+    isSelfEmployed: zod
+      .boolean()
+      .optional()
+      .describe(
+        "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+      ),
     earningsHistory: zod.array(
       zod
         .object({
@@ -487,6 +505,12 @@ export const UpdateScenarioBody = zod
         .string()
         .optional()
         .describe("Two-letter province code (used to flag QPP)"),
+      isSelfEmployed: zod
+        .boolean()
+        .optional()
+        .describe(
+          "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+        ),
       earningsHistory: zod.array(
         zod
           .object({
@@ -626,6 +650,12 @@ export const UpdateScenarioResponse = zod.object({
       .string()
       .optional()
       .describe("Two-letter province code (used to flag QPP)"),
+    isSelfEmployed: zod
+      .boolean()
+      .optional()
+      .describe(
+        "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+      ),
     earningsHistory: zod.array(
       zod
         .object({
@@ -816,6 +846,12 @@ export const GetSharedScenarioResponse = zod
         .string()
         .optional()
         .describe("Two-letter province code (used to flag QPP)"),
+      isSelfEmployed: zod
+        .boolean()
+        .optional()
+        .describe(
+          "When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).",
+        ),
       earningsHistory: zod.array(
         zod
           .object({

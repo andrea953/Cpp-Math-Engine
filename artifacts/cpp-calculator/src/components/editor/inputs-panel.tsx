@@ -177,6 +177,24 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
           </div>
         </div>
       ) : null}
+      <div className="flex items-start justify-between gap-3 rounded-md border bg-muted/30 p-3">
+        <div className="space-y-1">
+          <Label htmlFor="self-employed" className="text-sm font-medium">
+            Self-employed
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Self-employed contributors pay both the employee and employer share of CPP
+            contributions (2× the rate). This does not change calculated benefits — only the
+            annual contribution amount shown in the results.
+          </p>
+        </div>
+        <Switch
+          id="self-employed"
+          data-testid="switch-self-employed"
+          checked={inputs.isSelfEmployed ?? false}
+          onCheckedChange={(v) => onChange(patch(inputs, { isSelfEmployed: v }))}
+        />
+      </div>
     </div>
   );
 }

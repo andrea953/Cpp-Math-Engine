@@ -22,6 +22,8 @@ export interface ScenarioInputs {
   sex?: ScenarioInputsSex;
   /** Two-letter province code (used to flag QPP) */
   province?: string;
+  /** When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount). */
+  isSelfEmployed?: boolean;
   earningsHistory: EarningsRecord[];
   dropoutPeriods?: DropoutPeriod[];
   assumptions: Assumptions;

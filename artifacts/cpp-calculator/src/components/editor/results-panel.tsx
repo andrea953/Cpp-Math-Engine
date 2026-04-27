@@ -21,6 +21,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import {
+  calculateAnnualContribution,
   calculateCpp,
   calculateSurvivor,
   formatMoney,
@@ -32,7 +33,7 @@ import {
   type StartAgeResult,
   type SurvivorResult,
 } from "@/cpp";
-import { HeartHandshake, Users, Wallet, Info } from "lucide-react";
+import { Briefcase, HeartHandshake, Users, Wallet, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,8 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
         </div>
       </div>
 
+      <ContributionCard inputs={inputs} />
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {sortedAges.map((r) => (
           <StartAgeCard key={r.startAge} result={r} isOptimal={optimal?.startAge === r.startAge} />
@@ -174,6 +177,131 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
       <DiagnosticsPanel sortedAges={sortedAges} />
 
       {inputs.survivor?.enabled ? <SurvivorCard inputs={inputs} /> : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Current-year contribution card
+// ---------------------------------------------------------------------------
+
+function ContributionCard({ inputs }: { inputs: ScenarioInputs }) {
+  const currentYear = new Date().getFullYear();
+  const { breakdown, isCurrentYear } = useMemo(() => {
+    const sortedHistory = [...inputs.earningsHistory].sort((a, b) => b.year - a.year);
+    const latest = sortedHistory.find((r) => r.year <= currentYear);
+    const referenceYear = latest?.year ?? currentYear;
+    const referenceEarnings = latest?.pensionableEarnings ?? inputs.assumptions.assumedFutureEarnings;
+    return {
+      isCurrentYear: referenceYear === currentYear,
+      breakdown: calculateAnnualContribution(
+        referenceYear,
+        referenceEarnings,
+        inputs.isSelfEmployed ?? false,
+        inputs.assumptions.ympeGrowthRate,
+        inputs.assumptions.yampeGrowthRate,
+      ),
+    };
+  }, [inputs, currentYear]);
+
+  const isSelfEmployed = inputs.isSelfEmployed ?? false;
+  const oppositeLabel = isSelfEmployed ? "as an employee" : "if self-employed";
+  const delta = breakdown.totalContributionAtOppositeStatus - breakdown.totalContribution;
+  const titleSuffix = isCurrentYear
+    ? `(${breakdown.year})`
+    : `(latest known year ${breakdown.year})`;
+
+  return (
+    <Card
+      className="border-[hsl(var(--chart-2))]/40 bg-gradient-to-br from-card to-[hsl(var(--chart-2))]/5"
+      data-testid="card-contributions"
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-[hsl(var(--chart-2))]" />
+            <CardTitle className="text-base">
+              Annual CPP contribution {titleSuffix}
+            </CardTitle>
+          </div>
+          <Badge
+            variant={isSelfEmployed ? "default" : "secondary"}
+            data-testid="badge-employment-status"
+          >
+            {isSelfEmployed ? "Self-employed (2× rate)" : "Employee share"}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <ContributionTile
+            label="Base (4.95%)"
+            value={breakdown.baseContribution}
+            sub={`on ${formatMoney(breakdown.baseBandEarnings)} above YBE`}
+          />
+          <ContributionTile
+            label="Tier 1 enhancement (1%)"
+            value={breakdown.tier1Contribution}
+            sub={`on ${formatMoney(breakdown.baseBandEarnings)} above YBE`}
+          />
+          <ContributionTile
+            label="Tier 2 enhancement (4%)"
+            value={breakdown.tier2Contribution}
+            sub={
+              breakdown.tier2BandEarnings > 0
+                ? `on ${formatMoney(breakdown.tier2BandEarnings)} above YMPE`
+                : "no earnings above YMPE"
+            }
+          />
+        </div>
+        <div className="flex flex-wrap items-baseline justify-between gap-3 rounded-md border bg-background/60 p-3">
+          <div>
+            <div className="text-xs text-muted-foreground">Total annual contribution</div>
+            <div
+              className="text-2xl font-semibold tracking-tight"
+              data-testid="text-total-contribution"
+            >
+              {formatMoney(breakdown.totalContribution, true)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              ≈ {formatMoney(breakdown.biweeklyContribution, true)} per biweekly pay period
+            </div>
+          </div>
+          <div className="text-right text-xs text-muted-foreground">
+            <div>{oppositeLabel}:</div>
+            <div className="text-sm font-medium text-foreground">
+              {formatMoney(breakdown.totalContributionAtOppositeStatus, true)}
+            </div>
+            <div className={delta >= 0 ? "text-emerald-700" : "text-rose-700"}>
+              {delta >= 0 ? "+" : ""}
+              {formatMoney(delta, true)} vs. current
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Contributions are <strong>independent of benefits</strong>: your monthly CPP pension is
+          calculated identically whether you were employed or self-employed. Toggling
+          self-employed only changes the cost shown here.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContributionTile({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: number;
+  sub: string;
+}) {
+  return (
+    <div className="rounded-md border bg-background/60 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold tracking-tight">{formatMoney(value, true)}</div>
+      <div className="text-[11px] text-muted-foreground">{sub}</div>
     </div>
   );
 }

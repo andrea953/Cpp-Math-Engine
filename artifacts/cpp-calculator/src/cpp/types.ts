@@ -48,6 +48,12 @@ export interface ScenarioInputs {
   birthMonth: number; // 1..12
   sex?: "unspecified" | "female" | "male";
   province?: string;
+  /**
+   * When true, the contributor pays both the employee and employer share of
+   * CPP contributions (calculated benefits are unchanged — this only doubles
+   * the displayed annual contribution amount).
+   */
+  isSelfEmployed?: boolean;
   earningsHistory: EarningsRecord[];
   dropoutPeriods?: DropoutPeriod[];
   assumptions: Assumptions;

@@ -363,6 +363,9 @@ components:
         province:
           type: string
           description: Two-letter province code (used to flag QPP)
+        isSelfEmployed:
+          type: boolean
+          description: When true, the contributor pays both the employee and employer share of CPP contributions (does not affect calculated benefits, only the displayed annual contribution amount).
         earningsHistory:
           type: array
           items:

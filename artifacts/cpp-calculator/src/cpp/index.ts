@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./constants";
 export * from "./calculate";
+export * from "./contributions";
 export * from "./survivor";
 export * from "./socParser";
 export * from "./format";
