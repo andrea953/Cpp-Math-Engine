@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Copy, Save, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Printer, Save, Share2, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetScenario,
@@ -18,6 +18,7 @@ import { buildDefaultInputs, type ScenarioInputs } from "@/cpp";
 import { InputsPanel } from "@/components/editor/inputs-panel";
 import { ResultsPanel } from "@/components/editor/results-panel";
 import { ShareDialog } from "@/components/editor/share-dialog";
+import { PrintScenario } from "@/components/editor/print-scenario";
 
 interface ScenarioEditorProps {
   params: { id?: string };
@@ -143,7 +144,8 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   }
 
   return (
-    <div className="container mx-auto p-3 sm:p-4 lg:p-6">
+    <>
+    <div className="container mx-auto p-3 sm:p-4 lg:p-6 print:hidden">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button
@@ -165,6 +167,16 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           {dirty && <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">Unsaved changes</span>}
         </div>
         <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            title="Print client-ready scenario"
+            data-testid="button-print-scenario"
+          >
+            <Printer className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Print</span>
+          </Button>
           {!isNew && (
             <>
               <Button
@@ -223,6 +235,11 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
         <ResultsWrapper inputs={inputs} title={title} />
       </div>
     </div>
+
+    <div className="print-scenario hidden print:block">
+      <PrintScenario inputs={inputs} scenarioTitle={title} />
+    </div>
+    </>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { AlertTriangle, Lock } from "lucide-react";
+import { AlertTriangle, Lock, Printer } from "lucide-react";
 import {
   useGetSharedScenario,
   getGetSharedScenarioQueryKey,
@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResultsPanel } from "@/components/editor/results-panel";
+import { PrintScenario } from "@/components/editor/print-scenario";
 import type { ScenarioInputs } from "@/cpp";
 import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
 
@@ -37,20 +38,34 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
   const debounced = useDebouncedValue(inputs, 50);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-[hsl(215_85%_97%)] via-[hsl(248_70%_98%)] to-[hsl(28_90%_97%)]">
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-[hsl(215_85%_97%)] via-[hsl(248_70%_98%)] to-[hsl(28_90%_97%)] print:min-h-0 print:bg-none print:bg-white">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 print:hidden">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2.5 font-semibold text-foreground">
             <img src={logoUrl} alt="Modern CENTS" className="h-8 w-8 rounded-md object-cover" />
             <span className="tracking-tight">Modern CENTS</span>
           </Link>
-          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <Lock className="h-3.5 w-3.5" /> Read-only client view
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" /> Read-only client view
+            </span>
+            {!isLoading && !error && data ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                title="Print client-ready scenario"
+                data-testid="button-print-scenario"
+              >
+                <Printer className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Print</span>
+              </Button>
+            ) : null}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 print:hidden">
         <div className="container mx-auto p-4 lg:p-6">
           {isLoading && (
             <div className="space-y-3">
@@ -109,6 +124,12 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
           )}
         </div>
       </main>
+
+      {!isLoading && !error && data && debounced ? (
+        <div className="print-scenario hidden print:block">
+          <PrintScenario inputs={debounced} scenarioTitle={data.title} />
+        </div>
+      ) : null}
     </div>
   );
 }

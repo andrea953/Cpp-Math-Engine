@@ -419,4 +419,207 @@
   .print\:hidden {
     display: none !important;
   }
+
+  /* ----------------------------------------------------------------------
+     Client-ready scenario handout (.print-scenario)
+     Used by the per-scenario print view. Mirrors the .print-paper approach:
+     force black-on-white, neutralize background gradients, and lay out as
+     a paginated document.
+     ---------------------------------------------------------------------- */
+  .print-scenario,
+  .print-scenario * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    background: transparent !important;
+    background-image: none !important;
+  }
+
+  .print-scenario {
+    background: #ffffff !important;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  .print-scenario .print-scenario-article {
+    width: 100%;
+    max-width: none;
+  }
+
+  .print-scenario .print-scenario-header {
+    border-bottom: 1.5px solid #000;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .print-scenario .print-scenario-brand {
+    font-size: 9pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .print-scenario .print-scenario-title {
+    font-size: 22pt;
+    font-weight: 700;
+    margin: 0.25rem 0 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .print-scenario .print-scenario-meta {
+    font-size: 9.5pt;
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .print-scenario h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.15rem;
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .print-scenario h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 0.75rem 0 0.35rem;
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  .print-scenario .print-scenario-section {
+    margin-top: 1rem;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  /* Each major section after the first starts on a new page so each chapter
+     of the handout is clearly separated. */
+  .print-scenario .print-scenario-pagebreak {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .print-scenario .print-scenario-summary {
+    page-break-before: avoid;
+    break-before: avoid-page;
+  }
+
+  .print-scenario .print-scenario-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.25rem 0;
+    font-size: 10pt;
+  }
+
+  .print-scenario .print-scenario-table th,
+  .print-scenario .print-scenario-table td {
+    border: 1px solid #000;
+    padding: 0.2rem 0.4rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .print-scenario .print-scenario-table thead th {
+    background: #ffffff !important;
+    font-weight: 700;
+    font-size: 9.5pt;
+    border-bottom: 1.25px solid #000;
+  }
+
+  .print-scenario .print-scenario-table tbody th {
+    width: 45%;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+  }
+
+  .print-scenario .print-scenario-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: Menlo, "Courier New", monospace;
+    font-size: 9.5pt;
+  }
+
+  .print-scenario .print-scenario-table-list tbody th {
+    width: auto;
+  }
+
+  .print-scenario .print-scenario-summary-table tbody th {
+    width: 38%;
+  }
+
+  .print-scenario .print-scenario-twocol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .print-scenario .print-scenario-subblock {
+    margin-top: 0.6rem;
+  }
+
+  .print-scenario .print-scenario-note {
+    font-size: 9.5pt;
+    font-style: italic;
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .print-scenario .print-scenario-empty {
+    font-size: 11pt;
+    margin-top: 1rem;
+  }
+
+  .print-scenario .print-scenario-list {
+    margin: 0.4rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 9.5pt;
+  }
+
+  .print-scenario .print-scenario-warnings {
+    border: 1px solid #000;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .print-scenario .print-scenario-diag-block {
+    margin-top: 0.6rem;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-scenario .print-scenario-chart {
+    margin-top: 0.6rem;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    text-align: center;
+  }
+
+  .print-scenario .print-scenario-chart svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .print-scenario .print-scenario-caption {
+    font-size: 9pt;
+    font-style: italic;
+    margin: 0.3rem 0 0;
+    text-align: center;
+  }
+
+  .print-scenario .print-scenario-footer {
+    margin-top: 1.25rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid #000;
+    font-size: 8.5pt;
+    font-style: italic;
+  }
 }
+

@@ -18,8 +18,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { signOut } = useClerk();
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-[hsl(215_85%_97%)] via-[hsl(248_70%_98%)] to-[hsl(28_90%_97%)]">
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <div className="min-h-[100dvh] flex flex-col bg-gradient-to-br from-[hsl(215_85%_97%)] via-[hsl(248_70%_98%)] to-[hsl(28_90%_97%)] print:min-h-0 print:bg-none print:bg-white">
+      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 print:hidden">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <Link href="/scenarios" className="flex items-center gap-2.5 font-semibold text-foreground">
