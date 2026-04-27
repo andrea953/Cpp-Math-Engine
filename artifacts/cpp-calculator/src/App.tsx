@@ -161,7 +161,7 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={150} skipDelayDuration={300}>
       <WouterRouter base={basePath}>
         <ClerkProviderWithRoutes />
       </WouterRouter>
