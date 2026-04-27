@@ -24,6 +24,7 @@ import {
 interface PrintScenarioProps {
   inputs: ScenarioInputs;
   scenarioTitle: string;
+  notes?: string;
 }
 
 const MONTHS = [
@@ -47,6 +48,7 @@ function todayLong(): string {
 export function PrintScenario({
   inputs,
   scenarioTitle,
+  notes,
 }: PrintScenarioProps) {
   const result = useMemo(() => calculateCpp(inputs), [inputs]);
 
@@ -74,6 +76,8 @@ export function PrintScenario({
   const earliest = sortedAges[0] ?? null;
   const latest = sortedAges[sortedAges.length - 1] ?? null;
 
+  const trimmedNotes = notes?.trim() ?? "";
+
   const survivor: SurvivorResult | null = useMemo(() => {
     if (!inputs.survivor?.enabled) return null;
     try {
@@ -93,6 +97,13 @@ export function PrintScenario({
           <span>Generated: {todayLong()}</span>
         </div>
       </header>
+
+      {trimmedNotes ? (
+        <aside className="print-scenario-planner-note">
+          <div className="print-scenario-planner-note-label">Note from your planner</div>
+          <p className="print-scenario-planner-note-body">{trimmedNotes}</p>
+        </aside>
+      ) : null}
 
       {sortedAges.length === 0 ? (
         <p className="print-scenario-empty">

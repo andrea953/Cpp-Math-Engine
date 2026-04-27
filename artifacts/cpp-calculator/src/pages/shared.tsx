@@ -127,7 +127,11 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
 
       {!isLoading && !error && data && debounced ? (
         <div className="print-scenario hidden print:block">
-          <PrintScenario inputs={debounced} scenarioTitle={data.title} />
+          <PrintScenario
+            inputs={debounced}
+            scenarioTitle={data.title}
+            notes={data.notes ?? undefined}
+          />
         </div>
       ) : null}
     </div>
