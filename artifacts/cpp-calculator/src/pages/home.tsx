@@ -2,10 +2,11 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, TrendingUp, ShieldCheck } from "lucide-react";
 import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
+import { WhitePaper } from "@/components/white-paper";
 
 export default function Home() {
   return (
-    <div className="relative min-h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-br from-[hsl(215_85%_96%)] via-[hsl(248_75%_97%)] to-[hsl(28_90%_96%)]">
+    <div className="relative min-h-[100dvh] flex flex-col overflow-x-hidden bg-gradient-to-br from-[hsl(215_85%_96%)] via-[hsl(248_75%_97%)] to-[hsl(28_90%_96%)]">
       <div aria-hidden className="pointer-events-none absolute -top-32 -right-32 h-[28rem] w-[28rem] rounded-full bg-[hsl(190_80%_85%)] opacity-40 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-32 h-[32rem] w-[32rem] rounded-full bg-[hsl(28_90%_85%)] opacity-40 blur-3xl" />
       <div aria-hidden className="pointer-events-none absolute top-1/3 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full bg-[hsl(248_75%_88%)] opacity-30 blur-3xl" />
@@ -73,6 +74,8 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <WhitePaper />
     </div>
   );
 }

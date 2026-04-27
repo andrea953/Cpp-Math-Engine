@@ -30,7 +30,8 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ### Modern CENTS — `artifacts/cpp-calculator`
 A planner-grade Canada Pension Plan calculator for financial advisors.
-- **Routes**: `/` (marketing/redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`, `/shared/:token` (public read-only client view, no auth)
+- **Routes**: `/` (marketing + white paper / redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`, `/shared/:token` (public read-only client view, no auth)
+- **Home page**: hero + 3 feature cards above the fold, followed by an in-page white paper (Part 1 — positioning, Part 2 — methodology) with a sticky table of contents and closing CTA band. Component lives at `src/components/white-paper.tsx`.
 - **Auth**: Clerk (cookie-based; api-server proxies to Clerk middleware)
 - **Engine**: Pure-client TypeScript CPP engine in `src/cpp/` — base + Tier 1 + Tier 2 enhancement, CRDO, disability dropout, general 17% dropout, AMPE/AYMPE, breakeven projection, PRB, and full survivor-side benefits (survivor's pension with combined-benefit cap, $2,500 death benefit, children's benefit). Constants tables for YMPE 1966–2026, YAMPE 2024–2026, survivor flat rate and children's benefit 2019–2026.
 - **Persistence**: scenarios stored as JSONB in PostgreSQL (`scenariosTable`, see `lib/db/src/schema/scenarios.ts`); CRUD + duplicate + share via `/api/scenarios` exposed in OpenAPI spec. Share state lives on the row as a unique `share_token` column; planners can issue or revoke a public share link from the editor toolbar.
