@@ -47,8 +47,8 @@ export function formatYearMonth(year: number, month: number): string {
   return date.toLocaleDateString("en-CA", { month: "short", year: "numeric" });
 }
 
-export function exportToCsv(rows: Record<string, string | number>[], filename: string): void {
-  if (rows.length === 0) return;
+export function formatCsv(rows: Record<string, string | number>[]): string {
+  if (rows.length === 0) return "";
   const headers = Object.keys(rows[0]);
   const escape = (v: string | number) => {
     const s = String(v ?? "");
@@ -59,7 +59,13 @@ export function exportToCsv(rows: Record<string, string | number>[], filename: s
   for (const row of rows) {
     lines.push(headers.map((h) => escape(row[h])).join(","));
   }
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  return lines.join("\n");
+}
+
+export function exportToCsv(rows: Record<string, string | number>[], filename: string): void {
+  if (rows.length === 0) return;
+  const csv = formatCsv(rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

@@ -9,10 +9,10 @@
  *  - benefit at age 70 is strictly greater than benefit at 65 with identical earnings
  *  - CSV export (in `format.ts`) round-trips a small fixture (header + values)
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { calculateCpp } from "../calculate";
 import { TIER1_START_YEAR, TIER2_START_YEAR, YMPE_HISTORY } from "../constants";
-import { exportToCsv } from "../format";
+import { formatCsv } from "../format";
 import { parseSoc } from "../socParser";
 import type { ScenarioInputs } from "../types";
 import { pinYear, unpinTime } from "./_time";
@@ -107,18 +107,13 @@ describe("Invariants", () => {
   });
 });
 
-describe("CSV export round-trip", () => {
-  it("exportToCsv → parseSoc preserves the (year, earnings) fixture", () => {
-    // exportToCsv writes a Blob via DOM APIs; in node we capture its text
-    // content by stubbing URL/createObjectURL/document.createElement minimally.
-    // For round-trip purposes we'd rather build the CSV string directly via
-    // the same shape exportToCsv produces and verify parseSoc reads it back.
-    const fixture = [
+describe("CSV export round-trip (formatCsv → parseSoc)", () => {
+  it("preserves a (year, earnings) fixture exactly", () => {
+    const csvText = formatCsv([
       { year: 2020, earnings: 55000 },
       { year: 2021, earnings: 58000 },
       { year: 2022, earnings: 62000 },
-    ];
-    const csvText = ["year,earnings", ...fixture.map((r) => `${r.year},${r.earnings}`)].join("\n");
+    ]);
     const parsed = parseSoc(csvText);
     expect(parsed.records).toEqual([
       { year: 2020, pensionableEarnings: 55000 },
@@ -127,43 +122,32 @@ describe("CSV export round-trip", () => {
     ]);
   });
 
-  it("exportToCsv produces a CSV whose first row is the column headers", () => {
-    // Verify the actual exporter writes the expected first line by intercepting
-    // the Blob it builds. This guards the format the round-trip relies on.
-    const captured: string[] = [];
-    const origBlob = globalThis.Blob;
-    class CapturingBlob {
-      constructor(parts: BlobPart[]) {
-        captured.push(parts.map((p) => String(p)).join(""));
-      }
-    }
-    // jsdom isn't loaded; supply the minimum DOM stubs exportToCsv touches.
-    (globalThis as any).Blob = CapturingBlob;
-    const fakeAnchor = { href: "", download: "", click: vi.fn() } as any;
-    (globalThis as any).URL = {
-      createObjectURL: () => "blob:fake",
-      revokeObjectURL: () => undefined,
-    };
-    (globalThis as any).document = {
-      createElement: () => fakeAnchor,
-      body: { appendChild: vi.fn(), removeChild: vi.fn() },
-    };
-    try {
-      exportToCsv(
-        [
-          { year: 2020, earnings: 55000 },
-          { year: 2021, earnings: 58000 },
-        ],
-        "test.csv",
-      );
-      expect(captured.length).toBe(1);
-      expect(captured[0].split("\n")[0]).toBe("year,earnings");
-      expect(captured[0]).toContain("2020,55000");
-      expect(captured[0]).toContain("2021,58000");
-    } finally {
-      (globalThis as any).Blob = origBlob;
-      delete (globalThis as any).URL;
-      delete (globalThis as any).document;
-    }
+  it("emits the expected header row and data rows", () => {
+    const csv = formatCsv([
+      { year: 2020, earnings: 55000 },
+      { year: 2021, earnings: 58000 },
+    ]);
+    const lines = csv.split("\n");
+    expect(lines[0]).toBe("year,earnings");
+    expect(lines[1]).toBe("2020,55000");
+    expect(lines[2]).toBe("2021,58000");
+  });
+
+  it("escapes commas, quotes, and newlines in field values", () => {
+    const csv = formatCsv([
+      { label: "Hello, world", note: 'She said "hi"', extra: "line1\nline2" },
+    ]);
+    const lines = csv.split("\n");
+    // Header is unquoted (no special chars in our keys)
+    expect(lines[0]).toBe("label,note,extra");
+    // Data row: comma-bearing field is quoted; quotes are doubled; newlines
+    // are quoted (which causes the field to span lines but stay one record).
+    expect(csv).toContain('"Hello, world"');
+    expect(csv).toContain('"She said ""hi"""');
+    expect(csv).toContain('"line1\nline2"');
+  });
+
+  it("returns an empty string for an empty rows array", () => {
+    expect(formatCsv([])).toBe("");
   });
 });
