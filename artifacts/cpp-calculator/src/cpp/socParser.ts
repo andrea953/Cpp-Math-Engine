@@ -77,49 +77,28 @@ export function parseSoc(input: string): SocParseResult {
       continue;
     }
 
-    // Find a year-looking number and an earnings-looking number.
-    // Service Canada SOC table layout (left to right):
-    //   Year | Pensionable earnings | Year's Maximum Pensionable Earnings (YMPE) | Your contributions
-    // The FIRST numeric column after the year is the user's pensionable earnings,
-    // so we take the first plausible number after the year position rather than the
-    // largest number on the line (which would be the YMPE column for non-capped earners).
+    // Service Canada SOC PDF rows show year + several smaller dollar amounts
+    // (Total contribution, Base contribution, optional First/Second additional
+    // contributions, optional First/Second additional earnings) plus the user's
+    // Pensionable Earnings. Pensionable earnings is always the LARGEST value on
+    // the row because contributions and additional sub-portions are by
+    // definition smaller than the gross earnings they're computed from.
+    //
+    // For simple "year, earnings" CSV input there's only one non-year number,
+    // so picking the largest is equivalent.
     const numericTokens = tokens.map((t) => cleanNumber(t));
     let year: number | null = null;
-    let yearIdx = -1;
+    let earnings: number | null = null;
     for (let i = 0; i < numericTokens.length; i++) {
       const n = numericTokens[i];
       if (n === null) continue;
-      if (looksLikeYear(n)) {
+      if (year === null && looksLikeYear(n)) {
         year = n;
-        yearIdx = i;
-        break;
+        continue;
       }
-    }
-
-    let earnings: number | null = null;
-    if (year !== null) {
-      for (let i = yearIdx + 1; i < numericTokens.length; i++) {
-        const n = numericTokens[i];
-        if (n === null) continue;
-        if (looksLikeYear(n)) continue;
-        if (n >= 0 && n < 1_000_000) {
-          earnings = n;
-          break;
-        }
-      }
-      // Fallback: if no numeric appeared after the year (e.g. "earnings year" order),
-      // try the first plausible number anywhere on the line that isn't the year itself.
-      if (earnings === null) {
-        for (let i = 0; i < numericTokens.length; i++) {
-          if (i === yearIdx) continue;
-          const n = numericTokens[i];
-          if (n === null) continue;
-          if (looksLikeYear(n)) continue;
-          if (n >= 0 && n < 1_000_000) {
-            earnings = n;
-            break;
-          }
-        }
+      // Earnings: non-negative, plausibly under $1M, take the maximum on the row.
+      if (n >= 0 && n < 1_000_000 && (earnings === null || n > earnings)) {
+        earnings = n;
       }
     }
 
