@@ -7,12 +7,20 @@ import {
   ClipboardList,
   FileText,
   Layers,
+  Lightbulb,
   ScrollText,
   ShieldCheck,
   Sigma,
   Target,
   Users,
 } from "lucide-react";
+import { whitePaperExamples as ex } from "@/cpp/whitePaperExamples";
+import { formatMoney } from "@/cpp/format";
+
+const fmt0 = (n: number) => formatMoney(n, false);
+const fmt2 = (n: number) => formatMoney(n, true);
+const pct1 = (n: number) =>
+  `${(n * 100).toLocaleString("en-CA", { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`;
 
 interface TocItem {
   id: string;
@@ -63,6 +71,26 @@ function useActiveSection(ids: string[]): string | null {
 function Formula({ children }: { children: React.ReactNode }) {
   return (
     <div className="my-4 overflow-x-auto rounded-lg border border-border/60 bg-slate-50/80 px-4 py-3 font-mono text-[13px] leading-relaxed text-slate-800 shadow-inner">
+      {children}
+    </div>
+  );
+}
+
+function Example({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="my-4 rounded-lg border-l-4 border-primary/40 bg-primary/5 px-4 py-3 text-sm text-foreground/90">
+      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80">
+        <Lightbulb className="h-3.5 w-3.5" />
+        Worked example — {ex.profile.label}
+      </div>
+      <div className="space-y-1 leading-relaxed">{children}</div>
+    </div>
+  );
+}
+
+function ExampleLine({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="font-mono text-[12.5px] text-slate-700">
       {children}
     </div>
   );
@@ -340,6 +368,15 @@ export function WhitePaper() {
               <Formula>
                 Total monthly CPP = Base CPP + Tier 1 enhancement + Tier 2 enhancement
               </Formula>
+              <Example>
+                <ExampleLine>
+                  Representative client at 65: {fmt2(ex.total.base)} (Base) +{" "}
+                  {fmt2(ex.total.tier1)} (Tier 1) + {fmt2(ex.total.tier2)} (Tier 2)
+                </ExampleLine>
+                <ExampleLine>
+                  = {fmt2(ex.total.monthly)} / month before the take-up adjustment
+                </ExampleLine>
+              </Example>
               <p>
                 Each component is calculated at age 65 in start-year dollars and then multiplied by
                 an adjustment factor for the chosen take-up age (60–70). If the client continues
@@ -388,6 +425,18 @@ export function WhitePaper() {
               <Formula>
                 AYMPE(start) = ( YMPE(start) + YMPE(start−1) + … + YMPE(start−4) ) / 5
               </Formula>
+              <Example>
+                <ExampleLine>
+                  AYMPE({ex.profile.startYear}) = (
+                  {ex.aympeYears.map((y) => fmt0(y.ympe)).join(" + ")}
+                  ) / 5
+                </ExampleLine>
+                <ExampleLine>= {fmt0(ex.aympeStart)}</ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Years past 2026 use the user's YMPE growth rate (default 3.1%) to project
+                  forward.
+                </div>
+              </Example>
             </Section>
 
             <Section>
@@ -406,6 +455,23 @@ export function WhitePaper() {
               <Formula>
                 indexed monthly(year) = capped monthly(year) × AYMPE(start) / YMPE(year)
               </Formula>
+              <Example>
+                <div className="text-xs text-muted-foreground">
+                  Take a single month from {ex.ampeIndex.year} (a YMPE-max year). YMPE(
+                  {ex.ampeIndex.year}) = {fmt0(ex.ampeIndex.ympe)}, so:
+                </div>
+                <ExampleLine>
+                  capped monthly = {fmt0(ex.ampeIndex.ympe)} / 12 = {fmt2(ex.ampeIndex.cappedMonthly)}
+                </ExampleLine>
+                <ExampleLine>
+                  indexed monthly = {fmt2(ex.ampeIndex.cappedMonthly)} × {fmt0(ex.aympeStart)} /{" "}
+                  {fmt0(ex.ampeIndex.ympe)} = {fmt2(ex.ampeIndex.indexedMonthly)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Indexing translates the {ex.ampeIndex.year} earning into {ex.profile.startYear}{" "}
+                  dollars. For any YMPE-max year the result equals AYMPE(start) ÷ 12.
+                </div>
+              </Example>
               <p>
                 After CRDO, disability, and the general 17% drop-out are applied (see below), AMPE
                 is the simple average of the indexed monthly earnings that remain:
@@ -418,6 +484,19 @@ export function WhitePaper() {
                 AMPE is then capped at <InlineMath>AYMPE(start) ÷ 12</InlineMath> — a maximum
                 contributor cannot exceed the program's own ceiling.
               </p>
+              <Example>
+                <ExampleLine>
+                  contributory months = {ex.base.contribMonths.toLocaleString()} (June {ex.profile.birthYear + 18}
+                  → May {ex.profile.startYear}); retained after 17% drop-out ={" "}
+                  {ex.base.monthsRetained.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>AMPE ≈ {fmt2(ex.ampe)} / month</ExampleLine>
+                <ExampleLine>AMPE cap = AYMPE / 12 = {fmt2(ex.ampeCap)} / month</ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  This client never exceeds the AMPE cap. The 13 zero-earning years from age 18 to
+                  30 keep AMPE just below the ceiling even with the drop-out applied.
+                </div>
+              </Example>
             </Section>
 
             <Section>
@@ -434,6 +513,16 @@ export function WhitePaper() {
               <Formula>
                 Base monthly = AMPE × 0.25 × adjustment factor(start age)
               </Formula>
+              <Example>
+                <ExampleLine>
+                  Base monthly at 65 = {fmt2(ex.ampe)} × 0.25 × 1.000 ={" "}
+                  {fmt2(ex.base.monthlyAt65)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  At age 65 the adjustment factor is exactly 1.0; early/late take-up is shown
+                  further below.
+                </div>
+              </Example>
               <p>
                 Base CPP applies to the entire contributory period back to 1966 and continues to
                 exist alongside the Tier 1 and Tier 2 enhancements — it is not replaced by them.
@@ -467,6 +556,34 @@ export function WhitePaper() {
                 <br />
                 weighted(year) = indexed(year) × phase-in(year)
               </Formula>
+              <Example>
+                <div className="text-xs text-muted-foreground">
+                  Phase-in year {ex.tier1.phaseExample.year} (factor{" "}
+                  {pct1(ex.tier1.phaseExample.phaseFactor)} of full rate):
+                </div>
+                <ExampleLine>
+                  tier 1 earnings = min({fmt0(ex.tier1.phaseExample.ympe)},{" "}
+                  {fmt0(ex.tier1.phaseExample.ympe)}) − $3,500 ={" "}
+                  {fmt0(ex.tier1.phaseExample.tier1Earn)}
+                </ExampleLine>
+                <ExampleLine>
+                  indexed = {fmt0(ex.tier1.phaseExample.tier1Earn)} × {fmt0(ex.aympeStart)} /{" "}
+                  {fmt0(ex.tier1.phaseExample.ympe)} = {fmt0(ex.tier1.phaseExample.indexed)}
+                </ExampleLine>
+                <ExampleLine>
+                  weighted = {fmt0(ex.tier1.phaseExample.indexed)} ×{" "}
+                  {pct1(ex.tier1.phaseExample.phaseFactor)} ={" "}
+                  {fmt0(ex.tier1.phaseExample.weighted)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Fully phased-in year {ex.tier1.fullExample.year} (factor 100%):
+                </div>
+                <ExampleLine>
+                  weighted = ({fmt0(ex.tier1.fullExample.ympe)} − $3,500) × {fmt0(ex.aympeStart)} /{" "}
+                  {fmt0(ex.tier1.fullExample.ympe)} × 100% ={" "}
+                  {fmt0(ex.tier1.fullExample.weighted)}
+                </ExampleLine>
+              </Example>
               <p>
                 The annual benefit at 65 is the average weighted amount times the full replacement
                 rate, multiplied by an accrual factor that reaches 1.0 only after{" "}
@@ -479,6 +596,24 @@ export function WhitePaper() {
                 <br />
                 tier 1 monthly = tier 1 annual at 65 × adjustment factor / 12
               </Formula>
+              <Example>
+                <ExampleLine>
+                  contribution years (2019 → {ex.profile.startYear - 1}) ={" "}
+                  {ex.tier1.contributionYears}
+                </ExampleLine>
+                <ExampleLine>
+                  accrual = min(1, {ex.tier1.contributionYears} / {ex.tier1.enhancementFullYears})
+                  = {ex.tier1.accrualFactor.toFixed(3)}
+                </ExampleLine>
+                <ExampleLine>
+                  tier 1 monthly at 65 ≈ {fmt2(ex.tier1.monthlyAt65)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  This client only has {ex.tier1.contributionYears} years inside the Tier 1 window,
+                  so the accrual factor of {ex.tier1.accrualFactor.toFixed(3)} keeps the Tier 1
+                  contribution well below its eventual ceiling.
+                </div>
+              </Example>
             </Section>
 
             <Section>
@@ -504,6 +639,26 @@ export function WhitePaper() {
                 <br />
                 tier 2 monthly = tier 2 annual at 65 × adjustment factor / 12
               </Formula>
+              <Example>
+                <div className="text-xs text-muted-foreground">
+                  Our 35-year YMPE-max client never crosses YMPE, so their Tier 2 = $0. To
+                  illustrate the band, take {ex.tier2.yearExample.year} (the first Tier 2 year):
+                </div>
+                <ExampleLine>
+                  tier 2 earnings = min(YAMPE, earnings) − YMPE = {fmt0(ex.tier2.yearExample.yampe)} −{" "}
+                  {fmt0(ex.tier2.yearExample.ympe)} = {fmt0(ex.tier2.yearExample.tier2Earn)}
+                </ExampleLine>
+                <ExampleLine>
+                  indexed = {fmt0(ex.tier2.yearExample.tier2Earn)} × {fmt0(ex.ayampeStart)} /{" "}
+                  {fmt0(ex.tier2.yearExample.yampe)} = {fmt0(ex.tier2.yearExample.indexed)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  If that client instead earned the YAMPE-max every year from 2024 onward (
+                  {ex.tier2.altScenarioContributionYears} years, accrual{" "}
+                  {ex.tier2.altScenarioAccrualFactor.toFixed(3)}), tier 2 monthly at 65 ≈{" "}
+                  {fmt2(ex.tier2.altScenarioMonthlyAt65)}.
+                </div>
+              </Example>
               <p>
                 Tier 2 only contributes to the result when the client has earnings above the YMPE
                 ceiling in 2024 or later.
@@ -541,6 +696,26 @@ export function WhitePaper() {
                   in practice the worst earning years for the contributor.
                 </li>
               </ul>
+              <Example>
+                <ExampleLine>
+                  contributory months = {ex.base.contribMonths.toLocaleString()}; dropped = floor(
+                  {pct1(ex.base.dropoutRate)} × {ex.base.contribMonths.toLocaleString()}) ={" "}
+                  {ex.base.generalDropoutMonths.toLocaleString()}; retained ={" "}
+                  {ex.base.monthsRetained.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  base monthly with drop-out = {fmt2(ex.base.monthlyWithDropout)}
+                </ExampleLine>
+                <ExampleLine>
+                  base monthly without drop-out (dilute by zero years) ≈{" "}
+                  {fmt2(ex.base.monthlyNoDropout)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  The drop-out lifts this client's base CPP by ≈ {fmt2(ex.base.dropoutLift)} / month
+                  by removing the worst-earning months (their 1980s zero-earning years before
+                  starting work).
+                </div>
+              </Example>
             </Section>
 
             <Section>
@@ -565,9 +740,24 @@ export function WhitePaper() {
                 <br />
                 if start &gt; 65: factor = 1 + 0.007 × months late
               </Formula>
-              <p>
-                The adjustment factor is applied to the base, Tier 1, and Tier 2 components alike.
-              </p>
+              <Example>
+                <ExampleLine>
+                  age 60 → factor = 1 − 0.006 × 60 = {ex.adjustment.factor60.toFixed(3)} → total
+                  monthly = {fmt2(ex.adjustment.total60)}
+                </ExampleLine>
+                <ExampleLine>
+                  age 65 → factor = {ex.adjustment.factor65.toFixed(3)} → total monthly ={" "}
+                  {fmt2(ex.adjustment.total65)}
+                </ExampleLine>
+                <ExampleLine>
+                  age 70 → factor = 1 + 0.007 × 60 = {ex.adjustment.factor70.toFixed(3)} → total
+                  monthly = {fmt2(ex.adjustment.total70)}
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Same client, same earnings record — only the take-up age differs. The factor
+                  scales the base, Tier 1, and Tier 2 portions together.
+                </div>
+              </Example>
             </Section>
 
             <Section>
@@ -588,6 +778,25 @@ export function WhitePaper() {
                 <br />
                 annual PRB(year) ≈ (starting CPP at take-up × 12) / 40 × ratio
               </Formula>
+              <Example>
+                <ExampleLine>
+                  Same client starts CPP at 65 ({fmt2(ex.prb.startMonthly)} / month) and keeps
+                  working at {fmt0(ex.prb.annualEarnings)} / year through age {ex.prb.stopAge}.
+                </ExampleLine>
+                <ExampleLine>
+                  Year 1 ratio = min(1, {fmt0(ex.prb.annualEarnings)} /{" "}
+                  {fmt0(ex.prb.ympeAtStart)}) = {pct1(ex.prb.ratio)}
+                </ExampleLine>
+                <ExampleLine>
+                  Year 1 PRB = ({fmt2(ex.prb.startMonthly)} × 12) / 40 × {pct1(ex.prb.ratio)} ={" "}
+                  {fmt0(ex.prb.firstYearAnnual)} / yr ≈ {fmt2(ex.prb.firstYearMonthly)} / month
+                </ExampleLine>
+                <ExampleLine>
+                  After 5 years of accrual the engine reports an extra ≈{" "}
+                  {fmt0(ex.prb.annualUpliftAt70)} / yr added to the indexed payment stream at age{" "}
+                  {ex.prb.stopAge}.
+                </ExampleLine>
+              </Example>
               <p>
                 The base used is the client's own starting CPP at take-up (base + Tier 1 + Tier 2,
                 annualized) — i.e. the engine treats one additional year of contributions as
@@ -630,6 +839,33 @@ export function WhitePaper() {
                   own CPP retirement, the sum of (own base + Tier 1) and (survivor base + Tier 1)
                   cannot exceed the maximum CPP retirement pension at 65 for the start year. Any
                   excess is clawed back from the survivor's portion.
+                  <Example>
+                    <div className="text-xs text-muted-foreground">
+                      Same client dies at 65 in {ex.profile.startYear}; surviving spouse is also 65
+                      and already collects an identical max retirement pension.
+                    </div>
+                    <ExampleLine>
+                      combined cap (max retirement at 65 in {ex.profile.startYear}) ={" "}
+                      {fmt2(ex.survivor.cap)} / mo
+                    </ExampleLine>
+                    <ExampleLine>
+                      survivor pension (base + Tier 1, uncapped) = 60% × {fmt2(ex.survivor.deceasedBaseTier1)} ={" "}
+                      {fmt2(ex.survivor.pensionUncapped)} / mo
+                    </ExampleLine>
+                    <ExampleLine>
+                      allowed = max(0, {fmt2(ex.survivor.cap)} −{" "}
+                      {fmt2(ex.survivor.survivorOwnBaseTier1)}) ={" "}
+                      {fmt2(Math.max(0, ex.survivor.cap - ex.survivor.survivorOwnBaseTier1))} / mo
+                    </ExampleLine>
+                    <ExampleLine>
+                      after cap = {fmt2(ex.survivor.pensionAfterCap)} / mo (clawed back ≈{" "}
+                      {fmt2(ex.survivor.capReduction)} / mo)
+                    </ExampleLine>
+                    <div className="text-xs text-muted-foreground">
+                      The Tier 2 portion ({fmt2(ex.survivor.pensionTier2)} / mo) is not subject to
+                      the cap, so the survivor still receives a small enhancement on top.
+                    </div>
+                  </Example>
                 </li>
                 <li>
                   <strong>Children's benefit.</strong> A flat monthly amount per eligible dependent
