@@ -56,6 +56,8 @@ const clerkAppearance = {
     socialButtonsBlockButtonText: "!text-foreground !font-medium",
     socialButtonsIconButton:
       "!border !border-border !bg-white hover:!bg-accent",
+    formButtonPrimary:
+      "!bg-foreground !text-background hover:!bg-foreground/90 !font-medium",
   },
 };
 
