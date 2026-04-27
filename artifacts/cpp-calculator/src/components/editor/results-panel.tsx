@@ -379,7 +379,7 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
             <div className="bg-[hsl(var(--chart-2))]" style={{ width: `${t1Share * 100}%` }} />
             <div className="bg-[hsl(var(--chart-4))]" style={{ width: `${t2Share * 100}%` }} />
           </div>
-          <div className="grid grid-cols-3 text-[11px] tabular-nums">
+          <div className="grid grid-cols-3 gap-2 text-[11px] tabular-nums">
             <Legend2 color="chart-1" label="Base" amount={result.baseMonthly} />
             <Legend2 color="chart-2" label="Tier 1" amount={result.tier1Monthly} />
             <Legend2 color="chart-4" label="Tier 2" amount={result.tier2Monthly} />
@@ -392,10 +392,12 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
 
 function Legend2({ color, label, amount }: { color: string; label: string; amount: number }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span className={`h-2 w-2 rounded-sm bg-[hsl(var(--${color}))]`} />
-      <span className="text-muted-foreground">{label}</span>
-      <span className="ml-auto">{formatMoney(amount, true)}</span>
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        <span className={`h-2 w-2 shrink-0 rounded-sm bg-[hsl(var(--${color}))]`} />
+        <span className="truncate">{label}</span>
+      </div>
+      <span className="font-medium">{formatMoney(amount, true)}</span>
     </div>
   );
 }
