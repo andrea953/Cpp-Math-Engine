@@ -269,7 +269,33 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.6in;
+    margin: 0.7in 0.6in 0.8in 0.6in;
+
+    @top-left {
+      content: "Modern CENTS — The Modern CENTS approach to CPP";
+      font-family: 'Inter', sans-serif;
+      font-size: 9pt;
+      font-weight: 500;
+      color: #555;
+      padding-bottom: 0.18in;
+      vertical-align: bottom;
+    }
+
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', sans-serif;
+      font-size: 9pt;
+      color: #555;
+      padding-top: 0.18in;
+      vertical-align: top;
+    }
+  }
+
+  /* Cover page (first printed page with the title): suppress the running header. */
+  @page :first {
+    @top-left {
+      content: "";
+    }
   }
 
   html,
