@@ -22,6 +22,18 @@ export interface SocParseResult {
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+/**
+ * Remove thousands-separator commas inside numbers (e.g. "$42,000" -> "$42000",
+ * "$1,234,567" -> "$1234567") so the tokenizer doesn't split on them. We only
+ * match COMPLETE thousands-pattern numbers — 1-3 leading digits, then one or
+ * more groups of exactly 3 digits separated by commas, not followed by another
+ * digit. This preserves real CSV delimiters: "2023,999" and "2023,42000" are
+ * untouched because neither side parses as a thousands-pattern number.
+ */
+function stripThousandsCommas(s: string): string {
+  return s.replace(/\b\d{1,3}(?:,\d{3})+(?!\d)/g, (m) => m.replace(/,/g, ""));
+}
+
 function cleanNumber(raw: string): number | null {
   if (!raw) return null;
   const stripped = raw
@@ -52,8 +64,9 @@ export function parseSoc(input: string): SocParseResult {
       continue;
     }
 
-    // Tokenize on tabs, commas, or runs of whitespace
-    const tokens = line
+    // Tokenize on tabs, commas, or runs of whitespace, but first remove any
+    // thousands-separator commas inside numbers so "$42,000" stays one token.
+    const tokens = stripThousandsCommas(line)
       .split(/[,\t]|\s{2,}/)
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
@@ -64,20 +77,49 @@ export function parseSoc(input: string): SocParseResult {
       continue;
     }
 
-    // Find a year-looking number and an earnings-looking number
+    // Find a year-looking number and an earnings-looking number.
+    // Service Canada SOC table layout (left to right):
+    //   Year | Pensionable earnings | Year's Maximum Pensionable Earnings (YMPE) | Your contributions
+    // The FIRST numeric column after the year is the user's pensionable earnings,
+    // so we take the first plausible number after the year position rather than the
+    // largest number on the line (which would be the YMPE column for non-capped earners).
     const numericTokens = tokens.map((t) => cleanNumber(t));
     let year: number | null = null;
-    let earnings: number | null = null;
+    let yearIdx = -1;
     for (let i = 0; i < numericTokens.length; i++) {
       const n = numericTokens[i];
       if (n === null) continue;
-      if (year === null && looksLikeYear(n)) {
+      if (looksLikeYear(n)) {
         year = n;
-        continue;
+        yearIdx = i;
+        break;
       }
-      // Earnings: should be a non-negative number, typically > 0 and < 1,000,000
-      if (n >= 0 && n < 1_000_000 && (earnings === null || n > earnings)) {
-        earnings = n;
+    }
+
+    let earnings: number | null = null;
+    if (year !== null) {
+      for (let i = yearIdx + 1; i < numericTokens.length; i++) {
+        const n = numericTokens[i];
+        if (n === null) continue;
+        if (looksLikeYear(n)) continue;
+        if (n >= 0 && n < 1_000_000) {
+          earnings = n;
+          break;
+        }
+      }
+      // Fallback: if no numeric appeared after the year (e.g. "earnings year" order),
+      // try the first plausible number anywhere on the line that isn't the year itself.
+      if (earnings === null) {
+        for (let i = 0; i < numericTokens.length; i++) {
+          if (i === yearIdx) continue;
+          const n = numericTokens[i];
+          if (n === null) continue;
+          if (looksLikeYear(n)) continue;
+          if (n >= 0 && n < 1_000_000) {
+            earnings = n;
+            break;
+          }
+        }
       }
     }
 
