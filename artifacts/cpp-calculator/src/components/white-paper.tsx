@@ -8,6 +8,7 @@ import {
   FileText,
   Layers,
   Lightbulb,
+  Printer,
   ScrollText,
   ShieldCheck,
   Sigma,
@@ -70,7 +71,10 @@ function useActiveSection(ids: string[]): string | null {
 
 function Formula({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-lg border border-border/60 bg-slate-50/80 px-4 py-3 font-mono text-[13px] leading-relaxed text-slate-800 shadow-inner">
+    <div
+      data-print-formula
+      className="print-formula my-4 overflow-x-auto rounded-lg border border-border/60 bg-slate-50/80 px-4 py-3 font-mono text-[13px] leading-relaxed text-slate-800 shadow-inner"
+    >
       {children}
     </div>
   );
@@ -98,7 +102,7 @@ function ExampleLine({ children }: { children: React.ReactNode }) {
 
 function InlineMath({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-800">
+    <span className="print-inline-math rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-800">
       {children}
     </span>
   );
@@ -116,14 +120,14 @@ function SectionHeading({
   icon?: React.ReactNode;
 }) {
   return (
-    <div id={id} className="scroll-mt-24 space-y-2">
+    <div id={id} className="print-section-heading scroll-mt-24 space-y-2">
       {eyebrow && (
         <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
           {eyebrow}
         </div>
       )}
       <h3 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-        {icon && <span className="text-primary">{icon}</span>}
+        {icon && <span className="text-primary print:hidden">{icon}</span>}
         {title}
       </h3>
     </div>
@@ -144,10 +148,10 @@ function PartHeading({
   icon: React.ReactNode;
 }) {
   return (
-    <div id={id} className="scroll-mt-24">
+    <div id={id} className="print-part-heading scroll-mt-24">
       <div className="flex flex-col items-start gap-3 rounded-2xl border border-primary/15 bg-gradient-to-br from-white/90 to-[hsl(215_85%_97%)]/80 p-6 shadow-sm sm:p-8">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(215_85%_92%)] to-[hsl(248_75%_94%)] text-primary shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(215_85%_92%)] to-[hsl(248_75%_94%)] text-primary shadow-sm print:hidden">
             {icon}
           </div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/80">
@@ -168,10 +172,10 @@ export function WhitePaper() {
   const part2 = TOC.filter((t) => t.part === 2);
 
   return (
-    <section className="relative border-t border-border/40 bg-gradient-to-b from-white/40 via-white/70 to-white/90 py-16 sm:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur">
+    <section className="print-paper relative border-t border-border/40 bg-gradient-to-b from-white/40 via-white/70 to-white/90 py-16 sm:py-24 print:border-0 print:bg-none print:bg-white print:py-0">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 print:max-w-none print:px-0">
+        <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14 print:mb-8 print:text-left">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white/70 px-3 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur print:hidden">
             <ScrollText className="h-3.5 w-3.5" />
             White Paper
           </div>
@@ -184,8 +188,8 @@ export function WhitePaper() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px,1fr] lg:gap-14">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px,1fr] lg:gap-14 print:!block print:gap-0">
+          <aside className="lg:sticky lg:top-24 lg:self-start print:hidden">
             <nav
               aria-label="White paper sections"
               className="rounded-2xl border border-border/60 bg-white/80 p-4 shadow-sm backdrop-blur"
@@ -926,7 +930,7 @@ export function WhitePaper() {
         </div>
       </div>
 
-      <div className="mx-auto mt-16 w-full max-w-7xl px-4 sm:mt-20 sm:px-6">
+      <div className="mx-auto mt-16 w-full max-w-7xl px-4 sm:mt-20 sm:px-6 print:hidden">
         <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-[hsl(215_85%_96%)] via-[hsl(248_75%_97%)] to-[hsl(28_90%_96%)] p-8 text-center shadow-sm sm:p-12">
           <div aria-hidden className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-[hsl(190_80%_85%)] opacity-40 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-[hsl(28_90%_85%)] opacity-40 blur-3xl" />
@@ -949,6 +953,19 @@ export function WhitePaper() {
                   Sign In
                 </Button>
               </Link>
+              <Button
+                type="button"
+                size="lg"
+                variant="ghost"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.print();
+                }}
+                className="w-full sm:w-auto px-8"
+                data-testid="button-print-white-paper"
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Print white paper
+              </Button>
             </div>
           </div>
         </div>

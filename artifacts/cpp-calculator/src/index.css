@@ -265,3 +265,132 @@
     inset: -1px;
   }
 }
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  /* The white paper region: force black on white, neutralize gradients/shadows */
+  .print-paper,
+  .print-paper * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .print-paper [class*="bg-gradient"],
+  .print-paper [class*="bg-white"],
+  .print-paper [class*="bg-slate"],
+  .print-paper [class*="bg-primary"],
+  .print-paper [class*="bg-accent"],
+  .print-paper [class*="bg-muted"] {
+    background: #ffffff !important;
+    background-image: none !important;
+  }
+
+  .print-paper .text-muted-foreground,
+  .print-paper [class*="text-primary"] {
+    color: #1a1a1a !important;
+  }
+
+  /* Headings */
+  .print-paper h2,
+  .print-paper h3,
+  .print-paper h4 {
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+
+  /* Keep paragraph blocks coherent across pages */
+  .print-paper p,
+  .print-paper li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Formula blocks: keep on one page, plain border */
+  .print-paper .print-formula {
+    background: #ffffff !important;
+    border: 1px solid #444 !important;
+    border-radius: 4px !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Inline math: subtle underline instead of grey pill */
+  .print-paper .print-inline-math {
+    background: #ffffff !important;
+    border: 1px solid #999 !important;
+    border-radius: 3px !important;
+    padding: 0 3px !important;
+  }
+
+  /* Section heading should not be orphaned from its first paragraph */
+  .print-paper .print-section-heading {
+    page-break-after: avoid;
+    break-after: avoid-page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Each Part heading starts a new page (except the very first one). */
+  .print-paper .print-part-heading {
+    page-break-before: always;
+    break-before: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1.5px solid #000 !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+  }
+
+  .print-paper .print-part-heading:first-of-type {
+    page-break-before: auto;
+    break-before: auto;
+  }
+
+  .print-paper .print-part-heading > div {
+    background: #ffffff !important;
+    border: none !important;
+  }
+
+  /* Article should fill the printable width */
+  .print-paper article {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Sections should leave a little breathing room and not split awkwardly */
+  .print-paper article > section {
+    page-break-inside: auto;
+    break-inside: auto;
+    margin-top: 0.5rem;
+  }
+
+  /* Lists: tighter spacing for paper */
+  .print-paper ul,
+  .print-paper ol {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Force-hide anything explicitly marked for screen only.
+     `print:hidden` from Tailwind already handles most cases; this is a fallback. */
+  .print\:hidden {
+    display: none !important;
+  }
+}
