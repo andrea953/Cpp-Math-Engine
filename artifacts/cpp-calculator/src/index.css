@@ -214,6 +214,15 @@
 }
 
 @layer utilities {
+  /* The cross-browser print fallback elements (`useCrossBrowserPrintMargins`
+     in white-paper.tsx) are injected into <body> while the print dialog is
+     open. They must never be visible on screen — only inside @media print
+     (and only when the hook flips the `cross-browser-print-active` flag). */
+  .cross-browser-print-header,
+  .cross-browser-print-footer {
+    display: none !important;
+  }
+
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }
@@ -302,6 +311,18 @@
     @top-left {
       content: "";
     }
+  }
+
+  /* Cross-browser running header / footer fallback for Safari and Firefox.
+     Those browsers ignore @page margin boxes, so `useCrossBrowserPrintMargins`
+     in white-paper.tsx injects per-page absolutely-positioned divs. The divs
+     are hidden by default and only revealed in print (via @media print) when
+     the JS hook also adds `cross-browser-print-active` to <body>. Cover-page
+     suppression for the header is handled by the JS itself, which simply
+     skips emitting a header element for page 1. */
+  body.cross-browser-print-active .cross-browser-print-header,
+  body.cross-browser-print-active .cross-browser-print-footer {
+    display: block !important;
   }
 
   html,

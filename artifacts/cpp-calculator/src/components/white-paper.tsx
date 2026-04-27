@@ -78,6 +78,218 @@ function usePrintDate(): string {
   return date;
 }
 
+/**
+ * Chrome/Edge render `@page @top-left` / `@bottom-right` margin boxes for
+ * running headers and "Page N of M" footers. Safari and Firefox ignore
+ * those margin boxes entirely. To get the same printed output in those
+ * browsers, this hook injects absolutely-positioned per-page header and
+ * footer DOM elements on `beforeprint`, then removes them on `afterprint`.
+ *
+ * Because `position: absolute` elements appear on whichever printed page
+ * contains their Y coordinate, placing one element at body Y = p * pageH
+ * lands it on page p. Page count is estimated by measuring an offscreen
+ * clone rendered at the print width and font size, with forced page
+ * breaks at `.print-part-heading` accounted for.
+ *
+ * To stay in lockstep with Chrome's `@page @bottom-right` content
+ * (`var(--print-date) "Page " counter(page) " of " counter(pages)`),
+ * the injected footers compute a fresh `Generated YYYY-MM-DD \u00B7 `
+ * prefix at print time using the same `formatGeneratedDate` helper that
+ * `usePrintDate` uses for the Chrome path.
+ *
+ * Chrome remains on the existing `@page` margin-box rules and is not
+ * touched by this hook (the listeners early-return for Chromium).
+ */
+function useCrossBrowserPrintMargins(): void {
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return;
+
+    const ua = navigator.userAgent;
+    const isFirefox = /Firefox\//.test(ua);
+    const isSafari = /Safari\//.test(ua) && !/Chrom(e|ium)\//.test(ua);
+    if (!isFirefox && !isSafari) return;
+
+    const HEADER_TEXT = "Modern CENTS — The Modern CENTS approach to CPP";
+    // Letter page geometry, in CSS pixels at 96 DPI:
+    //   page outer:    11in   = 1056 px
+    //   @page margin:  0.7in top + 0.8in bottom  (matches @media print rule)
+    //   body content:  9.5in  = 912 px per printed page
+    const PAGE_CONTENT_PX = 9.5 * 96;
+    // Printable width inside @page margins (8.5in - 0.6in - 0.6in)
+    const PRINT_WIDTH_PX = 7.3 * 96;
+
+    let injected: HTMLElement[] = [];
+    let active = false;
+
+    function cleanup(): void {
+      for (const node of injected) node.remove();
+      injected = [];
+      if (active) {
+        document.body.classList.remove("cross-browser-print-active");
+        active = false;
+      }
+    }
+
+    function estimatePageCount(rootEl: HTMLElement): number {
+      const clone = rootEl.cloneNode(true) as HTMLElement;
+      // Force the clone to lay out as it will in print: same width as the
+      // printable area inside @page margins, same font-size as @media print
+      // (`body { font-size: 11pt }`), and no screen-only horizontal padding.
+      Object.assign(clone.style, {
+        position: "absolute",
+        left: "-99999px",
+        top: "0",
+        width: `${PRINT_WIDTH_PX}px`,
+        maxWidth: `${PRINT_WIDTH_PX}px`,
+        fontSize: "11pt",
+        lineHeight: "1.45",
+        boxSizing: "border-box",
+        padding: "0",
+        margin: "0",
+        background: "#fff",
+      } as CSSStyleDeclaration);
+      // Strip screen-only horizontal padding/max-width on inner containers
+      // so the clone really uses the full printable width.
+      const innerSelector =
+        'article, [class*="max-w-"], [class*="px-"], [class*="py-"]';
+      clone.querySelectorAll<HTMLElement>(innerSelector).forEach((el) => {
+        el.style.maxWidth = "none";
+        el.style.width = "100%";
+        el.style.paddingLeft = "0";
+        el.style.paddingRight = "0";
+      });
+
+      document.body.appendChild(clone);
+
+      const cloneTop = clone.getBoundingClientRect().top;
+      const partHeadings = Array.from(
+        clone.querySelectorAll<HTMLElement>(".print-part-heading"),
+      );
+      // The first .print-part-heading does NOT force a page break (matches
+      // the `:first-of-type { page-break-before: auto }` rule). Subsequent
+      // ones do.
+      const breakOffsets: number[] = [0];
+      partHeadings.forEach((h, i) => {
+        if (i === 0) return;
+        breakOffsets.push(h.getBoundingClientRect().top - cloneTop);
+      });
+      breakOffsets.push(clone.scrollHeight);
+
+      let pages = 0;
+      for (let i = 0; i < breakOffsets.length - 1; i++) {
+        const segHeight = breakOffsets[i + 1] - breakOffsets[i];
+        if (segHeight <= 0) continue;
+        pages += Math.max(1, Math.ceil(segHeight / PAGE_CONTENT_PX));
+      }
+
+      document.body.removeChild(clone);
+      return Math.max(1, pages);
+    }
+
+    function injectMargins(totalPages: number, datePrefix: string): void {
+      // Per-page footer (every page) and header (skip cover = page 1).
+      // Absolute positioning relative to the document root: a div at
+      // body Y = p * PAGE_CONTENT_PX sits at the bottom of page p's
+      // content area, so it prints on page p.
+      for (let p = 1; p <= totalPages; p++) {
+        const footer = document.createElement("div");
+        footer.className = "cross-browser-print-footer";
+        footer.setAttribute("data-page", String(p));
+        footer.textContent = `${datePrefix}Page ${p} of ${totalPages}`;
+        Object.assign(footer.style, {
+          position: "absolute",
+          left: "0",
+          right: "0",
+          top: `${p * PAGE_CONTENT_PX - 18}px`,
+          paddingRight: "0.6in",
+          textAlign: "right",
+          fontFamily: "Inter, sans-serif",
+          fontSize: "9pt",
+          color: "#555",
+          background: "#fff",
+          zIndex: "100",
+        } as CSSStyleDeclaration);
+        document.body.appendChild(footer);
+        injected.push(footer);
+
+        if (p > 1) {
+          const header = document.createElement("div");
+          header.className = "cross-browser-print-header";
+          header.setAttribute("data-page", String(p));
+          header.textContent = HEADER_TEXT;
+          Object.assign(header.style, {
+            position: "absolute",
+            left: "0",
+            right: "0",
+            top: `${(p - 1) * PAGE_CONTENT_PX}px`,
+            paddingLeft: "0.6in",
+            textAlign: "left",
+            fontFamily: "Inter, sans-serif",
+            fontSize: "9pt",
+            fontWeight: "500",
+            color: "#555",
+            background: "#fff",
+            zIndex: "100",
+          } as CSSStyleDeclaration);
+          document.body.appendChild(header);
+          injected.push(header);
+        }
+      }
+    }
+
+    function setup(): void {
+      cleanup();
+      const root = document.querySelector<HTMLElement>(".print-paper");
+      if (!root) return;
+      const totalPages = estimatePageCount(root);
+      if (totalPages < 1) return;
+      // Match Chrome's `--print-date` value: "Generated YYYY-MM-DD \u00B7 ".
+      const datePrefix = `Generated ${formatGeneratedDate(new Date())} \u00B7 `;
+      document.body.classList.add("cross-browser-print-active");
+      active = true;
+      injectMargins(totalPages, datePrefix);
+    }
+
+    window.addEventListener("beforeprint", setup);
+    window.addEventListener("afterprint", cleanup);
+
+    // Safari historically did not always fire `beforeprint` reliably;
+    // a `matchMedia('print')` change listener is the standard fallback.
+    const mq = window.matchMedia("print");
+    const mqHandler = (e: MediaQueryListEvent | MediaQueryList): void => {
+      if (e.matches) setup();
+      else cleanup();
+    };
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", mqHandler as (e: MediaQueryListEvent) => void);
+    } else if (typeof (mq as { addListener?: unknown }).addListener === "function") {
+      (mq as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }).addListener(
+        mqHandler as (e: MediaQueryListEvent) => void,
+      );
+    }
+
+    return () => {
+      window.removeEventListener("beforeprint", setup);
+      window.removeEventListener("afterprint", cleanup);
+      if (typeof mq.removeEventListener === "function") {
+        mq.removeEventListener(
+          "change",
+          mqHandler as (e: MediaQueryListEvent) => void,
+        );
+      } else if (
+        typeof (mq as { removeListener?: unknown }).removeListener === "function"
+      ) {
+        (
+          mq as unknown as {
+            removeListener: (cb: (e: MediaQueryListEvent) => void) => void;
+          }
+        ).removeListener(mqHandler as (e: MediaQueryListEvent) => void);
+      }
+      cleanup();
+    };
+  }, []);
+}
+
 function useActiveSection(ids: string[]): string | null {
   const [active, setActive] = useState<string | null>(ids[0] ?? null);
   useEffect(() => {
@@ -197,6 +409,7 @@ function PartHeading({
 }
 
 export function WhitePaper() {
+  useCrossBrowserPrintMargins();
   const activeId = useActiveSection(TOC.map((t) => t.id));
   const generatedOn = usePrintDate();
 
