@@ -102,9 +102,14 @@ export function buildEffectiveEarnings(
   const histYears = inputs.earningsHistory.map((r) => r.year);
   const lastHistYear = histYears.length > 0 ? Math.max(...histYears) : inputs.birthYear + 17;
 
-  // Project years from lastHistYear+1 up to min(endYear, stopYear)
+  // Project assumed earnings forward. Start from the earlier of (lastHistYear+1)
+  // or the current calendar year so the assumption covers the current year even
+  // when the user's earnings table doesn't extend that far. Years already in the
+  // earnings history keep their entered value (we never overwrite history).
+  const currentYear = new Date().getFullYear();
+  const projectionStart = Math.min(lastHistYear + 1, currentYear);
   let projected = inputs.assumptions.assumedFutureEarnings;
-  for (let y = lastHistYear + 1; y <= Math.min(endYear, stopYear); y++) {
+  for (let y = projectionStart; y <= Math.min(endYear, stopYear); y++) {
     if (!byYear.has(y)) {
       byYear.set(y, projected);
     }
