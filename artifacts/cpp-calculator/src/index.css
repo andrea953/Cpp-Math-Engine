@@ -141,6 +141,12 @@
   --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Set at print time by a `beforeprint` listener (see white-paper.tsx).
+     Holds a CSS string like `"Generated 2026-04-27 · "` that is concatenated
+     into the @bottom-right page footer. Empty by default so the footer
+     gracefully degrades to "Page N of M" if JS hasn't run. */
+  --print-date: "";
 }
 
 .dark {
@@ -282,7 +288,7 @@
     }
 
     @bottom-right {
-      content: "Page " counter(page) " of " counter(pages);
+      content: var(--print-date) "Page " counter(page) " of " counter(pages);
       font-family: 'Inter', sans-serif;
       font-size: 9pt;
       color: #555;

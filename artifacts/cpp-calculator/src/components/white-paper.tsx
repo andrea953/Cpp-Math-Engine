@@ -47,6 +47,37 @@ const TOC: TocItem[] = [
   { id: "wp-soc", label: "SOC import", part: 2 },
 ];
 
+function formatGeneratedDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function usePrintDate(): string {
+  const [date, setDate] = useState<string>(() => formatGeneratedDate(new Date()));
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => {
+      const iso = formatGeneratedDate(new Date());
+      setDate(iso);
+      // Set a CSS custom property on :root so the @page @bottom-right margin
+      // box can read it via `var(--print-date)`. The value is a CSS string
+      // token, so it must include its own quotes.
+      document.documentElement.style.setProperty(
+        "--print-date",
+        `"Generated ${iso} \u00B7 "`,
+      );
+    };
+    update();
+    window.addEventListener("beforeprint", update);
+    return () => {
+      window.removeEventListener("beforeprint", update);
+    };
+  }, []);
+  return date;
+}
+
 function useActiveSection(ids: string[]): string | null {
   const [active, setActive] = useState<string | null>(ids[0] ?? null);
   useEffect(() => {
@@ -167,6 +198,7 @@ function PartHeading({
 
 export function WhitePaper() {
   const activeId = useActiveSection(TOC.map((t) => t.id));
+  const generatedOn = usePrintDate();
 
   const part1 = TOC.filter((t) => t.part === 1);
   const part2 = TOC.filter((t) => t.part === 2);
@@ -185,6 +217,12 @@ export function WhitePaper() {
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
             A reference document for financial advisors covering what Modern CENTS is, how it differs
             from public CPP calculators, and the full math behind every dollar it produces.
+          </p>
+          <p
+            className="mt-6 hidden text-sm font-semibold tracking-wide text-foreground/80 print:block"
+            data-testid="text-prepared-on"
+          >
+            Prepared on {generatedOn}
           </p>
         </div>
 
