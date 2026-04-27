@@ -69,6 +69,7 @@ bugs in indexation, dropouts, or replacement rates.
 | `survivor.test.ts` | Service Canada — survivor's, death and children's benefits (all branches) |
 | `socParser.test.ts` | Production parser regressions: PDF column order, CSV, `$1,234,567`, `2023,999` |
 | `invariants.test.ts` | Property tests: total = base + T1 + T2; benefit @60 < @65 < @70; T1/T2 zero before phase-in |
+| `whitePaperPrintEstimator.test.ts` | Drift guard for the Safari/Firefox print "Page N of M" fallback in `useCrossBrowserPrintMargins`. Snapshots the white-paper structural block counts, bucketed body-text length, and the estimator's geometry constants + `@page` rules. **If this snapshot fails, do NOT just run `pnpm test -u`.** First print the white paper from BOTH Safari and Firefox and confirm the injected page-number footers still match the actual rendered page count and land on real (not phantom) pages. Tune `estimatePageCount` in `src/components/white-paper.tsx` if they drift, then update the snapshot. Chrome's printed output is unaffected — it uses native `@page counter(pages)`. |
 
 ## Known limitations explicitly tested as TODOs
 
