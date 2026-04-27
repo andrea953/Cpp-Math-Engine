@@ -4,6 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Legend,
   Line,
   LineChart,
@@ -517,12 +518,12 @@ function EarningsChart({
           </span>
         </div>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
+          <ComposedChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="year" tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
             <ChartTooltip formatter={(v: any) => (typeof v === "number" ? `$${v.toLocaleString()}` : "—")} />
-            <Bar dataKey="Earnings">
+            <Bar dataKey="Earnings" isAnimationActive={false}>
               {data.map((d, idx) => (
                 <Cell
                   key={idx}
@@ -530,12 +531,12 @@ function EarningsChart({
                 />
               ))}
             </Bar>
-            <Line type="monotone" dataKey="YMPE" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="YAMPE" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="YMPE" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
+            <Line type="monotone" dataKey="YAMPE" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} connectNulls isAnimationActive={false} />
             {Number.isFinite(lastHistYear) && (
               <ReferenceLine x={lastHistYear} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" label={{ value: "Today", position: "insideTopRight", style: { fontSize: 11 } }} />
             )}
-          </BarChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
