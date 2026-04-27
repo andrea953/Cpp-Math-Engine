@@ -80,12 +80,12 @@ function Formula({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Example({ children }: { children: React.ReactNode }) {
+function Example({ children, label }: { children: React.ReactNode; label?: string }) {
   return (
     <div className="my-4 rounded-lg border-l-4 border-primary/40 bg-primary/5 px-4 py-3 text-sm text-foreground/90">
       <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80">
         <Lightbulb className="h-3.5 w-3.5" />
-        Worked example — {ex.profile.label}
+        Worked example — {label ?? ex.profile.label}
       </div>
       <div className="space-y-1 leading-relaxed">{children}</div>
     </div>
@@ -718,6 +718,91 @@ export function WhitePaper() {
                   The drop-out lifts this client's base CPP by ≈ {fmt2(ex.base.dropoutLift)} / month
                   by removing the worst-earning months (their 1980s zero-earning years before
                   starting work).
+                </div>
+              </Example>
+
+              <Example
+                label={`Parent client, born June ${ex.profile.birthYear}, ${ex.crdoExample.yearsOff} years out of the workforce raising young children`}
+              >
+                <div className="text-xs text-muted-foreground">
+                  Same June {ex.profile.birthYear} birth and start age (65 in {ex.profile.startYear}
+                  ), but this parent worked at YMPE-max from {ex.crdoExample.workStartYear} onward
+                  except for {ex.crdoExample.gapStartYear}–{ex.crdoExample.gapEndYear} (
+                  {ex.crdoExample.monthsOff} months at home with young children, zero pensionable
+                  earnings). Both numbers below are produced by running the engine with vs without
+                  a CRDO claim covering that window.
+                </div>
+                <ExampleLine>
+                  without CRDO: contributory months ={" "}
+                  {ex.crdoExample.contribMonths.toLocaleString()}, general drop-out removes{" "}
+                  {ex.crdoExample.generalDropoutMonthsWithout.toLocaleString()}, retained ={" "}
+                  {ex.crdoExample.monthsRetainedWithout.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  → AMPE ≈ {fmt2(ex.crdoExample.ampeWithout)} / mo, base CPP ≈{" "}
+                  {fmt2(ex.crdoExample.baseMonthlyWithout)} / mo, total CPP ≈{" "}
+                  {fmt2(ex.crdoExample.totalMonthlyWithout)} / mo
+                </ExampleLine>
+                <ExampleLine>
+                  with CRDO: {ex.crdoExample.crdoMonthsDropped.toLocaleString()} months removed
+                  first, then general drop-out removes{" "}
+                  {ex.crdoExample.generalDropoutMonthsWith.toLocaleString()}, retained ={" "}
+                  {ex.crdoExample.monthsRetainedWith.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  → AMPE ≈ {fmt2(ex.crdoExample.ampeWith)} / mo, base CPP ≈{" "}
+                  {fmt2(ex.crdoExample.baseMonthlyWith)} / mo, total CPP ≈{" "}
+                  {fmt2(ex.crdoExample.totalMonthlyWith)} / mo
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Claiming the CRDO lifts this parent's base CPP by ≈{" "}
+                  {fmt2(ex.crdoExample.baseLift)} / month (≈ {fmt2(ex.crdoExample.totalLift)} / mo
+                  on the total) — the parental window is removed before the 17% drop-out is
+                  computed, so more low-earning months get caught by the drop-out instead of
+                  pulling AMPE down.
+                </div>
+              </Example>
+
+              <Example
+                label={`Worker client, born June ${ex.profile.birthYear}, ${ex.disabilityExample.yearsOff}-year disability window mid-career`}
+              >
+                <div className="text-xs text-muted-foreground">
+                  Same birth and start age, started YMPE-max work in{" "}
+                  {ex.disabilityExample.workStartYear}, then a{" "}
+                  {ex.disabilityExample.yearsOff}-year disability window from{" "}
+                  {ex.disabilityExample.gapStartYear} to {ex.disabilityExample.gapEndYear} (
+                  {ex.disabilityExample.monthsOff} months, zero pensionable earnings). Compared
+                  with vs without a disability drop-out claim covering that window.
+                </div>
+                <ExampleLine>
+                  without claim: contributory months ={" "}
+                  {ex.disabilityExample.contribMonths.toLocaleString()}, general drop-out removes{" "}
+                  {ex.disabilityExample.generalDropoutMonthsWithout.toLocaleString()}, retained ={" "}
+                  {ex.disabilityExample.monthsRetainedWithout.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  → AMPE ≈ {fmt2(ex.disabilityExample.ampeWithout)} / mo, base CPP ≈{" "}
+                  {fmt2(ex.disabilityExample.baseMonthlyWithout)} / mo, total CPP ≈{" "}
+                  {fmt2(ex.disabilityExample.totalMonthlyWithout)} / mo
+                </ExampleLine>
+                <ExampleLine>
+                  with claim:{" "}
+                  {ex.disabilityExample.disabilityMonthsDropped.toLocaleString()} months removed
+                  first, then general drop-out removes{" "}
+                  {ex.disabilityExample.generalDropoutMonthsWith.toLocaleString()}, retained ={" "}
+                  {ex.disabilityExample.monthsRetainedWith.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  → AMPE ≈ {fmt2(ex.disabilityExample.ampeWith)} / mo, base CPP ≈{" "}
+                  {fmt2(ex.disabilityExample.baseMonthlyWith)} / mo, total CPP ≈{" "}
+                  {fmt2(ex.disabilityExample.totalMonthlyWith)} / mo
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Claiming the disability drop-out lifts base CPP by ≈{" "}
+                  {fmt2(ex.disabilityExample.baseLift)} / month (≈{" "}
+                  {fmt2(ex.disabilityExample.totalLift)} / mo on the total) for the same earnings
+                  history — a meaningful uplift advisors should make sure clients who qualified for
+                  CPP-D apply for.
                 </div>
               </Example>
             </Section>

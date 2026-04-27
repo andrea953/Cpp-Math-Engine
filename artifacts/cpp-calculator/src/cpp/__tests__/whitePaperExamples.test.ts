@@ -101,6 +101,37 @@ describe("white paper examples", () => {
     expect(ex.adjustment.total70).toBeGreaterThan(ex.adjustment.total65);
   });
 
+  it("CRDO drop-out example shows a positive uplift vs the same client without the claim", () => {
+    const c = ex.crdoExample;
+    expect(c.gapEndYear - c.gapStartYear + 1).toBe(c.yearsOff);
+    expect(c.monthsOff).toBe(c.yearsOff * 12);
+    expect(c.crdoMonthsDropped).toBe(c.monthsOff);
+    expect(c.contribMonths).toBeGreaterThan(c.monthsOff);
+    expect(c.monthsRetainedWithout).toBeLessThan(c.contribMonths);
+    expect(c.monthsRetainedWith).toBeLessThan(c.contribMonths - c.crdoMonthsDropped + 1);
+    expect(c.ampeWith).toBeGreaterThan(c.ampeWithout);
+    expect(c.baseMonthlyWith).toBeGreaterThan(c.baseMonthlyWithout);
+    expect(c.baseLift).toBeCloseTo(c.baseMonthlyWith - c.baseMonthlyWithout, 6);
+    expect(c.totalLift).toBeCloseTo(c.totalMonthlyWith - c.totalMonthlyWithout, 6);
+    // Drop-outs only affect base CPP (Tier 1/2 skip zero-earning years), so
+    // the total uplift should match the base uplift to a few decimals.
+    expect(c.totalLift).toBeCloseTo(c.baseLift, 4);
+    expect(c.baseLift).toBeGreaterThan(0);
+  });
+
+  it("Disability drop-out example shows a positive uplift vs the same client without the claim", () => {
+    const d = ex.disabilityExample;
+    expect(d.gapEndYear - d.gapStartYear + 1).toBe(d.yearsOff);
+    expect(d.monthsOff).toBe(d.yearsOff * 12);
+    expect(d.disabilityMonthsDropped).toBe(d.monthsOff);
+    expect(d.ampeWith).toBeGreaterThan(d.ampeWithout);
+    expect(d.baseMonthlyWith).toBeGreaterThan(d.baseMonthlyWithout);
+    expect(d.baseLift).toBeCloseTo(d.baseMonthlyWith - d.baseMonthlyWithout, 6);
+    expect(d.totalLift).toBeCloseTo(d.totalMonthlyWith - d.totalMonthlyWithout, 6);
+    expect(d.totalLift).toBeCloseTo(d.baseLift, 4);
+    expect(d.baseLift).toBeGreaterThan(0);
+  });
+
   it("Survivor combined-cap example demonstrates a non-zero claw-back", () => {
     expect(ex.survivor.cap).toBeGreaterThan(0);
     expect(ex.survivor.deceasedBaseTier1).toBeGreaterThan(0);

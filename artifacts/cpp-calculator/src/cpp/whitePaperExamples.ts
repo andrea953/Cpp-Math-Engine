@@ -30,7 +30,7 @@ import {
 import { calculateCpp } from "./calculate";
 import { calculateSurvivor, type SurvivorInputs } from "./survivor";
 import { DEFAULT_ASSUMPTIONS } from "./defaults";
-import type { EarningsRecord, ScenarioInputs } from "./types";
+import type { DropoutPeriod, EarningsRecord, ScenarioInputs } from "./types";
 
 const BIRTH_YEAR = 1965;
 const BIRTH_MONTH = 6;
@@ -188,6 +188,95 @@ const PRB_FIRST_YEAR_ANNUAL = ((r65.totalMonthly * 12) / 40) * PRB_RATIO;
 const PRB_FIRST_YEAR_MONTHLY = PRB_FIRST_YEAR_ANNUAL / 12;
 
 // ---------------------------------------------------------------------------
+// CRDO drop-out worked example
+//
+// A representative parent (same June 1965 birth, retiring at 65 in 2030):
+//   - Started YMPE-max work in 1988 (age 23) after schooling.
+//   - Took a 6-year break (Jan 2000 – Dec 2005, ages 35–40) raising young
+//     children — zero pensionable earnings during that window.
+//   - Returned to YMPE-max work 2006 → 2030.
+//
+// Run the engine twice — once with no dropout periods, once with a CRDO
+// claim covering the parental window — and read AMPE / base CPP off both
+// results so the dollar uplift stays correct as constants change.
+// ---------------------------------------------------------------------------
+const CRDO_WORK_START_YEAR = 1988;
+const CRDO_GAP_START_YEAR = 2000;
+const CRDO_GAP_END_YEAR = 2005;
+const CRDO_GAP_YEARS = CRDO_GAP_END_YEAR - CRDO_GAP_START_YEAR + 1;
+
+function buildParentEarnings(gapStartYear: number, gapEndYear: number): EarningsRecord[] {
+  const list: EarningsRecord[] = [];
+  for (let y = CRDO_WORK_START_YEAR; y <= START_YEAR; y++) {
+    if (y >= gapStartYear && y <= gapEndYear) {
+      list.push({ year: y, pensionableEarnings: 0 });
+    } else {
+      list.push({ year: y, pensionableEarnings: getYmpe(y, YMPE_GROWTH) });
+    }
+  }
+  return list;
+}
+
+const PARENT_SCENARIO_BASE: ScenarioInputs = {
+  birthYear: BIRTH_YEAR,
+  birthMonth: BIRTH_MONTH,
+  earningsHistory: buildParentEarnings(CRDO_GAP_START_YEAR, CRDO_GAP_END_YEAR),
+  dropoutPeriods: [],
+  assumptions: { ...DEFAULT_ASSUMPTIONS, stopWorkAge: START_AGE },
+  postRetirementBenefit: { continuesWorkingAfterStart: false },
+  startAges: [START_AGE],
+};
+
+const CRDO_PERIODS: DropoutPeriod[] = [
+  {
+    kind: "crdo",
+    startYear: CRDO_GAP_START_YEAR,
+    startMonth: 1,
+    endYear: CRDO_GAP_END_YEAR,
+    endMonth: 12,
+  },
+];
+
+const CRDO_NO_CLAIM = calculateCpp(PARENT_SCENARIO_BASE).byStartAge[0]!;
+const CRDO_WITH_CLAIM = calculateCpp({
+  ...PARENT_SCENARIO_BASE,
+  dropoutPeriods: CRDO_PERIODS,
+}).byStartAge[0]!;
+
+// ---------------------------------------------------------------------------
+// Disability drop-out worked example
+//
+// Same birth (June 1965) and start age (65 in 2030). Started YMPE-max work in
+// 1988 (age 23). Then a 5-year disability window (Jan 2010 – Dec 2014, ages
+// 44–49) with zero pensionable earnings. Returned to YMPE-max work 2015 →
+// 2030. Same with-vs-without comparison as above.
+// ---------------------------------------------------------------------------
+const DIS_GAP_START_YEAR = 2010;
+const DIS_GAP_END_YEAR = 2014;
+const DIS_GAP_YEARS = DIS_GAP_END_YEAR - DIS_GAP_START_YEAR + 1;
+
+const DISABILITY_SCENARIO_BASE: ScenarioInputs = {
+  ...PARENT_SCENARIO_BASE,
+  earningsHistory: buildParentEarnings(DIS_GAP_START_YEAR, DIS_GAP_END_YEAR),
+};
+
+const DISABILITY_PERIODS: DropoutPeriod[] = [
+  {
+    kind: "disability",
+    startYear: DIS_GAP_START_YEAR,
+    startMonth: 1,
+    endYear: DIS_GAP_END_YEAR,
+    endMonth: 12,
+  },
+];
+
+const DIS_NO_CLAIM = calculateCpp(DISABILITY_SCENARIO_BASE).byStartAge[0]!;
+const DIS_WITH_CLAIM = calculateCpp({
+  ...DISABILITY_SCENARIO_BASE,
+  dropoutPeriods: DISABILITY_PERIODS,
+}).byStartAge[0]!;
+
+// ---------------------------------------------------------------------------
 // Survivor combined-benefit cap example
 //
 // Same client dies in 2030 at 65; surviving spouse is also 65 and is already
@@ -315,6 +404,50 @@ export const whitePaperExamples = {
     firstYearMonthly: PRB_FIRST_YEAR_MONTHLY,
     annualUpliftAt70: PRB_ANNUAL_AT_70,
     fullEnhancementYears: ENHANCEMENT_FULL_YEARS,
+  },
+
+  crdoExample: {
+    workStartYear: CRDO_WORK_START_YEAR,
+    gapStartYear: CRDO_GAP_START_YEAR,
+    gapEndYear: CRDO_GAP_END_YEAR,
+    yearsOff: CRDO_GAP_YEARS,
+    monthsOff: CRDO_GAP_YEARS * 12,
+    contribMonths: CRDO_NO_CLAIM.base.contributoryPeriodMonths,
+    monthsRetainedWithout: CRDO_NO_CLAIM.base.monthsRetained,
+    generalDropoutMonthsWithout: CRDO_NO_CLAIM.base.generalDropoutMonths,
+    monthsRetainedWith: CRDO_WITH_CLAIM.base.monthsRetained,
+    generalDropoutMonthsWith: CRDO_WITH_CLAIM.base.generalDropoutMonths,
+    crdoMonthsDropped: CRDO_WITH_CLAIM.base.crdoMonthsDropped,
+    ampeWithout: CRDO_NO_CLAIM.base.ampe,
+    ampeWith: CRDO_WITH_CLAIM.base.ampe,
+    baseMonthlyWithout: CRDO_NO_CLAIM.baseMonthly,
+    baseMonthlyWith: CRDO_WITH_CLAIM.baseMonthly,
+    totalMonthlyWithout: CRDO_NO_CLAIM.totalMonthly,
+    totalMonthlyWith: CRDO_WITH_CLAIM.totalMonthly,
+    baseLift: CRDO_WITH_CLAIM.baseMonthly - CRDO_NO_CLAIM.baseMonthly,
+    totalLift: CRDO_WITH_CLAIM.totalMonthly - CRDO_NO_CLAIM.totalMonthly,
+  },
+
+  disabilityExample: {
+    workStartYear: CRDO_WORK_START_YEAR,
+    gapStartYear: DIS_GAP_START_YEAR,
+    gapEndYear: DIS_GAP_END_YEAR,
+    yearsOff: DIS_GAP_YEARS,
+    monthsOff: DIS_GAP_YEARS * 12,
+    contribMonths: DIS_NO_CLAIM.base.contributoryPeriodMonths,
+    monthsRetainedWithout: DIS_NO_CLAIM.base.monthsRetained,
+    generalDropoutMonthsWithout: DIS_NO_CLAIM.base.generalDropoutMonths,
+    monthsRetainedWith: DIS_WITH_CLAIM.base.monthsRetained,
+    generalDropoutMonthsWith: DIS_WITH_CLAIM.base.generalDropoutMonths,
+    disabilityMonthsDropped: DIS_WITH_CLAIM.base.disabilityMonthsDropped,
+    ampeWithout: DIS_NO_CLAIM.base.ampe,
+    ampeWith: DIS_WITH_CLAIM.base.ampe,
+    baseMonthlyWithout: DIS_NO_CLAIM.baseMonthly,
+    baseMonthlyWith: DIS_WITH_CLAIM.baseMonthly,
+    totalMonthlyWithout: DIS_NO_CLAIM.totalMonthly,
+    totalMonthlyWith: DIS_WITH_CLAIM.totalMonthly,
+    baseLift: DIS_WITH_CLAIM.baseMonthly - DIS_NO_CLAIM.baseMonthly,
+    totalLift: DIS_WITH_CLAIM.totalMonthly - DIS_NO_CLAIM.totalMonthly,
   },
 
   survivor: {
