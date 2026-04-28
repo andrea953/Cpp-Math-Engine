@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { whitePaperExamples as ex } from "@/cpp/whitePaperExamples";
 import { formatMoney } from "@/cpp/format";
+import { estimateWhitePaperPageCount } from "./whitePaperPrintEstimator";
 
 const fmt0 = (n: number) => formatMoney(n, false);
 const fmt2 = (n: number) => formatMoney(n, true);
@@ -132,59 +133,14 @@ function useCrossBrowserPrintMargins(): void {
     }
 
     function estimatePageCount(rootEl: HTMLElement): number {
-      const clone = rootEl.cloneNode(true) as HTMLElement;
-      // Force the clone to lay out as it will in print: same width as the
-      // printable area inside @page margins, same font-size as @media print
-      // (`body { font-size: 11pt }`), and no screen-only horizontal padding.
-      Object.assign(clone.style, {
-        position: "absolute",
-        left: "-99999px",
-        top: "0",
-        width: `${PRINT_WIDTH_PX}px`,
-        maxWidth: `${PRINT_WIDTH_PX}px`,
-        fontSize: "11pt",
-        lineHeight: "1.45",
-        boxSizing: "border-box",
-        padding: "0",
-        margin: "0",
-        background: "#fff",
-      } as CSSStyleDeclaration);
-      // Strip screen-only horizontal padding/max-width on inner containers
-      // so the clone really uses the full printable width.
-      const innerSelector =
-        'article, [class*="max-w-"], [class*="px-"], [class*="py-"]';
-      clone.querySelectorAll<HTMLElement>(innerSelector).forEach((el) => {
-        el.style.maxWidth = "none";
-        el.style.width = "100%";
-        el.style.paddingLeft = "0";
-        el.style.paddingRight = "0";
+      // Geometry constants live next to this hook so the snapshot guard
+      // in `whitePaperPrintEstimator.test.ts` can see them; the actual
+      // estimator logic is in `./whitePaperPrintEstimator` so the
+      // cross-browser e2e test can call exactly the same function.
+      return estimateWhitePaperPageCount(rootEl, {
+        pageContentPx: PAGE_CONTENT_PX,
+        printWidthPx: PRINT_WIDTH_PX,
       });
-
-      document.body.appendChild(clone);
-
-      const cloneTop = clone.getBoundingClientRect().top;
-      const partHeadings = Array.from(
-        clone.querySelectorAll<HTMLElement>(".print-part-heading"),
-      );
-      // The first .print-part-heading does NOT force a page break (matches
-      // the `:first-of-type { page-break-before: auto }` rule). Subsequent
-      // ones do.
-      const breakOffsets: number[] = [0];
-      partHeadings.forEach((h, i) => {
-        if (i === 0) return;
-        breakOffsets.push(h.getBoundingClientRect().top - cloneTop);
-      });
-      breakOffsets.push(clone.scrollHeight);
-
-      let pages = 0;
-      for (let i = 0; i < breakOffsets.length - 1; i++) {
-        const segHeight = breakOffsets[i + 1] - breakOffsets[i];
-        if (segHeight <= 0) continue;
-        pages += Math.max(1, Math.ceil(segHeight / PAGE_CONTENT_PX));
-      }
-
-      document.body.removeChild(clone);
-      return Math.max(1, pages);
     }
 
     function injectMargins(totalPages: number, datePrefix: string): void {

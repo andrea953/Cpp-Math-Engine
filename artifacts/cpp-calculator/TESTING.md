@@ -15,11 +15,20 @@ pnpm --filter @workspace/cpp-calculator test:watch
 
 # Type-check (independent of the test runner)
 pnpm --filter @workspace/cpp-calculator typecheck
+
+# Real-browser e2e for the white-paper print page-count estimator.
+# Boots a transient Vite dev server and headless Chromium via
+# puppeteer-core, then asserts the JS estimator agrees with
+# `Page.printToPDF`. Requires the system `chromium` binary.
+pnpm --filter @workspace/cpp-calculator test:e2e
 ```
 
-The suite uses [Vitest](https://vitest.dev/) in `node` environment — no
-browser, no DOM, no jsdom. Tests live in
-`src/cpp/__tests__/*.test.ts`.
+The default suite uses [Vitest](https://vitest.dev/) in `node` environment —
+no browser, no DOM, no jsdom. Tests live in `src/cpp/__tests__/*.test.ts`.
+
+The e2e suite (`src/components/__tests__/*.e2e.test.ts`) is a separate
+config (`vitest.e2e.config.ts`); see "White-paper print page-count e2e"
+below.
 
 ## Why we pin "today"
 
@@ -69,7 +78,8 @@ bugs in indexation, dropouts, or replacement rates.
 | `survivor.test.ts` | Service Canada — survivor's, death and children's benefits (all branches) |
 | `socParser.test.ts` | Production parser regressions: PDF column order, CSV, `$1,234,567`, `2023,999` |
 | `invariants.test.ts` | Property tests: total = base + T1 + T2; benefit @60 < @65 < @70; T1/T2 zero before phase-in |
-| `whitePaperPrintEstimator.test.ts` | Drift guard for the Safari/Firefox print "Page N of M" fallback in `useCrossBrowserPrintMargins`. Snapshots the white-paper structural block counts, bucketed body-text length, and the estimator's geometry constants + `@page` rules. **If this snapshot fails, do NOT just run `pnpm test -u`.** First print the white paper from BOTH Safari and Firefox and confirm the injected page-number footers still match the actual rendered page count and land on real (not phantom) pages. Tune `estimatePageCount` in `src/components/white-paper.tsx` if they drift, then update the snapshot. Chrome's printed output is unaffected — it uses native `@page counter(pages)`. |
+| `whitePaperPrintEstimator.test.ts` | Drift guard for the Safari/Firefox print "Page N of M" fallback in `useCrossBrowserPrintMargins`. Snapshots the white-paper structural block counts, bucketed body-text length, and the estimator's geometry constants + `@page` rules. **If this snapshot fails, do NOT just run `pnpm test -u`.** First run `pnpm test:e2e` (the real-browser check below) to see whether the estimator actually drifted; if it did, tune `estimateWhitePaperPageCount` in `src/components/whitePaperPrintEstimator.ts` until `pnpm test:e2e` passes again, then update this snapshot. Chrome's printed output is unaffected — it uses native `@page counter(pages)`. |
+| `components/__tests__/whitePaperPrint.e2e.test.ts` | Real-browser truth check for the same shared `estimateWhitePaperPageCount` function the runtime hook uses. Boots a transient Vite dev server pointing at the standalone `whitepaper-e2e.html` entry, launches headless Chromium via `puppeteer-core`, switches the page into print media so `useExpandSectionsForPrint` opens every collapsible section (matching what production does on `beforeprint`), calls `Page.printToPDF` with `preferCSSPageSize: true` (which respects `@page size: letter` and the `0.7in/0.6in/0.8in/0.6in` margins from `src/index.css`), counts the pages of the resulting PDF with `pdfjs-dist`, and asserts the count matches `estimateWhitePaperPageCount` within `PAGE_COUNT_TOLERANCE = 1` page. The 1-page tolerance covers unmodelled effects of the print pipeline (`page-break-inside: avoid` pushes, orphans/widows on `<p>` and `<li>`, and sub-pixel font-metric drift between the screen and print pipelines); on the current white paper the observed delta is exactly 1 (estimated=13, actual=14) and stable across runs. A delta ≥2 indicates a real regression — fix the estimator (or `@page` geometry in `src/index.css`) before bumping the constant. Runs via `pnpm test:e2e` (separate config; excluded from `pnpm test`). Requires the system `chromium` binary. |
 
 ## Known limitations explicitly tested as TODOs
 

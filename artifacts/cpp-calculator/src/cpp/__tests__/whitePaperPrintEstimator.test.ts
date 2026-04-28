@@ -10,6 +10,14 @@
  * Letter-page geometry and accounts for forced page breaks at
  * `.print-part-heading`.
  *
+ * NOTE: The companion test
+ * `src/components/__tests__/whitePaperPrint.e2e.test.ts` (run via
+ * `pnpm test:e2e`) actually paginates the white paper in headless
+ * Chromium via `Page.printToPDF` and asserts the estimator agrees with
+ * the real page count exactly. THIS file is a fast structural
+ * pre-flight that runs in the regular `pnpm test` loop without needing
+ * a Chromium binary.
+ *
  * That estimator deliberately ignores three sources of layout shift
  * because they are content-dependent and hard to model from a screen
  * clone:
