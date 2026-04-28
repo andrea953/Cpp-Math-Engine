@@ -184,7 +184,10 @@ function useCrossBrowserPrintMargins(): void {
             fontFamily: "Inter, sans-serif",
             fontSize: "9pt",
             fontWeight: "500",
-            color: "#555",
+            // Brand-tinted running header to match Chrome's @page @top-left
+            // color in src/index.css. Keep the page-number footer neutral
+            // grey so the brand accent appears only at the top of the page.
+            color: "#5a4dd0",
             background: "#fff",
             zIndex: "100",
           } as CSSStyleDeclaration);
@@ -322,7 +325,7 @@ function SectionHeading({
   return (
     <div id={id} className="print-section-heading scroll-mt-24 space-y-2">
       {eyebrow && (
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+        <div className="print-eyebrow text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/80">
           {eyebrow}
         </div>
       )}
@@ -354,7 +357,7 @@ function PartHeading({
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(215_85%_92%)] to-[hsl(248_75%_94%)] text-primary shadow-sm print:hidden">
             {icon}
           </div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/80">
+          <div className="print-eyebrow text-[11px] font-semibold uppercase tracking-[0.2em] text-primary/80">
             {number}
           </div>
         </div>

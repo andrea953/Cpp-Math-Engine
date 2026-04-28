@@ -293,6 +293,19 @@
 }
 
 @media print {
+  /* Brand-color accent palette for print. We deliberately keep base text
+     black for ink contrast and only use these as accents (eyebrows, part
+     numbers, formula/note borders, table thead, header line, tinted
+     backgrounds). Slightly darker than the on-screen `--primary` so the
+     accents stay legible at typical printer ink densities, and the soft
+     border / tint values stay light enough to print well on inkjets and
+     to fall back gracefully on monochrome printers. */
+  :root {
+    --print-primary: #5a4dd0;
+    --print-primary-soft: #b8b1ec;
+    --print-tint: #f3f2fc;
+  }
+
   @page {
     size: letter;
     margin: 0.7in 0.6in 0.8in 0.6in;
@@ -302,7 +315,9 @@
       font-family: 'Inter', sans-serif;
       font-size: 9pt;
       font-weight: 500;
-      color: #555;
+      /* Inline color (rather than var()) — @page margin boxes have spotty
+         CSS-custom-property support across print engines. */
+      color: #5a4dd0;
       padding-bottom: 0.18in;
       vertical-align: bottom;
     }
@@ -371,6 +386,14 @@
     color: #1a1a1a !important;
   }
 
+  /* Brand-colored eyebrow labels ("WHAT IT IS", "PART 1", etc.). Tagged
+     via the `print-eyebrow` className in white-paper.tsx so this rule
+     wins over the broad `[class*="text-primary"]` reset above on equal
+     specificity (later rule wins). */
+  .print-paper .print-eyebrow {
+    color: var(--print-primary) !important;
+  }
+
   /* Headings */
   .print-paper h2,
   .print-paper h3,
@@ -386,21 +409,30 @@
     widows: 3;
   }
 
-  /* Formula blocks: keep on one page, plain border */
+  /* Formula blocks: tinted background with a primary-colored left accent.
+     Kept the same total border width as before (1px) on the top/right/
+     bottom edges so this rule does not shift vertical layout — important
+     for the page-count estimator's tolerance. The thicker left border
+     only shifts content horizontally. */
   .print-paper .print-formula {
-    background: #ffffff !important;
-    border: 1px solid #444 !important;
+    background: var(--print-tint) !important;
+    border: 1px solid var(--print-primary-soft) !important;
+    border-left: 3px solid var(--print-primary) !important;
     border-radius: 4px !important;
     page-break-inside: avoid;
     break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
-  /* Inline math: subtle underline instead of grey pill */
+  /* Inline math: subtle brand-tinted pill */
   .print-paper .print-inline-math {
-    background: #ffffff !important;
-    border: 1px solid #999 !important;
+    background: var(--print-tint) !important;
+    border: 1px solid var(--print-primary-soft) !important;
     border-radius: 3px !important;
     padding: 0 3px !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   /* Section heading should not be orphaned from its first paragraph */
@@ -411,15 +443,22 @@
     break-inside: avoid;
   }
 
-  /* Each Part heading starts a new page (except the very first one). */
+  /* Each Part heading starts a new page (except the very first one).
+     Brand border + tinted background + a thicker left accent bar. As
+     above, only the LEFT border width changes so vertical layout is
+     unchanged. */
   .print-paper .print-part-heading {
     page-break-before: always;
     break-before: page;
     page-break-inside: avoid;
     break-inside: avoid;
-    border: 1.5px solid #000 !important;
+    border: 1.5px solid var(--print-primary-soft) !important;
+    border-left: 6px solid var(--print-primary) !important;
     border-radius: 6px !important;
     padding: 0 !important;
+    background: var(--print-tint) !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .print-paper .print-part-heading:first-of-type {
@@ -427,8 +466,10 @@
     break-before: auto;
   }
 
+  /* Inner content card sits on top of the tinted parent — let the brand
+     tint show through instead of painting it back to white. */
   .print-paper .print-part-heading > div {
-    background: #ffffff !important;
+    background: transparent !important;
     border: none !important;
   }
 
@@ -487,7 +528,9 @@
   }
 
   .print-scenario .print-scenario-header {
-    border-bottom: 1.5px solid #000;
+    /* Brand-colored bottom rule — same width as before so vertical layout
+       is unchanged. */
+    border-bottom: 1.5px solid var(--print-primary) !important;
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
     page-break-after: avoid;
@@ -499,6 +542,10 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-family: 'Inter', sans-serif;
+    /* Brand color on the brand line. Higher specificity than the broad
+       `.print-scenario *` color reset above, so this wins. */
+    color: var(--print-primary) !important;
+    font-weight: 600;
   }
 
   .print-scenario .print-scenario-title {
@@ -518,10 +565,16 @@
   .print-scenario .print-scenario-planner-note {
     margin: 0.75rem 0 1rem;
     padding: 0.5rem 0.7rem;
-    border: 1px solid #000;
-    border-left-width: 3px;
+    /* Brand-colored callout: tinted background + primary left accent.
+       Border widths unchanged from the original (1px / 3px) so layout
+       is preserved. */
+    border: 1px solid var(--print-primary-soft) !important;
+    border-left: 3px solid var(--print-primary) !important;
+    background: var(--print-tint) !important;
     page-break-inside: auto;
     break-inside: auto;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .print-scenario .print-scenario-planner-note-label {
@@ -531,6 +584,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-bottom: 0.2rem;
+    color: var(--print-primary) !important;
   }
 
   .print-scenario .print-scenario-planner-note-body {
@@ -546,7 +600,8 @@
     font-size: 14pt;
     font-weight: 700;
     margin: 0 0 0.5rem;
-    border-bottom: 1px solid #000;
+    /* Brand-colored section underline (width unchanged at 1px). */
+    border-bottom: 1px solid var(--print-primary) !important;
     padding-bottom: 0.15rem;
     page-break-after: avoid;
     break-after: avoid-page;
@@ -594,10 +649,15 @@
   }
 
   .print-scenario .print-scenario-table thead th {
-    background: #ffffff !important;
+    /* Brand-tinted column-header band + primary divider. Width unchanged
+       (1.25px) so column heights are preserved. */
+    background: var(--print-tint) !important;
     font-weight: 700;
     font-size: 9.5pt;
-    border-bottom: 1.25px solid #000;
+    border-bottom: 1.25px solid var(--print-primary) !important;
+    color: var(--print-primary) !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .print-scenario .print-scenario-table tbody th {
@@ -682,7 +742,8 @@
   .print-scenario .print-scenario-footer {
     margin-top: 1.25rem;
     padding-top: 0.4rem;
-    border-top: 1px solid #000;
+    /* Brand-colored footer rule (width unchanged at 1px). */
+    border-top: 1px solid var(--print-primary) !important;
     font-size: 8.5pt;
     font-style: italic;
   }
