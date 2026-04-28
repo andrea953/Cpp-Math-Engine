@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { Children, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import {
   BookOpen,
   Calculator,
+  ChevronRight,
   ClipboardList,
   FileText,
   Layers,
@@ -408,7 +409,87 @@ function PartHeading({
   );
 }
 
+/**
+ * Sections collapse by default (chevron click expands them). When the user
+ * prints the white paper we want every section open so the printed output
+ * matches what it has always been. This hook saves each section's open
+ * state on `beforeprint`, opens them all, and restores the previous state
+ * on `afterprint`.
+ *
+ * MUST run before `useCrossBrowserPrintMargins` in the component body so
+ * that this hook's `beforeprint` listener is registered first and fires
+ * first — otherwise the cross-browser page-count estimator measures the
+ * collapsed DOM and produces an incorrect "Page N of M" footer.
+ *
+ * Also subscribes to `matchMedia('print')` like the cross-browser print
+ * margins hook, because Safari does not always fire `beforeprint` reliably.
+ */
+function useExpandSectionsForPrint(): void {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let saved: Array<{ el: HTMLDetailsElement; wasOpen: boolean }> = [];
+    const expand = () => {
+      // Re-entrant safety: if a previous expand already saved state and
+      // restore hasn't happened yet (overlapping events from Safari /
+      // matchMedia + beforeprint), don't overwrite the original state.
+      if (saved.length > 0) return;
+      const nodes = document.querySelectorAll<HTMLDetailsElement>(
+        "details.wp-section",
+      );
+      saved = Array.from(nodes).map((el) => ({ el, wasOpen: el.open }));
+      saved.forEach(({ el }) => {
+        el.open = true;
+      });
+    };
+    const restore = () => {
+      saved.forEach(({ el, wasOpen }) => {
+        el.open = wasOpen;
+      });
+      saved = [];
+    };
+
+    window.addEventListener("beforeprint", expand);
+    window.addEventListener("afterprint", restore);
+
+    const mq = window.matchMedia("print");
+    const mqHandler = (e: MediaQueryListEvent | MediaQueryList): void => {
+      if (e.matches) expand();
+      else restore();
+    };
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", mqHandler as (e: MediaQueryListEvent) => void);
+    } else if (typeof (mq as { addListener?: unknown }).addListener === "function") {
+      (mq as unknown as { addListener: (cb: (e: MediaQueryListEvent) => void) => void }).addListener(
+        mqHandler as (e: MediaQueryListEvent) => void,
+      );
+    }
+
+    return () => {
+      window.removeEventListener("beforeprint", expand);
+      window.removeEventListener("afterprint", restore);
+      if (typeof mq.removeEventListener === "function") {
+        mq.removeEventListener(
+          "change",
+          mqHandler as (e: MediaQueryListEvent) => void,
+        );
+      } else if (
+        typeof (mq as { removeListener?: unknown }).removeListener === "function"
+      ) {
+        (
+          mq as unknown as {
+            removeListener: (cb: (e: MediaQueryListEvent) => void) => void;
+          }
+        ).removeListener(mqHandler as (e: MediaQueryListEvent) => void);
+      }
+      restore();
+    };
+  }, []);
+}
+
 export function WhitePaper() {
+  // Order matters: expand sections FIRST so the cross-browser margins
+  // hook's page-count estimator measures the fully-expanded DOM.
+  useExpandSectionsForPrint();
   useCrossBrowserPrintMargins();
   const activeId = useActiveSection(TOC.map((t) => t.id));
   const generatedOn = usePrintDate();
@@ -1315,9 +1396,25 @@ export function WhitePaper() {
 function smoothScrollTo(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (typeof history !== "undefined" && history.replaceState) {
-    history.replaceState(null, "", `#${id}`);
+  // If the target heading lives inside a collapsed <details.wp-section>,
+  // open it first so the body becomes visible. We scroll on the next frame
+  // so the browser has time to lay out the now-expanded section before we
+  // compute the final scroll position.
+  const details = el.closest<HTMLDetailsElement>("details.wp-section");
+  const wasClosed = !!details && !details.open;
+  if (details && !details.open) {
+    details.open = true;
+  }
+  const doScroll = () => {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (typeof history !== "undefined" && history.replaceState) {
+      history.replaceState(null, "", `#${id}`);
+    }
+  };
+  if (wasClosed && typeof requestAnimationFrame !== "undefined") {
+    requestAnimationFrame(doScroll);
+  } else {
+    doScroll();
   }
 }
 
@@ -1363,9 +1460,26 @@ function TocList({
 }
 
 function Section({ children }: { children: React.ReactNode }) {
+  // Each <Section> call site starts with a <SectionHeading> followed by
+  // body content. Splitting the first child off lets us put the heading
+  // inside the <summary> (the click target) and the rest inside a
+  // collapsible body. Defaults to closed.
+  const arr = Children.toArray(children);
+  const [head, ...body] = arr;
   return (
-    <section className="space-y-4 text-base leading-relaxed text-foreground/90 [&>p]:text-muted-foreground [&>p]:leading-relaxed">
-      {children}
-    </section>
+    <details className="wp-section group rounded-xl print:rounded-none">
+      <summary
+        className="wp-section-summary -mx-2 flex cursor-pointer list-none items-start gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-accent/40 print:mx-0 print:rounded-none print:p-0 print:hover:bg-transparent"
+      >
+        <ChevronRight
+          aria-hidden="true"
+          className="wp-chevron mt-1.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-90 print:hidden"
+        />
+        <div className="min-w-0 flex-1">{head}</div>
+      </summary>
+      <div className="wp-section-body space-y-4 pl-8 pt-4 text-base leading-relaxed text-foreground/90 [&>p]:text-muted-foreground [&>p]:leading-relaxed print:pl-0 print:pt-4">
+        {body}
+      </div>
+    </details>
   );
 }

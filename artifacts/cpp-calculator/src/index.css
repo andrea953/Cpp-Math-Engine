@@ -223,6 +223,17 @@
     display: none !important;
   }
 
+  /* Collapsible white-paper sections use native <details>/<summary>. Hide
+     the default disclosure marker so our chevron is the only visible affordance.
+     Tailwind's `list-none` class handles the standard `list-style: none`,
+     but WebKit-based browsers also need this vendor-prefixed pseudo-element. */
+  .wp-section > .wp-section-summary::-webkit-details-marker {
+    display: none;
+  }
+  .wp-section > .wp-section-summary::marker {
+    content: "";
+  }
+
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }
