@@ -91,7 +91,7 @@ export function PrintScenario({
     <article className="print-scenario-article">
       {/* ---------- COVER / SUMMARY PAGE ---------- */}
       <header className="print-scenario-header">
-        <div className="print-scenario-brand">Modern CENTS · CPP Scenario</div>
+        <div className="print-scenario-brand">Modern Cents CPP Calculator · Client Scenario</div>
         <h1 className="print-scenario-title">{scenarioTitle || "Untitled scenario"}</h1>
         <div className="print-scenario-meta">
           <span>Generated: {todayLong()}</span>
@@ -143,7 +143,7 @@ export function PrintScenario({
           ) : null}
 
           <footer className="print-scenario-footer">
-            Estimates only. Modern CENTS calculations are based on publicly
+            Estimates only. Modern Cents CPP Calculator calculations are based on publicly
             available CPP rules and the inputs entered by the planner. Final
             amounts are determined by Service Canada and may differ.
           </footer>

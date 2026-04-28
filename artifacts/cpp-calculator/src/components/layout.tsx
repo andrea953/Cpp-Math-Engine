@@ -23,8 +23,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <Link href="/scenarios" className="flex items-center gap-2.5 font-semibold text-foreground">
-              <img src={logoUrl} alt="Modern CENTS" className="h-8 w-8 rounded-md object-cover" />
-              <span className="tracking-tight">Modern CENTS</span>
+              <img src={logoUrl} alt="Modern Cents CPP Calculator" className="h-8 w-8 rounded-md object-cover" />
+              <span className="tracking-tight">
+                Modern Cents <span className="hidden sm:inline">CPP Calculator</span>
+              </span>
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-sm font-medium text-muted-foreground">
               <Link href="/scenarios" className="hover:text-foreground transition-colors">

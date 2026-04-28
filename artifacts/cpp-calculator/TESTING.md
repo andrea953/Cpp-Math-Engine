@@ -1,4 +1,4 @@
-# Modern CENTS — CPP Engine Test Suite
+# Modern Cents CPP Calculator — CPP Engine Test Suite
 
 A regression test suite for the Canada Pension Plan calculation engine. Each
 test file maps 1:1 to a section of the engine's documented behaviour so a peer

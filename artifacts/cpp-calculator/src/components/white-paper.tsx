@@ -32,7 +32,7 @@ interface TocItem {
 const TOC: TocItem[] = [
   { id: "wp-overview", label: "Overview", part: 1 },
   { id: "wp-problem", label: "The problem with public CPP calculators", part: 1 },
-  { id: "wp-difference", label: "How Modern CENTS is different", part: 1 },
+  { id: "wp-difference", label: "How the Modern Cents CPP Calculator is different", part: 1 },
   { id: "wp-audience", label: "Who benefits and typical use cases", part: 1 },
   { id: "wp-methodology", label: "Methodology overview", part: 2 },
   { id: "wp-contributory", label: "Contributory period, YMPE & YAMPE", part: 2 },
@@ -109,7 +109,7 @@ function useCrossBrowserPrintMargins(): void {
     const isSafari = /Safari\//.test(ua) && !/Chrom(e|ium)\//.test(ua);
     if (!isFirefox && !isSafari) return;
 
-    const HEADER_TEXT = "Modern CENTS — The Modern CENTS approach to CPP";
+    const HEADER_TEXT = "Modern Cents CPP Calculator — Methodology";
     // Letter page geometry, in CSS pixels at 96 DPI:
     //   page outer:    11in   = 1056 px
     //   @page margin:  0.7in top + 0.8in bottom  (matches @media print rule)
@@ -425,11 +425,12 @@ export function WhitePaper() {
             White Paper
           </div>
           <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            The Modern CENTS approach to CPP
+            Inside the Modern Cents CPP Calculator
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-            A reference document for financial advisors covering what Modern CENTS is, how it differs
-            from public CPP calculators, and the full math behind every dollar it produces.
+            A reference document for financial advisors covering what the Modern Cents CPP
+            Calculator is, how it differs from public CPP calculators, and the full math behind
+            every dollar it produces.
           </p>
           <p
             className="mt-6 hidden text-sm font-semibold tracking-wide text-foreground/80 print:block"
@@ -460,7 +461,7 @@ export function WhitePaper() {
               id="wp-part-1"
               number="Part 1"
               title="Product positioning"
-              blurb="What Modern CENTS is, who it's for, and why advisors need a planner-grade CPP tool."
+              blurb="What the Modern Cents CPP Calculator is, who it's for, and why advisors need a planner-grade CPP tool."
               icon={<Target className="h-5 w-5" />}
             />
 
@@ -468,12 +469,13 @@ export function WhitePaper() {
               <SectionHeading
                 id="wp-overview"
                 eyebrow="What it is"
-                title="Modern CENTS in one paragraph"
+                title="The Modern Cents CPP Calculator in one paragraph"
                 icon={<FileText className="h-5 w-5" />}
               />
               <p>
-                Modern CENTS is a planner-grade Canada Pension Plan calculator built for financial
-                advisors. It models a client's CPP retirement pension from their actual contributory
+                The Modern Cents CPP Calculator is a planner-grade Canada Pension Plan calculator
+                built for financial advisors. It models a client's CPP retirement pension from
+                their actual contributory
                 record, computing base CPP, the 2019 first additional (Tier 1) enhancement, and the
                 2024 second additional (Tier 2) enhancement; applies the general 17% drop-out, the
                 Child Rearing Drop-Out (CRDO), and disability drop-out; runs the early/late take-up
@@ -526,7 +528,7 @@ export function WhitePaper() {
               <SectionHeading
                 id="wp-difference"
                 eyebrow="The difference"
-                title="How Modern CENTS is different"
+                title="How the Modern Cents CPP Calculator is different"
                 icon={<ShieldCheck className="h-5 w-5" />}
               />
               <ul className="ml-5 list-disc space-y-2">
@@ -573,7 +575,7 @@ export function WhitePaper() {
                 icon={<Users className="h-5 w-5" />}
               />
               <p>
-                Modern CENTS is built for financial planners, advisors, and retirement specialists
+                The Modern Cents CPP Calculator is built for financial planners, advisors, and retirement specialists
                 who need to defend a CPP number to a client, a compliance reviewer, or an estate
                 lawyer. Typical use cases include:
               </p>
@@ -605,7 +607,7 @@ export function WhitePaper() {
               id="wp-part-2"
               number="Part 2"
               title="Technical methodology"
-              blurb="The exact formulas, constants, and rules that the Modern CENTS engine implements."
+              blurb="The exact formulas, constants, and rules that the Modern Cents CPP Calculator engine implements."
               icon={<Calculator className="h-5 w-5" />}
             />
 
@@ -617,7 +619,7 @@ export function WhitePaper() {
                 icon={<Layers className="h-5 w-5" />}
               />
               <p>
-                A monthly CPP retirement pension in Modern CENTS is the sum of three components,
+                A monthly CPP retirement pension in the Modern Cents CPP Calculator is the sum of three components,
                 each computed from the same earnings record but with different rules:
               </p>
               <Formula>

@@ -13,8 +13,10 @@ export default function Home() {
 
       <header className="relative px-4 sm:px-6 py-4 flex items-center justify-between gap-2 print:hidden">
         <div className="flex items-center gap-2 sm:gap-2.5 font-semibold text-base sm:text-lg text-foreground min-w-0">
-          <img src={logoUrl} alt="Modern CENTS" className="h-8 w-8 sm:h-9 sm:w-9 rounded-md object-cover shadow-sm shrink-0" />
-          <span className="tracking-tight truncate">Modern CENTS</span>
+          <img src={logoUrl} alt="Modern Cents CPP Calculator" className="h-8 w-8 sm:h-9 sm:w-9 rounded-md object-cover shadow-sm shrink-0" />
+          <span className="tracking-tight truncate">
+            Modern Cents <span className="hidden sm:inline">CPP Calculator</span>
+          </span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <Link href="/sign-in">
@@ -41,7 +43,7 @@ export default function Home() {
           </h1>
 
           <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Go beyond simple calculators. Modern CENTS provides an audit-ready breakdown of base, Tier 1, and Tier 2 enhancements. Trace every dollar back to the contributory record.
+            Go beyond simple calculators. The Modern Cents CPP Calculator provides an audit-ready breakdown of base, Tier 1, and Tier 2 enhancements. Trace every dollar back to the contributory record.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 sm:pt-4">

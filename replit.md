@@ -28,7 +28,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ## Artifacts
 
-### Modern CENTS — `artifacts/cpp-calculator`
+### Modern Cents CPP Calculator — `artifacts/cpp-calculator`
 A planner-grade Canada Pension Plan calculator for financial advisors.
 - **Routes**: `/` (marketing + white paper / redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`, `/shared/:token` (public read-only client view, no auth)
 - **Home page**: hero + 3 feature cards above the fold, followed by an in-page white paper (Part 1 — positioning, Part 2 — methodology) with a sticky table of contents and closing CTA band. Component lives at `src/components/white-paper.tsx`.

@@ -42,8 +42,10 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
       <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 print:hidden">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2.5 font-semibold text-foreground">
-            <img src={logoUrl} alt="Modern CENTS" className="h-8 w-8 rounded-md object-cover" />
-            <span className="tracking-tight">Modern CENTS</span>
+            <img src={logoUrl} alt="Modern Cents CPP Calculator" className="h-8 w-8 rounded-md object-cover" />
+            <span className="tracking-tight">
+              Modern Cents <span className="hidden sm:inline">CPP Calculator</span>
+            </span>
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -116,7 +118,7 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
               </div>
               <ResultsPanel inputs={debounced} scenarioTitle={data.title} />
               <p className="mt-8 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
-                Estimates only. Modern CENTS calculations are based on publicly
+                Estimates only. Modern Cents CPP Calculator calculations are based on publicly
                 available CPP rules and the inputs entered by your planner. Final
                 amounts are determined by Service Canada and may differ.
               </p>
