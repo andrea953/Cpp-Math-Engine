@@ -6,6 +6,7 @@ import {
   TIER1_FULL_REPLACEMENT_RATE,
   TIER2_REPLACEMENT_RATE,
   YBE,
+  getMaxBenefitAt65,
   getYampe,
   getYmpe,
 } from "../constants";
@@ -159,6 +160,45 @@ describe("white paper examples", () => {
     );
     expect(ex.prb.firstYearMonthly).toBeCloseTo(ex.prb.firstYearAnnual / 12, 6);
     expect(ex.prb.annualUpliftAt70).toBeGreaterThan(0);
+  });
+
+  it("% of maximum example matches the engine derivation per start age", () => {
+    // Each start age has its own start year and its own projected max-at-65.
+    // Verify the example data mirrors getMaxBenefitAt65(startYear, ympeGrowth) ×
+    // adjustment factor exactly, which is what the engine does in calculate.ts.
+    expect(ex.maximum.startYear60).toBe(ex.profile.startYear - 5);
+    expect(ex.maximum.startYear65).toBe(ex.profile.startYear);
+    expect(ex.maximum.startYear70).toBe(ex.profile.startYear + 5);
+
+    expect(ex.maximum.maxAt65InStartYear60).toBeCloseTo(
+      getMaxBenefitAt65(ex.maximum.startYear60, ex.maximum.ympeGrowthRate),
+      6,
+    );
+    expect(ex.maximum.maxAt65InStartYear65).toBeCloseTo(
+      getMaxBenefitAt65(ex.maximum.startYear65, ex.maximum.ympeGrowthRate),
+      6,
+    );
+    expect(ex.maximum.maxAt65InStartYear70).toBeCloseTo(
+      getMaxBenefitAt65(ex.maximum.startYear70, ex.maximum.ympeGrowthRate),
+      6,
+    );
+
+    expect(ex.maximum.maxAt60).toBeCloseTo(
+      ex.maximum.maxAt65InStartYear60 * ex.adjustment.factor60,
+      6,
+    );
+    expect(ex.maximum.maxAt65).toBeCloseTo(
+      ex.maximum.maxAt65InStartYear65 * ex.adjustment.factor65,
+      6,
+    );
+    expect(ex.maximum.maxAt70).toBeCloseTo(
+      ex.maximum.maxAt65InStartYear70 * ex.adjustment.factor70,
+      6,
+    );
+
+    expect(ex.maximum.pctOf60).toBeCloseTo(ex.adjustment.total60 / ex.maximum.maxAt60, 6);
+    expect(ex.maximum.pctOf65).toBeCloseTo(ex.adjustment.total65 / ex.maximum.maxAt65, 6);
+    expect(ex.maximum.pctOf70).toBeCloseTo(ex.adjustment.total70 / ex.maximum.maxAt70, 6);
   });
 });
 

@@ -24,6 +24,7 @@ import {
   YBE,
   getAyampe,
   getAympe,
+  getMaxBenefitAt65,
   getYampe,
   getYmpe,
 } from "./constants";
@@ -385,6 +386,36 @@ export const whitePaperExamples = {
     total60: r60.totalMonthly,
     total65: r65.totalMonthly,
     total70: r70.totalMonthly,
+  },
+
+  /**
+   * Worked numbers for the "% of maximum" white-paper section. Each take-up
+   * age has its own start year (60 → START_YEAR-5, 65 → START_YEAR, 70 →
+   * START_YEAR+5), so each has its own projected max-at-65 base. The engine
+   * (`calculate.ts`) projects `getMaxBenefitAt65(start.year, ympeGrowthRate)`
+   * for each start age individually, then multiplies by that age's
+   * actuarial adjustment factor — these example fields mirror that pathway
+   * exactly so the printed derivation matches the engine output.
+   */
+  maximum: {
+    /** YMPE (wage) growth rate used to project max-at-65 forward to each start year. */
+    ympeGrowthRate: YMPE_GROWTH,
+    /** Start year of each take-up age for the example client. */
+    startYear60: r60.startYear,
+    startYear65: r65.startYear,
+    startYear70: r70.startYear,
+    /** Projected max-at-65 in each take-up age's own start year, in that year's dollars. */
+    maxAt65InStartYear60: getMaxBenefitAt65(r60.startYear, YMPE_GROWTH),
+    maxAt65InStartYear65: getMaxBenefitAt65(r65.startYear, YMPE_GROWTH),
+    maxAt65InStartYear70: getMaxBenefitAt65(r70.startYear, YMPE_GROWTH),
+    /** Max benefit at each take-up age (projected max-at-65 × that age's adjustment factor). */
+    maxAt60: r60.maxMonthlyAtStart,
+    maxAt65: r65.maxMonthlyAtStart,
+    maxAt70: r70.maxMonthlyAtStart,
+    /** Total monthly ÷ max at start age — exactly what the result cards display. */
+    pctOf60: r60.percentOfMaximum,
+    pctOf65: r65.percentOfMaximum,
+    pctOf70: r70.percentOfMaximum,
   },
 
   total: {

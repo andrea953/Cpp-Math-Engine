@@ -44,6 +44,7 @@ const TOC: TocItem[] = [
   { id: "wp-tier2", label: "Tier 2 enhancement (post-2023)", part: 2 },
   { id: "wp-dropouts", label: "Drop-out provisions", part: 2 },
   { id: "wp-adjustments", label: "Early / late take-up adjustments", part: 2 },
+  { id: "wp-percent-of-maximum", label: "Percent of the maximum CPP retirement pension", part: 2 },
   { id: "wp-prb", label: "Post-Retirement Benefit (PRB)", part: 2 },
   { id: "wp-survivor", label: "Survivor, children & death benefit", part: 2 },
   { id: "wp-soc", label: "SOC import", part: 2 },
@@ -1140,6 +1141,76 @@ export function WhitePaper() {
                   scales the base, Tier 1, and Tier 2 portions together.
                 </div>
               </Example>
+            </Section>
+
+            <Section>
+              <SectionHeading
+                id="wp-percent-of-maximum"
+                eyebrow="Benchmarking"
+                title="Percent of the maximum CPP retirement pension"
+                icon={<Target className="h-5 w-5" />}
+              />
+              <p>
+                The result cards show each start age as a percentage of the maximum CPP retirement
+                pension a person taking up at that same age in that same year could receive. To make
+                the ratio meaningful, both numerator and denominator must be in the same year's
+                dollars — so the engine projects the maximum forward to the chosen start year and
+                applies the actuarial adjustment for the start age before dividing.
+              </p>
+              <p>
+                The CPP maximum is{" "}
+                <strong>wage-indexed (it grows with the YMPE) before take-up</strong>, then
+                CPI-indexed once the benefit is in payment. The engine therefore projects the
+                published max-at-65 forward using <InlineMath>ympeGrowthRate</InlineMath> (≈ 3.1%
+                by default), <em>not</em> <InlineMath>indexingRate</InlineMath> (CPI ≈ 2.1%). This
+                matches how Service Canada re-bases the maximum each January using the same wage
+                growth that drives YMPE.
+              </p>
+              <Formula>
+                max at 65 (start year) = max at 65 (latest published) × (1 + ympeGrowthRate)^(years
+                forward)
+                <br />
+                max at start age = max at 65 (start year) × adjustment factor(start age)
+                <br />
+                % of maximum = total monthly ÷ max at start age
+              </Formula>
+              <Example>
+                <div className="text-xs text-muted-foreground">
+                  Same {ex.profile.label.toLowerCase()}. Each take-up age has its own start year
+                  ({ex.maximum.startYear60}, {ex.maximum.startYear65}, {ex.maximum.startYear70}),
+                  so the max-at-65 is re-projected for each age at the default{" "}
+                  {pct1(ex.maximum.ympeGrowthRate)} YMPE growth before the actuarial factor is
+                  applied.
+                </div>
+                <ExampleLine>
+                  age 60 → max at 65 in {ex.maximum.startYear60} ={" "}
+                  {fmt2(ex.maximum.maxAt65InStartYear60)} → ×{" "}
+                  {ex.adjustment.factor60.toFixed(3)} = {fmt2(ex.maximum.maxAt60)} / mo →{" "}
+                  {fmt2(ex.adjustment.total60)} ÷ {fmt2(ex.maximum.maxAt60)} ={" "}
+                  {pct1(ex.maximum.pctOf60)}
+                </ExampleLine>
+                <ExampleLine>
+                  age 65 → max at 65 in {ex.maximum.startYear65} ={" "}
+                  {fmt2(ex.maximum.maxAt65InStartYear65)} → × 1.000 ={" "}
+                  {fmt2(ex.maximum.maxAt65)} / mo → {fmt2(ex.adjustment.total65)} ÷{" "}
+                  {fmt2(ex.maximum.maxAt65)} = {pct1(ex.maximum.pctOf65)}
+                </ExampleLine>
+                <ExampleLine>
+                  age 70 → max at 65 in {ex.maximum.startYear70} ={" "}
+                  {fmt2(ex.maximum.maxAt65InStartYear70)} → ×{" "}
+                  {ex.adjustment.factor70.toFixed(3)} = {fmt2(ex.maximum.maxAt70)} / mo →{" "}
+                  {fmt2(ex.adjustment.total70)} ÷ {fmt2(ex.maximum.maxAt70)} ={" "}
+                  {pct1(ex.maximum.pctOf70)}
+                </ExampleLine>
+              </Example>
+              <p className="text-sm text-muted-foreground">
+                The figure can occasionally exceed <InlineMath>100%</InlineMath> for high earners
+                with a long Tier 1 / Tier 2 contribution history — the published "maximum" reflects
+                the transitional ceiling for someone with a complete career under the pre-2019
+                design, while the engine computes the actual amount a fully-enhanced contributor
+                would accrue. The progress bar on the result cards visually clamps at 100%, but the
+                numeric value shown is the true ratio.
+              </p>
             </Section>
 
             <Section>
