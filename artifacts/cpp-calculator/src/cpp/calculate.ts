@@ -33,6 +33,7 @@ import {
   YBE,
   getAyampe,
   getAympe,
+  getMaxBenefitAt65,
   getYampe,
   getYmpe,
 } from "./constants";
@@ -439,6 +440,17 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
       inputs.assumptions.ympeGrowthRate,
     );
 
+    // Project the maximum monthly CPP retirement pension forward to the start
+    // year. CPP's max is wage-indexed (grows with YMPE) prior to take-up — so
+    // we project using `ympeGrowthRate`, NOT `indexingRate` (CPI). Multiplying
+    // by the actuarial `adjustmentFactor` gives the equivalent "max" for a
+    // person taking up at this age (e.g. ~0.64× at 60, ~1.42× at 70). The
+    // result is in start-year dollars, matching `totalMonthly` so the ratio
+    // is a clean apples-to-apples comparison.
+    const maxAt65AtStartYear = getMaxBenefitAt65(start.year, inputs.assumptions.ympeGrowthRate);
+    const maxMonthlyAtStart = maxAt65AtStartYear * base.adjustmentFactor;
+    const percentOfMaximum = maxMonthlyAtStart > 0 ? totalMonthly / maxMonthlyAtStart : 0;
+
     byStartAge.push({
       startAge: age,
       startYear: start.year,
@@ -449,6 +461,8 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
       tier2Monthly: enh.tier2Monthly,
       totalMonthly,
       totalAnnual: totalMonthly * 12,
+      maxMonthlyAtStart,
+      percentOfMaximum,
       base: base.diag,
       enhancement: enh.diag,
       cumulativeByAge,

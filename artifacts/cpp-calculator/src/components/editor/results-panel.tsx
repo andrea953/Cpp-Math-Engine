@@ -78,6 +78,8 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
       tier2_monthly: r.tier2Monthly.toFixed(2),
       total_monthly: r.totalMonthly.toFixed(2),
       total_annual: r.totalAnnual.toFixed(2),
+      max_monthly_at_start: r.maxMonthlyAtStart.toFixed(2),
+      percent_of_maximum: r.percentOfMaximum.toFixed(4),
       contributory_months: r.base.contributoryPeriodMonths,
       crdo_dropped: r.base.crdoMonthsDropped,
       disability_dropped: r.base.disabilityMonthsDropped,
@@ -501,6 +503,43 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
             per month · {formatMoney(result.totalAnnual)} per year
           </div>
         </div>
+
+        {/* Percent of the maximum CPP retirement pension for someone taking
+            up at this same age in the same start year. The max is projected
+            forward to the start year using YMPE growth and adjusted by the
+            actuarial factor for the start age, so the ratio is in the same
+            (start-year) dollars as the user's projected benefit. See
+            `calculate.ts` and `StartAgeResult.percentOfMaximum`. */}
+        {(() => {
+          // Single source of truth for the clamped 0–100 value — keeps the
+          // visual bar width and the ARIA value in sync, so screen readers
+          // never announce an out-of-range progressbar value even if the
+          // raw `percentOfMaximum` exceeds 1.0 (rare edge cases noted in
+          // the field doc comment).
+          const rawPct = result.percentOfMaximum * 100;
+          const clampedPct = Math.min(100, Math.max(0, rawPct));
+          return (
+            <div className="space-y-1">
+              <div className="flex items-baseline justify-between gap-2 text-xs">
+                <span className="text-muted-foreground">% of maximum</span>
+                <span className="font-mono font-medium tabular-nums">{rawPct.toFixed(1)}%</span>
+              </div>
+              <div
+                className="h-1.5 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-label={`Projected benefit as a percent of the maximum CPP retirement pension at age ${result.startAge}`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(clampedPct)}
+              >
+                <div className="h-full bg-primary" style={{ width: `${clampedPct}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Max at age {result.startAge} in {result.startYear}: {formatMoney(result.maxMonthlyAtStart, true)}/mo
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="space-y-1.5">
           <div className="flex h-2 overflow-hidden rounded-full bg-muted">

@@ -92,6 +92,23 @@ export interface StartAgeResult {
   /** Total annual CPP at start in start-year dollars */
   totalAnnual: number;
 
+  /**
+   * Maximum monthly CPP retirement pension a person taking up at this age in
+   * this start year could receive — i.e. the projected max-at-65 for the start
+   * year (wage-indexed forward via `ympeGrowthRate`) multiplied by the standard
+   * actuarial adjustment for this start age. In start-year dollars, so it can
+   * be compared apples-to-apples with `totalMonthly`.
+   */
+  maxMonthlyAtStart: number;
+  /**
+   * `totalMonthly / maxMonthlyAtStart` — the user's projected monthly benefit
+   * expressed as a fraction of the maximum possible benefit for someone taking
+   * up at the same age in the same year. Values can exceed 1.0 in edge cases
+   * (e.g. very high earners with a heavy enhancement contribution history),
+   * but are typically in the 0.0–1.0 range.
+   */
+  percentOfMaximum: number;
+
   /** Diagnostics for the base calculation */
   base: BaseCalcDiagnostics;
   /** Diagnostics for the enhancement calculation */
