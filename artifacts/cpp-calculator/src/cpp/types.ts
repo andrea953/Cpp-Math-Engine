@@ -125,6 +125,13 @@ export interface BaseCalcDiagnostics {
   crdoMonthsDropped: number;
   /** Months dropped under disability dropout */
   disabilityMonthsDropped: number;
+  /**
+   * Months dropped by the post-65 / late-take-up drop-out (a.k.a. the "age 65
+   * drop-out"). Applies only when start age > 65: months from age 65 to take-up
+   * are removed from the contributory period if their indexed earnings are
+   * below the running mean (i.e. dropping them raises AMPE).
+   */
+  post65DropoutMonths: number;
   /** Months dropped by the general 17% drop-out */
   generalDropoutMonths: number;
   /** Months retained for the AMPE calculation */

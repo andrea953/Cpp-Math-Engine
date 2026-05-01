@@ -988,8 +988,18 @@ export function WhitePaper() {
                   period are counted once (CRDO takes precedence in the diagnostics).
                 </li>
                 <li>
-                  <strong>General 17% drop-out.</strong> After CRDO and disability windows are
-                  removed, the engine drops the lowest{" "}
+                  <strong>Post-65 / late take-up drop-out (a.k.a. "age 65 drop-out").</strong> When
+                  take-up is delayed past 65, months between turning 65 and the take-up month are
+                  removed from the contributory period if their indexed earnings are below the
+                  running mean — i.e. only when dropping them raises AMPE. High-earning post-65
+                  months stay (they actively raise AMPE); zero- or low-earning months are removed.
+                  This is a separate provision from the 17% drop-out and does not consume the 17%
+                  allowance. Without this rule, a client who stops working at 65 and delays CPP to
+                  70 would see their age-70 base CPP fall below age-65 base × 1.42.
+                </li>
+                <li>
+                  <strong>General 17% drop-out.</strong> After the special drop-outs above are
+                  applied, the engine drops the lowest{" "}
                   <InlineMath>floor(0.17 × remaining months)</InlineMath> indexed monthly amounts —
                   in practice the worst earning years for the contributor.
                 </li>
@@ -1054,6 +1064,49 @@ export function WhitePaper() {
                   on the total) — the parental window is removed before the 17% drop-out is
                   computed, so more low-earning months get caught by the drop-out instead of
                   pulling AMPE down.
+                </div>
+              </Example>
+
+              <Example
+                label={`Same client, take-up delayed to age 70 (${ex.lateTakeUpExample.startYear}) with no earnings 65 → 70`}
+              >
+                <div className="text-xs text-muted-foreground">
+                  Same June {ex.profile.birthYear} birth and same {ex.profile.yearsOfMaxEarnings}{" "}
+                  years of YMPE-max earnings, but this client stops working at 65 and delays CPP to
+                  70. The five years of zero earnings between 65 and take-up would otherwise drag
+                  AMPE down through the longer contributory period; the post-65 drop-out removes
+                  them so the actuarial 1.42 uplift survives intact.
+                </div>
+                <ExampleLine>
+                  contributory months at 70 ={" "}
+                  {ex.lateTakeUpExample.contribMonths.toLocaleString()}; post-65 drop-out removes{" "}
+                  {ex.lateTakeUpExample.post65DropoutMonths}; general 17% drop-out then removes{" "}
+                  {ex.lateTakeUpExample.generalDropoutMonths.toLocaleString()}; retained ={" "}
+                  {ex.lateTakeUpExample.monthsRetained.toLocaleString()}
+                </ExampleLine>
+                <ExampleLine>
+                  AMPE at 70 = {fmt2(ex.lateTakeUpExample.ampe)} / mo (the post-65 zeros are
+                  removed, so AMPE reflects only the YMPE-max earning years indexed forward to{" "}
+                  {ex.lateTakeUpExample.startYear} dollars)
+                </ExampleLine>
+                <ExampleLine>
+                  base CPP at 70 = AMPE × 25% × {fmt2(ex.lateTakeUpExample.adjustmentFactor)} ={" "}
+                  {fmt2(ex.lateTakeUpExample.baseMonthly)} / mo (vs base CPP at 65 ={" "}
+                  {fmt2(ex.lateTakeUpExample.baseMonthly65)} / mo — ratio{" "}
+                  {(ex.lateTakeUpExample.baseMonthly / ex.lateTakeUpExample.baseMonthly65).toFixed(
+                    3,
+                  )}
+                  , at or above the 1.42 actuarial factor)
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  Without the post-65 drop-out, this client's base CPP at 70 would collapse to ≈{" "}
+                  {fmt2(ex.lateTakeUpExample.baseMonthlyWithoutRule)} / mo (a ratio of only{" "}
+                  {(
+                    ex.lateTakeUpExample.baseMonthlyWithoutRule /
+                    ex.lateTakeUpExample.baseMonthly65
+                  ).toFixed(3)}{" "}
+                  vs age 65) — the five years of post-65 zero earnings would dilute AMPE below
+                  AMPE_65 even after the 17% drop-out absorbs as many as it can.
                 </div>
               </Example>
 

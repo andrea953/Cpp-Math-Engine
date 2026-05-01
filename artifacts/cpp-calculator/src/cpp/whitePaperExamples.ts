@@ -459,6 +459,52 @@ export const whitePaperExamples = {
     totalLift: CRDO_WITH_CLAIM.totalMonthly - CRDO_NO_CLAIM.totalMonthly,
   },
 
+  /**
+   * Worked numbers for the "Post-65 / late take-up drop-out" white-paper
+   * bullet. The example client retired at 65 and earned $0 from 65 to 70,
+   * so all months between turning 65 and the age-70 take-up have indexed
+   * earnings of 0 — well below the running mean — and the post-65 drop-out
+   * removes every one of them. Values come straight from `r70` so they
+   * stay in sync with the engine.
+   */
+  lateTakeUpExample: {
+    startYear: r70.startYear,
+    contribMonths: r70.base.contributoryPeriodMonths,
+    post65DropoutMonths: r70.base.post65DropoutMonths,
+    generalDropoutMonths: r70.base.generalDropoutMonths,
+    monthsRetained: r70.base.monthsRetained,
+    ampe: r70.base.ampe,
+    ampe65: r65.base.ampe,
+    baseMonthly: r70.baseMonthly,
+    baseMonthly65: r65.baseMonthly,
+    adjustmentFactor: r70.adjustmentFactor,
+    /**
+     * What base CPP at 70 WOULD have been without the post-65 drop-out:
+     * the same retained-month sum re-averaged across the longer (624-month)
+     * window inflated by the 60 zero post-65 months that the 17% drop-out
+     * couldn't fully absorb.
+     *
+     * Algebraically, the engine without the rule keeps `keptNoRule` months
+     * after dropping floor(0.17 × 624) = 106 of the 624 contributory months.
+     * Of those 106 dropped months, 60 are the post-65 zeros and 46 are the
+     * lowest-indexed pre-65 months. The remaining 46 pre-65 zeros (1983
+     * → mid-1995, age 18 → ~30) stay in the average at value 0, so AMPE
+     * collapses to (sum_indexed_kept_pre65) / (624 - 106) ≈
+     * sum_indexed_kept_pre65 / 518.
+     *
+     * We approximate sum_indexed_kept_pre65 from the WITH-rule result:
+     * `monthsRetained` months at AMPE_70 each (since with the rule the
+     * 17% drop-out catches the 1983-1995 zeros and the rest are at the
+     * AYMPE/12 cap).
+     */
+    baseMonthlyWithoutRule:
+      ((r70.base.ampe * r70.base.monthsRetained) /
+        (r70.base.contributoryPeriodMonths -
+          Math.floor(r70.base.contributoryPeriodMonths * 0.17))) *
+      0.25 *
+      r70.adjustmentFactor,
+  },
+
   disabilityExample: {
     workStartYear: CRDO_WORK_START_YEAR,
     gapStartYear: DIS_GAP_START_YEAR,

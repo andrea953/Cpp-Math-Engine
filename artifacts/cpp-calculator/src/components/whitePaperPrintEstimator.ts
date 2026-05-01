@@ -95,11 +95,46 @@ export function estimateWhitePaperPageCount(
   });
   breakOffsets.push(clone.scrollHeight);
 
+  // Model `page-break-inside: avoid` overflow: when a keep-together block
+  // (formulas, section headings, ul/ol) doesn't fit at the bottom of the
+  // current page, the print pipeline pushes it to the next page, leaving
+  // the unused tail of the current page as slack. The base estimator only
+  // sums raw heights, so without this adjustment it under-counts whenever
+  // keep-together blocks straddle page boundaries.
+  const keepTogetherSelector =
+    ".print-formula, .print-section-heading, ul, ol";
+  const keepTogether = Array.from(
+    clone.querySelectorAll<HTMLElement>(keepTogetherSelector),
+  ).map((el) => {
+    const rect = el.getBoundingClientRect();
+    return {
+      top: rect.top - cloneTop,
+      height: Math.min(rect.height, geom.pageContentPx),
+    };
+  });
+
   let pages = 0;
   for (let i = 0; i < breakOffsets.length - 1; i++) {
-    const segHeight = breakOffsets[i + 1] - breakOffsets[i];
+    const segStart = breakOffsets[i];
+    const segHeight = breakOffsets[i + 1] - segStart;
     if (segHeight <= 0) continue;
-    pages += Math.max(1, Math.ceil(segHeight / geom.pageContentPx));
+
+    // Walk keep-together blocks in this segment in document order; if a
+    // block crosses a page boundary, snap the running cursor to the next
+    // boundary (modelling the push-to-next-page).
+    const blocksInSeg = keepTogether
+      .filter((b) => b.top >= segStart && b.top < segStart + segHeight)
+      .sort((a, b) => a.top - b.top);
+
+    let slack = 0;
+    for (const b of blocksInSeg) {
+      const yInSeg = b.top - segStart + slack;
+      const pageOffset = yInSeg % geom.pageContentPx;
+      if (pageOffset + b.height > geom.pageContentPx) {
+        slack += geom.pageContentPx - pageOffset;
+      }
+    }
+    pages += Math.max(1, Math.ceil((segHeight + slack) / geom.pageContentPx));
   }
 
   document.body.removeChild(clone);

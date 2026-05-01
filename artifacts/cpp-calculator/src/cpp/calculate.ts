@@ -224,10 +224,53 @@ function calculateBase(
     return { ...p, indexedMonthly: indexed };
   });
 
-  // Apply general drop-out: drop the lowest 17% of months
-  const totalMonths = indexedPoints.length;
+  // ---------------------------------------------------------------------------
+  // Post-65 / late take-up drop-out ("age 65 drop-out")
+  //
+  // CPP rule: if you delay starting your retirement pension past age 65, any
+  // months between age 65 and the date you start CPP are removed from the
+  // contributory period IF doing so raises your benefit. This is a separate
+  // provision from the 17% general drop-out and does not consume the 17%
+  // allowance.
+  //
+  // Greedy implementation: sort post-65 months by indexed earnings ascending,
+  // drop them while the lowest is strictly below the running mean (since
+  // dropping a value < mean always raises the mean). Stop at the first
+  // post-65 month whose value is at or above the mean — once that's reached,
+  // no remaining post-65 month is below the (new, higher) mean either.
+  // ---------------------------------------------------------------------------
+  const age65 = ageToYearMonth(inputs.birthYear, inputs.birthMonth, 65);
+  const isPost65 = (p: { year: number; month: number }) =>
+    p.year > age65.year || (p.year === age65.year && p.month >= age65.month);
+
+  let workingPoints = indexedPoints;
+  let post65DropoutMonths = 0;
+  if (startAge > 65 && indexedPoints.length > 0) {
+    const post65Sorted = indexedPoints
+      .map((p, idx) => ({ idx, val: p.indexedMonthly, post65: isPost65(p) }))
+      .filter((x) => x.post65)
+      .sort((a, b) => a.val - b.val);
+
+    let runningSum = indexedPoints.reduce((acc, p) => acc + p.indexedMonthly, 0);
+    let runningCount = indexedPoints.length;
+    const droppedIdx = new Set<number>();
+    for (const m of post65Sorted) {
+      const mean = runningSum / runningCount;
+      if (m.val >= mean) break;
+      droppedIdx.add(m.idx);
+      runningSum -= m.val;
+      runningCount -= 1;
+    }
+    post65DropoutMonths = droppedIdx.size;
+    if (post65DropoutMonths > 0) {
+      workingPoints = indexedPoints.filter((_, idx) => !droppedIdx.has(idx));
+    }
+  }
+
+  // Apply general drop-out: drop the lowest 17% of remaining months
+  const totalMonths = workingPoints.length;
   const dropCount = Math.floor(totalMonths * GENERAL_DROPOUT_RATE);
-  const sorted = [...indexedPoints].sort((a, b) => a.indexedMonthly - b.indexedMonthly);
+  const sorted = [...workingPoints].sort((a, b) => a.indexedMonthly - b.indexedMonthly);
   const kept = sorted.slice(dropCount);
   const generalDropoutMonths = totalMonths - kept.length;
 
@@ -249,6 +292,7 @@ function calculateBase(
     contributoryPeriodMonths: points.length,
     crdoMonthsDropped,
     disabilityMonthsDropped,
+    post65DropoutMonths,
     generalDropoutMonths,
     monthsRetained: kept.length,
     ampe: ampeCapped,
