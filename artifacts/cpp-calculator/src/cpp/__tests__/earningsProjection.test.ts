@@ -9,7 +9,7 @@
  *  - History values are never overwritten
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildEffectiveEarnings } from "../calculate";
+import { buildEffectiveEarnings, calculateCpp } from "../calculate";
 import type { ScenarioInputs } from "../types";
 import { pinYear, unpinTime } from "./_time";
 
@@ -193,5 +193,65 @@ describe("buildEffectiveEarnings", () => {
     // un-covered year. So 2029 gets `80000 × (1 + 0.02)^3` (skipped 2026/27/28).
     expect(map.get(2029)).toBeCloseTo(80000 * Math.pow(1.02, 3), 4);
     expect(map.get(2030)).toBeCloseTo(80000 * Math.pow(1.02, 4), 4);
+  });
+});
+
+describe("calculateCpp input validation (defensive guards)", () => {
+  /**
+   * Regression: a transient typo in the birth-year input (e.g. "19650"
+   * mid-keystroke while typing "1965") used to crash the editor with a
+   * "Maximum call stack size exceeded" error. Cause: the projection loop
+   * in `buildEffectiveEarnings` ran from `currentYear` to
+   * `birthYear + stopWorkAge`, populating a Map with hundreds of
+   * thousands of entries, which then overflowed the JS engine's
+   * spread-arg limit when `Math.min(...byYear.keys(), …)` was called.
+   *
+   * The guard returns an empty `byStartAge` for out-of-range birth
+   * years (1900-2100). The defensive switch from spread-Math.min to a
+   * reduce-based min/max in `buildEffectiveEarnings` is a separate
+   * defence so even an in-range scenario can't blow the stack.
+   */
+  it("birth years outside [1900, 2100] short-circuit to an empty result instead of crashing", () => {
+    for (const birthYear of [19650, 1899, 2101, 0, -1965, 1e9, NaN, Infinity]) {
+      const inputs: ScenarioInputs = {
+        birthYear: birthYear as number,
+        birthMonth: 6,
+        earningsHistory: [],
+        assumptions: {
+          ympeGrowthRate: 0.031,
+          yampeGrowthRate: 0.031,
+          indexingRate: 0.025,
+          futureEarningsGrowthRate: 0.02,
+          assumedFutureEarnings: 60000,
+          stopWorkAge: 65,
+        },
+        startAges: [60, 65, 70],
+      };
+      // Must not throw, and must return early with a warning.
+      const result = calculateCpp(inputs);
+      expect(result.byStartAge).toEqual([]);
+      expect(result.warnings.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("buildEffectiveEarnings does not blow the call stack even when given a degenerate endYear", () => {
+    // Direct test of the spread-Math.min defence. Even if upstream
+    // validation were bypassed, building 200k years of projection
+    // shouldn't crash the runtime.
+    const inputs: ScenarioInputs = {
+      birthYear: 1965,
+      birthMonth: 6,
+      earningsHistory: [{ year: 2000, pensionableEarnings: 50000 }],
+      assumptions: {
+        ympeGrowthRate: 0,
+        yampeGrowthRate: 0,
+        indexingRate: 0,
+        futureEarningsGrowthRate: 0,
+        assumedFutureEarnings: 50000,
+        stopWorkAge: 200_000,
+      },
+      startAges: [65],
+    };
+    expect(() => buildEffectiveEarnings(inputs, 200_000)).not.toThrow();
   });
 });

@@ -125,10 +125,19 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
           <Input
             id="birth-year"
             type="number"
+            min={1900}
+            max={2100}
             value={inputs.birthYear}
-            onChange={(e) =>
-              onChange(patch(inputs, { birthYear: Number(e.target.value) || inputs.birthYear }))
-            }
+            onChange={(e) => {
+              const raw = Number(e.target.value);
+              if (!Number.isFinite(raw)) return;
+              // Clamp to a sane range so a transient typo (e.g. "19650"
+              // while typing "1965") can't blow up the projection loop in
+              // calculateCpp by inflating birthYear + stopWorkAge to a
+              // 6-digit year.
+              const clamped = Math.min(2100, Math.max(1900, Math.trunc(raw)));
+              onChange(patch(inputs, { birthYear: clamped }));
+            }}
           />
         </div>
         <div>

@@ -100,8 +100,13 @@ export function buildEffectiveEarnings(
   const stopYearMonth = ageToYearMonth(inputs.birthYear, inputs.birthMonth, inputs.assumptions.stopWorkAge);
   const stopYear = stopYearMonth.year;
 
-  const histYears = inputs.earningsHistory.map((r) => r.year);
-  const lastHistYear = histYears.length > 0 ? Math.max(...histYears) : inputs.birthYear + 17;
+  // Reduce instead of `Math.max(...histYears)` for the same reason as below:
+  // a malformed earningsHistory shouldn't be able to overflow the spread-arg
+  // limit. In practice histYears is small (~50 entries) but defence in depth.
+  let lastHistYear = inputs.birthYear + 17;
+  for (const r of inputs.earningsHistory) {
+    if (r.year > lastHistYear) lastHistYear = r.year;
+  }
 
   // Project assumed earnings forward. Start from the earlier of (lastHistYear+1)
   // or the current calendar year so the assumption covers the current year even
@@ -117,9 +122,20 @@ export function buildEffectiveEarnings(
     projected = projected * (1 + inputs.assumptions.futureEarningsGrowthRate);
   }
 
+  // Compute min/max year via reduction rather than `Math.min(...keys, x)` —
+  // spreading a Map iterator with many entries past the engine's spread-arg
+  // limit (~65k in V8) throws "Maximum call stack size exceeded". This is a
+  // defensive guard: with a sane birthYear `byYear` is small, but a transient
+  // typo in the birth-year input (e.g. "19650") can briefly inflate the
+  // projection range to hundreds of thousands of years before the next
+  // render clamps it.
+  let minYear = inputs.birthYear + 18;
+  let maxYear = endYear;
+  for (const y of byYear.keys()) {
+    if (y < minYear) minYear = y;
+    if (y > maxYear) maxYear = y;
+  }
   const result: EarningsRecord[] = [];
-  const minYear = Math.min(...byYear.keys(), inputs.birthYear + 18);
-  const maxYear = Math.max(...byYear.keys(), endYear);
   for (let y = minYear; y <= maxYear; y++) {
     result.push({ year: y, pensionableEarnings: byYear.get(y) ?? 0 });
   }
@@ -451,7 +467,21 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
   if (!inputs.startAges || inputs.startAges.length === 0) {
     return { byStartAge: [], effectiveEarnings: [], warnings: ["No start ages provided"] };
   }
-  if (inputs.birthYear < 1900) warnings.push("Birth year looks unreasonable");
+  // Bail out early on insane birth years rather than letting the projection
+  // loop run for hundreds of thousands of iterations (which crashes the UI
+  // mid-edit if the user types e.g. "19650" before correcting it). Anything
+  // outside [1900, 2100] cannot produce a meaningful CPP projection anyway.
+  if (
+    !Number.isFinite(inputs.birthYear) ||
+    inputs.birthYear < 1900 ||
+    inputs.birthYear > 2100
+  ) {
+    return {
+      byStartAge: [],
+      effectiveEarnings: [],
+      warnings: [`Birth year ${inputs.birthYear} is out of range (1900-2100)`],
+    };
+  }
 
   // Latest start year we need to project to
   const latestStartAge = Math.max(...inputs.startAges);
