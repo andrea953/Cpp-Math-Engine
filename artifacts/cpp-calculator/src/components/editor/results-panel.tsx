@@ -511,31 +511,60 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
             (start-year) dollars as the user's projected benefit. See
             `calculate.ts` and `StartAgeResult.percentOfMaximum`. */}
         {(() => {
+          // Two framings of "% of maximum" (see calculate.ts and
+          // StartAgeResult). The "at this age" ratio is invariant across
+          // start ages because numerator and denominator both scale by the
+          // same actuarial factor — it isolates earnings-record strength.
+          // The "vs. age-65 max" ratio scales with the actuarial factor and
+          // visualises the timing decision (≈64% at 60, ≈142% at 70).
+          const atAgePct = result.percentOfMaximum * 100;
+          const vs65Pct = result.percentOfAge65Maximum * 100;
           // Single source of truth for the clamped 0–100 value — keeps the
           // visual bar width and the ARIA value in sync, so screen readers
-          // never announce an out-of-range progressbar value even if the
-          // raw `percentOfMaximum` exceeds 1.0 (rare edge cases noted in
-          // the field doc comment).
-          const rawPct = result.percentOfMaximum * 100;
-          const clampedPct = Math.min(100, Math.max(0, rawPct));
+          // never announce an out-of-range progressbar value even if either
+          // raw percentage exceeds 1.0 (rare edge cases noted in the field
+          // doc comment, and the common ≈142% case at age 70).
+          const atAgeClamped = Math.min(100, Math.max(0, atAgePct));
+          const vs65Clamped = Math.min(100, Math.max(0, vs65Pct));
           return (
-            <div className="space-y-1">
-              <div className="flex items-baseline justify-between gap-2 text-xs">
-                <span className="text-muted-foreground">% of maximum</span>
-                <span className="font-mono font-medium tabular-nums">{rawPct.toFixed(1)}%</span>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-muted-foreground">% of max at this age</span>
+                  <span className="font-mono font-medium tabular-nums">{atAgePct.toFixed(1)}%</span>
+                </div>
+                <div
+                  className="h-1.5 overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-label={`Projected benefit as a percent of the maximum CPP retirement pension at age ${result.startAge}`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(atAgeClamped)}
+                >
+                  <div className="h-full bg-primary" style={{ width: `${atAgeClamped}%` }} />
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  Max at age {result.startAge} in {result.startYear}: {formatMoney(result.maxMonthlyAtStart, true)}/mo
+                </div>
               </div>
-              <div
-                className="h-1.5 overflow-hidden rounded-full bg-muted"
-                role="progressbar"
-                aria-label={`Projected benefit as a percent of the maximum CPP retirement pension at age ${result.startAge}`}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(clampedPct)}
-              >
-                <div className="h-full bg-primary" style={{ width: `${clampedPct}%` }} />
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                Max at age {result.startAge} in {result.startYear}: {formatMoney(result.maxMonthlyAtStart, true)}/mo
+              <div className="space-y-1">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-muted-foreground">% of age-65 max</span>
+                  <span className="font-mono font-medium tabular-nums">{vs65Pct.toFixed(1)}%</span>
+                </div>
+                <div
+                  className="h-1.5 overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-label={`Projected benefit as a percent of the age-65 maximum CPP retirement pension in ${result.startYear}`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(vs65Clamped)}
+                >
+                  <div className="h-full bg-primary/60" style={{ width: `${vs65Clamped}%` }} />
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  Age-65 max in {result.startYear}: {formatMoney(result.maxMonthlyAtAge65, true)}/mo
+                </div>
               </div>
             </div>
           );

@@ -105,9 +105,28 @@ export interface StartAgeResult {
    * expressed as a fraction of the maximum possible benefit for someone taking
    * up at the same age in the same year. Values can exceed 1.0 in edge cases
    * (e.g. very high earners with a heavy enhancement contribution history),
-   * but are typically in the 0.0–1.0 range.
+   * but are typically in the 0.0–1.0 range. This ratio is invariant across
+   * start ages because both numerator and denominator scale by the same
+   * actuarial adjustment factor — it measures the strength of the user's
+   * earnings record, independent of the timing decision.
    */
   percentOfMaximum: number;
+  /**
+   * Maximum monthly CPP retirement pension at age 65 in the user's start year
+   * (no actuarial adjustment applied). Wage-indexed forward via
+   * `ympeGrowthRate`. Used as the absolute reference point for
+   * `percentOfAge65Maximum`.
+   */
+  maxMonthlyAtAge65: number;
+  /**
+   * `totalMonthly / maxMonthlyAtAge65` — the user's projected monthly benefit
+   * expressed as a fraction of the *age-65* max in their start year. Unlike
+   * `percentOfMaximum`, this DOES change with start age (because the numerator
+   * scales by the actuarial factor while the denominator does not). At age 60
+   * a max-earner shows ~64%; at age 70, ~142%. Useful for visualising the
+   * timing decision.
+   */
+  percentOfAge65Maximum: number;
 
   /** Diagnostics for the base calculation */
   base: BaseCalcDiagnostics;

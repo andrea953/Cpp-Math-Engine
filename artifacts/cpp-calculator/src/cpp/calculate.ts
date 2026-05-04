@@ -523,7 +523,14 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
     // is a clean apples-to-apples comparison.
     const maxAt65AtStartYear = getMaxBenefitAt65(start.year, inputs.assumptions.ympeGrowthRate);
     const maxMonthlyAtStart = maxAt65AtStartYear * base.adjustmentFactor;
+    // Two complementary "% of maximum" framings (see types.ts):
+    //   percentOfMaximum     — vs. someone taking up at this same age (ratio
+    //                          invariant across start ages; measures earnings
+    //                          record strength).
+    //   percentOfAge65Maximum — vs. the un-adjusted age-65 max (scales with
+    //                          the actuarial factor; visualises timing).
     const percentOfMaximum = maxMonthlyAtStart > 0 ? totalMonthly / maxMonthlyAtStart : 0;
+    const percentOfAge65Maximum = maxAt65AtStartYear > 0 ? totalMonthly / maxAt65AtStartYear : 0;
 
     byStartAge.push({
       startAge: age,
@@ -537,6 +544,8 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
       totalAnnual: totalMonthly * 12,
       maxMonthlyAtStart,
       percentOfMaximum,
+      maxMonthlyAtAge65: maxAt65AtStartYear,
+      percentOfAge65Maximum,
       base: base.diag,
       enhancement: enh.diag,
       cumulativeByAge,
