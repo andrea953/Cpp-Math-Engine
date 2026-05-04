@@ -737,7 +737,7 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                     <DiagRow label="General 17% drop-out months" value={r.base.generalDropoutMonths} />
                     <DiagRow label="Months retained" value={r.base.monthsRetained} />
                     <DiagRow label="AMPE (monthly)" value={formatMoney(r.base.ampe, true)} />
-                    <DiagRow label="AYMPE start year" value={formatMoney(r.base.aympeStartYear)} />
+                    <DiagRow label="AYMPE in start year" value={formatMoney(r.base.aympeStartYear)} />
                     <DiagRow label="Adjustment factor" value={r.adjustmentFactor.toFixed(4)} />
                   </div>
                   <div>
