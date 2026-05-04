@@ -460,6 +460,10 @@ function DiagnosticsSection({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                   <td>{r.base.generalDropoutMonths}</td>
                 </tr>
                 <tr>
+                  <th>Post-65 drop-out months</th>
+                  <td>{r.base.post65DropoutMonths}</td>
+                </tr>
+                <tr>
                   <th>Months retained for AMPE</th>
                   <td>{r.base.monthsRetained}</td>
                 </tr>

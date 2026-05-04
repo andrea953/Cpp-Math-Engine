@@ -735,6 +735,7 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                     <DiagRow label="CRDO months dropped" value={r.base.crdoMonthsDropped} />
                     <DiagRow label="Disability months dropped" value={r.base.disabilityMonthsDropped} />
                     <DiagRow label="General 17% drop-out months" value={r.base.generalDropoutMonths} />
+                    <DiagRow label="Post-65 drop-out months" value={r.base.post65DropoutMonths} />
                     <DiagRow label="Months retained" value={r.base.monthsRetained} />
                     <DiagRow label="AMPE (monthly)" value={formatMoney(r.base.ampe, true)} />
                     <DiagRow label="AYMPE in start year" value={formatMoney(r.base.aympeStartYear)} />
