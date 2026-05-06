@@ -687,13 +687,13 @@ function AssumptionsForm({ inputs, onChange }: InputsPanelProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <PercentInput
           label="YMPE growth rate"
-          hint="Used to project the Year's Maximum Pensionable Earnings beyond published values, and to index past earnings to start-year dollars."
+          hint="Used to project the Year's Maximum Pensionable Earnings beyond published values, and to index past earnings to start-year dollars. Drives the AYMPE-indexing lift you see between earlier and later take-up ages on the base CPP and Tier 1 figures — set to 0% to compare ages purely on the actuarial factor (e.g. exactly 1.42× between 65 and 70)."
           value={a.ympeGrowthRate}
           onChange={(n) => setA({ ympeGrowthRate: n })}
         />
         <PercentInput
           label="YAMPE growth rate"
-          hint="Annual growth rate of the Year's Additional Maximum Pensionable Earnings (Tier 2 enhancement, 2024+)."
+          hint="Annual growth rate of the Year's Additional Maximum Pensionable Earnings (Tier 2 enhancement, 2024+). Independent of YMPE growth — to compare take-up ages purely on the 0.7%/mo actuarial factor, set BOTH YMPE growth and YAMPE growth to 0%. Leaving YAMPE at a positive rate while YMPE is 0% will lift the Tier 2 component above the actuarial ratio between earlier and later take-up ages."
           value={a.yampeGrowthRate}
           onChange={(n) => setA({ yampeGrowthRate: n })}
         />
