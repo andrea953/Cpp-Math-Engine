@@ -7,11 +7,13 @@ import {
   Info,
   AlertCircle,
   Loader2,
+  Wand2,
 } from "lucide-react";
 import {
   parseSoc,
   YMPE_HISTORY,
   buildDefaultSurvivorInputs,
+  buildYmpeMaxEarnings,
   type EarningsRecord,
   type DropoutPeriod,
   type ScenarioInputs,
@@ -253,6 +255,20 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
     setRecords(merged);
   }
 
+  function fillWithYmpeMax() {
+    // Fill in missing years (age 18 -> last published YMPE year) at the YMPE
+    // maximum. Existing entries are preserved so planners don't lose any
+    // already-entered or already-imported values.
+    const maxRecords = buildYmpeMaxEarnings(inputs.birthYear);
+    const byYear = new Map<number, number>();
+    for (const r of maxRecords) byYear.set(r.year, r.pensionableEarnings);
+    for (const r of sorted) byYear.set(r.year, r.pensionableEarnings);
+    const merged = Array.from(byYear.entries())
+      .map(([year, pensionableEarnings]) => ({ year, pensionableEarnings }))
+      .sort((a, b) => a.year - b.year);
+    setRecords(merged);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-5">
@@ -263,6 +279,16 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" onClick={fillWithYmpeMax}>
+                <Wand2 className="mr-2 h-4 w-4" /> Fill with YMPE max
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              Pre-populate the table with the YMPE maximum from age 18 through the most recent published year. Existing rows are preserved — use this for a quick max-earner baseline, then override individual years (or import a Statement of Contributions).
+            </TooltipContent>
+          </Tooltip>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -285,7 +311,7 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
 
       {sorted.length === 0 ? (
         <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
-          No earnings entered yet. Add years manually or import from a Service Canada Statement of Contributions.
+          No earnings entered yet. Click <strong>Fill with YMPE max</strong> for a quick max-earner baseline, add years manually, or import from a Service Canada Statement of Contributions.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border bg-card">
