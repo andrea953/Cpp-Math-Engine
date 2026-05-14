@@ -79,6 +79,60 @@ describe("SOC parser — currency and thousands separators", () => {
   });
 });
 
+describe("SOC parser — Service Canada flag suffixes (M/S/B/A)", () => {
+  // Service Canada flags individual SOC values with single-letter codes:
+  // M = year's max reached, S = self-employed, B = below YBE, A = amended.
+  // The flag is glued to the dollar value with a single space in the rendered
+  // PDF, e.g. "$51,100.00 M". Without preprocessing, the tokenizer would
+  // produce the unparseable token "$51100.00 M" and fall back to the
+  // contribution amount instead of the pensionable earnings.
+
+  it("strips trailing M flag and picks the pensionable earnings", () => {
+    const input = "2013   $2,356.20    $2,356.20 $51,100.00 M";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2013, pensionableEarnings: 51100 }]);
+  });
+
+  it("strips B flag (below year's basic exemption)", () => {
+    const input = "2008   $0.00    $0.00   $0.00  B";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2008, pensionableEarnings: 0 }]);
+  });
+
+  it("strips multiple flags on one row (S contribution + M earnings)", () => {
+    const input = "2021   $3,771.90 S $381.00   $4,152.90 $61,600.00 M $61,600.00 M";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2021, pensionableEarnings: 61600 }]);
+  });
+
+  it("parses a full Service Canada SOC PDF transcript end-to-end", () => {
+    // Real layout from the user's "MICHAEL S VENTRESCA" SOC PDF (Mar 1983)
+    const input = `2003               $14.18                                                            $14.18        $3,786.00
+2004               $103.65                                                           $103.65       $5,594.00
+2005               $171.12                                                           $171.12       $6,957.00
+2008               $0.00                                                             $0.00         $0.00        B
+2012               $2,306.70                                                         $2,306.70 $50,099.00
+2013               $2,356.20                                                         $2,356.20 $51,100.00 M
+2018               $2,593.80                                                         $2,593.80 $55,900.00 M
+2019               $2,668.05         $80.85                                          $2,748.90 $57,400.00 M $57,400.00 M
+2021               $3,771.90 S $381.00                                               $4,152.90 $61,600.00 M $61,600.00 M
+2023               $6,246.90 S $1,262.00                                             $7,508.90 $66,600.00 M $66,600.00 M`;
+    const result = parseSoc(input);
+    expect(result.records).toEqual([
+      { year: 2003, pensionableEarnings: 3786 },
+      { year: 2004, pensionableEarnings: 5594 },
+      { year: 2005, pensionableEarnings: 6957 },
+      { year: 2008, pensionableEarnings: 0 },
+      { year: 2012, pensionableEarnings: 50099 },
+      { year: 2013, pensionableEarnings: 51100 },
+      { year: 2018, pensionableEarnings: 55900 },
+      { year: 2019, pensionableEarnings: 57400 },
+      { year: 2021, pensionableEarnings: 61600 },
+      { year: 2023, pensionableEarnings: 66600 },
+    ]);
+  });
+});
+
 describe("SOC parser — duplicates", () => {
   it("dedupes by year, keeping the last occurrence", () => {
     const input = "2024,50000\n2024,55000\n2025,60000";

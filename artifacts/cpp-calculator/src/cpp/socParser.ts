@@ -34,6 +34,23 @@ function stripThousandsCommas(s: string): string {
   return s.replace(/\b\d{1,3}(?:,\d{3})+(?!\d)/g, (m) => m.replace(/,/g, ""));
 }
 
+/**
+ * Service Canada flags individual SOC values with single-letter codes:
+ *   M = year's maximum pensionable earnings reached
+ *   S = self-employed contribution
+ *   B = below the year's basic exemption
+ *   A = amended
+ * They appear in the rendered PDF as a lone capital letter following a
+ * dollar value, separated only by a single space (e.g. "$51,100.00 M").
+ * Without preprocessing, the `\s{2,}` tokenizer would glue the flag to the
+ * value (yielding the unparseable token "$51100.00 M") and the parser would
+ * fall back to the contribution amount instead of the pensionable earnings.
+ * Strip these flag letters so the value becomes a clean numeric token.
+ */
+function stripSocFlags(s: string): string {
+  return s.replace(/(\d)\s+([MSBA])\b/g, "$1");
+}
+
 function cleanNumber(raw: string): number | null {
   if (!raw) return null;
   const stripped = raw
@@ -64,15 +81,21 @@ export function parseSoc(input: string): SocParseResult {
       continue;
     }
 
-    // Tokenize on tabs, commas, or runs of whitespace, but first remove any
-    // thousands-separator commas inside numbers so "$42,000" stays one token.
-    const tokens = stripThousandsCommas(line)
-      .split(/[,\t]|\s{2,}/)
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
+    // Extract numeric tokens directly via regex after stripping thousands
+    // commas and Service Canada flag letters. We can't tokenize by whitespace
+    // alone because the rendered SOC PDF sometimes separates adjacent numeric
+    // columns with a single space (e.g. "$2,356.20 $51,100.00"), and we can't
+    // tokenize by single whitespace because other inputs use spaces inside
+    // labels. Regex-based numeric extraction handles both cleanly.
+    const cleanedLine = stripSocFlags(stripThousandsCommas(line));
+    const numericTokens: number[] = [];
+    for (const m of cleanedLine.matchAll(/-?\d+(?:\.\d+)?/g)) {
+      const n = Number(m[0]);
+      if (Number.isFinite(n)) numericTokens.push(n);
+    }
 
-    if (tokens.length < 2) {
-      // Single-token lines (probably labels) — skip
+    if (numericTokens.length < 2) {
+      // Header/label lines or rows with only a year — skip
       skippedLines += 1;
       continue;
     }
@@ -86,12 +109,9 @@ export function parseSoc(input: string): SocParseResult {
     //
     // For simple "year, earnings" CSV input there's only one non-year number,
     // so picking the largest is equivalent.
-    const numericTokens = tokens.map((t) => cleanNumber(t));
     let year: number | null = null;
     let earnings: number | null = null;
-    for (let i = 0; i < numericTokens.length; i++) {
-      const n = numericTokens[i];
-      if (n === null) continue;
+    for (const n of numericTokens) {
       if (year === null && looksLikeYear(n)) {
         year = n;
         continue;
