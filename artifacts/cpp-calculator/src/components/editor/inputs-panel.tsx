@@ -584,9 +584,33 @@ function DropoutsForm({ inputs, onChange }: InputsPanelProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => add("crdo")}>
-            <Plus className="mr-2 h-4 w-4" /> CRDO
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="outline" onClick={() => add("crdo")}>
+              <Plus className="mr-2 h-4 w-4" /> CRDO
+            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="More info about the Child Rearing Provision"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-left">
+                <p>
+                  It&apos;s a common misconception that this is tied only to your &ldquo;mat
+                  leave&rdquo; or EI period. In reality, the CPP Child Rearing Provision
+                  (CRP) is much more generous.
+                </p>
+                <p className="mt-2">
+                  It doesn&apos;t just cover the few months you were on EI &mdash; it can
+                  cover every month until the child turns 7.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <Button size="sm" variant="outline" onClick={() => add("disability")}>
             <Plus className="mr-2 h-4 w-4" /> Disability
           </Button>
