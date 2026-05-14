@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -118,6 +118,32 @@ export function InputsPanel({ inputs, onChange }: InputsPanelProps) {
 // ---------------------------------------------------------------------------
 
 function PersonForm({ inputs, onChange }: InputsPanelProps) {
+  // Local string state for the birth-year input so transient values during
+  // typing (e.g. "1", "19", "197" on the way to "1972") aren't clamped up to
+  // 1900 on every keystroke and don't corrupt subsequent edits. We only
+  // commit (and clamp) on blur or when a plausible 4-digit year is entered.
+  // calculateCpp itself already clamps birthYear defensively to [1900, 2100],
+  // so partial values never reach the projection loop.
+  const [birthYearDraft, setBirthYearDraft] = useState<string>(String(inputs.birthYear));
+  // Re-sync the draft when the parent input changes (e.g. another scenario
+  // is loaded, or the field is patched programmatically).
+  useEffect(() => {
+    setBirthYearDraft(String(inputs.birthYear));
+  }, [inputs.birthYear]);
+
+  function commitBirthYear(raw: string) {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) {
+      setBirthYearDraft(String(inputs.birthYear));
+      return;
+    }
+    const clamped = Math.min(2100, Math.max(1900, Math.trunc(n)));
+    setBirthYearDraft(String(clamped));
+    if (clamped !== inputs.birthYear) {
+      onChange(patch(inputs, { birthYear: clamped }));
+    }
+  }
+
   return (
     <div className="space-y-4 rounded-lg border bg-card p-5">
       <h3 className="text-sm font-semibold tracking-tight">Personal information</h3>
@@ -129,16 +155,22 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
             type="number"
             min={1900}
             max={2100}
-            value={inputs.birthYear}
+            value={birthYearDraft}
             onChange={(e) => {
-              const raw = Number(e.target.value);
-              if (!Number.isFinite(raw)) return;
-              // Clamp to a sane range so a transient typo (e.g. "19650"
-              // while typing "1965") can't blow up the projection loop in
-              // calculateCpp by inflating birthYear + stopWorkAge to a
-              // 6-digit year.
-              const clamped = Math.min(2100, Math.max(1900, Math.trunc(raw)));
-              onChange(patch(inputs, { birthYear: clamped }));
+              const raw = e.target.value;
+              setBirthYearDraft(raw);
+              // Only commit upstream once the user has typed a plausible
+              // 4-digit year — partial values stay local until blur.
+              const n = Number(raw);
+              if (Number.isFinite(n) && n >= 1900 && n <= 2100 && raw.length === 4) {
+                if (Math.trunc(n) !== inputs.birthYear) {
+                  onChange(patch(inputs, { birthYear: Math.trunc(n) }));
+                }
+              }
+            }}
+            onBlur={(e) => commitBirthYear(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitBirthYear((e.target as HTMLInputElement).value);
             }}
           />
         </div>
