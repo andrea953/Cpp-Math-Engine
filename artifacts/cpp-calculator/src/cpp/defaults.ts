@@ -1,13 +1,20 @@
 import type { EarningsRecord, ScenarioInputs } from "./types";
-import { YMPE_HISTORY } from "./constants";
+import { YAMPE_HISTORY, YMPE_HISTORY } from "./constants";
 import { buildDefaultSurvivorInputs } from "./survivor";
 
 /**
- * Build a year-by-year earnings history at the YMPE maximum, from the year the
- * client turned 18 through the most recent calendar year for which a YMPE
- * value is published. Used to pre-populate the earnings table for new
- * scenarios so that planners start from a "max earner" baseline they can edit
- * down (or replace by uploading a Statement of Contributions).
+ * Build a year-by-year earnings history at the maximum pensionable earnings,
+ * from the year the client turned 18 through the most recent calendar year
+ * for which a YMPE value is published. Used to pre-populate the earnings
+ * table for new scenarios so that planners start from a "max earner"
+ * baseline they can edit down (or replace by uploading a Statement of
+ * Contributions).
+ *
+ * Starting in 2024, CPP2 introduced the Year's Additional Maximum
+ * Pensionable Earnings (YAMPE) — a second tier of pensionable earnings
+ * above the YMPE. A true max earner contributes on the full YAMPE band
+ * (Tier 1 up to YMPE, plus Tier 2 between YMPE and YAMPE), so for
+ * 2024-onward we use YAMPE rather than YMPE as the baseline.
  */
 export function buildYmpeMaxEarnings(birthYear: number): EarningsRecord[] {
   const startYear = birthYear + 18;
@@ -19,8 +26,10 @@ export function buildYmpeMaxEarnings(birthYear: number): EarningsRecord[] {
   const endYear = Math.min(lastKnown, new Date().getFullYear() - 1);
   const out: EarningsRecord[] = [];
   for (let y = Math.max(startYear, knownYears[0]); y <= endYear; y++) {
-    const ympe = YMPE_HISTORY[y];
-    if (ympe !== undefined) out.push({ year: y, pensionableEarnings: ympe });
+    // For 2024+, the true max-earner baseline is YAMPE (the upper Tier 2
+    // ceiling). Pre-2024, only YMPE existed.
+    const cap = YAMPE_HISTORY[y] ?? YMPE_HISTORY[y];
+    if (cap !== undefined) out.push({ year: y, pensionableEarnings: cap });
   }
   return out;
 }
