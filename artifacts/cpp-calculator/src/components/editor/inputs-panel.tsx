@@ -821,6 +821,27 @@ function AssumptionsForm({ inputs, onChange }: InputsPanelProps) {
             onChange={(e) => setA({ stopWorkAge: Number(e.target.value) || 65 })}
             className="tabular-nums"
           />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {(() => {
+              // Resolve "stop work age" to a concrete calendar month/year so
+              // planners can see exactly when future contributions stop.
+              // Convention: contributions are projected up to and including
+              // the month the client reaches stopWorkAge (matches the engine
+              // — see ageToYearMonth in calculate.ts).
+              const wholeYears = Math.floor(a.stopWorkAge);
+              const extraMonths = Math.round((a.stopWorkAge - wholeYears) * 12);
+              let month = inputs.birthMonth + extraMonths;
+              let year = inputs.birthYear + wholeYears;
+              while (month > 12) {
+                month -= 12;
+                year += 1;
+              }
+              const monthName = new Date(2000, month - 1, 1).toLocaleString("en-CA", {
+                month: "long",
+              });
+              return `Future contributions stop ${monthName} ${year} (when the client turns ${a.stopWorkAge}).`;
+            })()}
+          </p>
         </div>
       </div>
     </div>
