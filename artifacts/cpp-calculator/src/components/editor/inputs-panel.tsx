@@ -277,10 +277,18 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
   }
 
   function handleImport(records: EarningsRecord[]) {
+    // Drop any year before the client turned 18. Service Canada SOC PDFs
+    // include a "YMPE Reference Table" appendix listing every year's YMPE
+    // back to 1966 — the parser would otherwise ingest those reference rows
+    // as if they were the client's own earnings. The CPP engine ignores
+    // pre-age-18 months in its contributory period anyway, so these rows
+    // can never represent valid earnings for this client.
+    const minYear = inputs.birthYear + 18;
+    const eligible = records.filter((r) => r.year >= minYear);
     // Merge: prefer imported values for years present in import
     const byYear = new Map<number, number>();
     for (const r of sorted) byYear.set(r.year, r.pensionableEarnings);
-    for (const r of records) byYear.set(r.year, r.pensionableEarnings);
+    for (const r of eligible) byYear.set(r.year, r.pensionableEarnings);
     const merged = Array.from(byYear.entries())
       .map(([year, pensionableEarnings]) => ({ year, pensionableEarnings }))
       .sort((a, b) => a.year - b.year);
