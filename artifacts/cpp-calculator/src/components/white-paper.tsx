@@ -1257,12 +1257,14 @@ export function WhitePaper() {
                 </ExampleLine>
               </Example>
               <p className="text-sm text-muted-foreground">
-                The figure can occasionally exceed <InlineMath>100%</InlineMath> for high earners
-                with a long Tier 1 / Tier 2 contribution history — the published "maximum" reflects
-                the transitional ceiling for someone with a complete career under the pre-2019
-                design, while the engine computes the actual amount a fully-enhanced contributor
-                would accrue. The progress bar on the result cards visually clamps at 100%, but the
-                numeric value shown is the true ratio.
+                The worked example above uses Service Canada&apos;s published base-CPP maximum (the
+                pre-2019 ceiling for a complete career under the original design). On the result
+                cards, the calculator instead compares against the <em>true</em> ceiling — base
+                CPP plus the maximum Tier 1 and Tier 2 enhancements a contributor of the same
+                birth year could accrue with continuous YMPE/YAMPE earnings. With that
+                apples-to-apples denominator, a true max earner lands at exactly{" "}
+                <InlineMath>100%</InlineMath>, and any client&apos;s percentage is bounded above by
+                their birth year&apos;s enhancement phase-in.
               </p>
             </Section>
 

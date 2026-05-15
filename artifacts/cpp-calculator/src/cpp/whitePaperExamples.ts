@@ -408,14 +408,21 @@ export const whitePaperExamples = {
     maxAt65InStartYear60: getMaxBenefitAt65(r60.startYear, YMPE_GROWTH),
     maxAt65InStartYear65: getMaxBenefitAt65(r65.startYear, YMPE_GROWTH),
     maxAt65InStartYear70: getMaxBenefitAt65(r70.startYear, YMPE_GROWTH),
-    /** Max benefit at each take-up age (projected max-at-65 × that age's adjustment factor). */
-    maxAt60: r60.maxMonthlyAtStart,
-    maxAt65: r65.maxMonthlyAtStart,
-    maxAt70: r70.maxMonthlyAtStart,
-    /** Total monthly ÷ max at start age — exactly what the result cards display. */
-    pctOf60: r60.percentOfMaximum,
-    pctOf65: r65.percentOfMaximum,
-    pctOf70: r70.percentOfMaximum,
+    /**
+     * Max benefit at each take-up age (projected base-CPP max-at-65 × that
+     * age's adjustment factor). NOTE: the UI's `maxMonthlyAtStart` field is
+     * the TRUE max (base + Tier 1 + Tier 2 enhancement) — the worked example
+     * here intentionally derives the simpler base-only ceiling so the
+     * formula in the white paper still reads cleanly. The trailing paragraph
+     * after the example explains the gap.
+     */
+    maxAt60: getMaxBenefitAt65(r60.startYear, YMPE_GROWTH) * ADJ_60,
+    maxAt65: getMaxBenefitAt65(r65.startYear, YMPE_GROWTH) * ADJ_65,
+    maxAt70: getMaxBenefitAt65(r70.startYear, YMPE_GROWTH) * ADJ_70,
+    /** Total monthly ÷ base-only max at start age (matches the worked example above). */
+    pctOf60: r60.totalMonthly / (getMaxBenefitAt65(r60.startYear, YMPE_GROWTH) * ADJ_60),
+    pctOf65: r65.totalMonthly / (getMaxBenefitAt65(r65.startYear, YMPE_GROWTH) * ADJ_65),
+    pctOf70: r70.totalMonthly / (getMaxBenefitAt65(r70.startYear, YMPE_GROWTH) * ADJ_70),
   },
 
   total: {

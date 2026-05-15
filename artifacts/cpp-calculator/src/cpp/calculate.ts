@@ -33,7 +33,6 @@ import {
   YBE,
   getAyampe,
   getAympe,
-  getMaxBenefitAt65,
   getYampe,
   getYmpe,
 } from "./constants";
@@ -140,6 +139,34 @@ export function buildEffectiveEarnings(
     result.push({ year: y, pensionableEarnings: byYear.get(y) ?? 0 });
   }
   return result;
+}
+
+/**
+ * Build a synthetic max-earner ScenarioInputs that mirrors the client (same
+ * birth year/month and assumptions) but earns the maximum pensionable amount
+ * every year from age 18 (or CPP start, whichever is later) up through the
+ * year they take up at `startAge`. Pre-2024 the cap is YMPE; 2024+ it is
+ * YAMPE so that Tier 2 contributions are also at the maximum. CRDO and
+ * disability dropouts are stripped — a max earner has no special drop-out
+ * months. Used to compute the true max-CPP denominator for the "% of
+ * maximum" displays so a real max earner shows exactly 100%.
+ */
+function buildMaxEarnerInputs(inputs: ScenarioInputs, startAge: number): ScenarioInputs {
+  const stopYearMonth = ageToYearMonth(inputs.birthYear, inputs.birthMonth, startAge);
+  const startYear = Math.max(inputs.birthYear + 18, CPP_START_YEAR);
+  const earningsHistory: EarningsRecord[] = [];
+  for (let y = startYear; y <= stopYearMonth.year; y++) {
+    const ympe = getYmpe(y, inputs.assumptions.ympeGrowthRate);
+    const cap =
+      y >= TIER2_START_YEAR ? getYampe(y, inputs.assumptions.yampeGrowthRate) : ympe;
+    earningsHistory.push({ year: y, pensionableEarnings: cap });
+  }
+  return {
+    ...inputs,
+    earningsHistory,
+    dropoutPeriods: [],
+    assumptions: { ...inputs.assumptions, stopWorkAge: startAge },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -514,15 +541,26 @@ export function calculateCpp(inputs: ScenarioInputs): CalculationResult {
       inputs.assumptions.ympeGrowthRate,
     );
 
-    // Project the maximum monthly CPP retirement pension forward to the start
-    // year. CPP's max is wage-indexed (grows with YMPE) prior to take-up — so
-    // we project using `ympeGrowthRate`, NOT `indexingRate` (CPI). Multiplying
-    // by the actuarial `adjustmentFactor` gives the equivalent "max" for a
-    // person taking up at this age (e.g. ~0.64× at 60, ~1.42× at 70). The
-    // result is in start-year dollars, matching `totalMonthly` so the ratio
-    // is a clean apples-to-apples comparison.
-    const maxAt65AtStartYear = getMaxBenefitAt65(start.year, inputs.assumptions.ympeGrowthRate);
-    const maxMonthlyAtStart = maxAt65AtStartYear * base.adjustmentFactor;
+    // Compute the TRUE maximum CPP retirement pension by running the same
+    // base + Tier 1 + Tier 2 pipeline against a synthetic max earner: someone
+    // with this same birth year/month who hit the YMPE every year (and the
+    // YAMPE for 2024+, the Tier 2 ceiling). Service Canada's published
+    // MAX_BENEFIT_AT_65 table only covers BASE CPP, so using it as the
+    // denominator caused a true max earner to display ~103–105% once Tier 1
+    // and Tier 2 enhancements were included in the numerator. This synthetic
+    // computation keeps numerator and denominator on the same footing — a
+    // true max earner now lands at exactly 100%.
+    const maxInputs = buildMaxEarnerInputs(inputs, age);
+    const maxEffective = buildEffectiveEarnings(maxInputs, start.year);
+    const maxBase = calculateBase(maxInputs, maxEffective, start.year, start.month, age);
+    const maxEnh = calculateEnhancement(maxInputs, maxEffective, start.year, age);
+    const maxMonthlyAtStart = maxBase.monthly + maxEnh.tier1Monthly + maxEnh.tier2Monthly;
+    // The "% of age-65 max" framing strips out the actuarial factor in the
+    // denominator so the ratio scales with timing (≈64% at 60, ≈142% at 70
+    // for a max earner). Algebraically: max-at-65 in start-year dollars =
+    // maxMonthlyAtStart / adjustmentFactor.
+    const maxAt65AtStartYear =
+      base.adjustmentFactor > 0 ? maxMonthlyAtStart / base.adjustmentFactor : 0;
     // Two complementary "% of maximum" framings (see types.ts):
     //   percentOfMaximum     — vs. someone taking up at this same age (ratio
     //                          invariant across start ages; measures earnings
