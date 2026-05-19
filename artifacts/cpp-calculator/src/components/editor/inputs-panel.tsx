@@ -131,6 +131,34 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
     setBirthYearDraft(String(inputs.birthYear));
   }, [inputs.birthYear]);
 
+  // When the planner edits the birth year, the earnings table (which is
+  // anchored at birthYear + 18) needs to follow — otherwise a scenario
+  // created with the default 1971 birth year keeps showing rows starting in
+  // 1989 even after the planner changes the year to, say, 1985. We only
+  // auto-regenerate when the existing rows still match the YMPE-max
+  // baseline for the old birth year (i.e. the planner hasn't customized
+  // the table yet). Once they've imported a SOC or edited rows, we leave
+  // their data alone.
+  function applyBirthYearChange(newBirthYear: number) {
+    if (newBirthYear === inputs.birthYear) return;
+    const oldBaseline = buildYmpeMaxEarnings(inputs.birthYear);
+    const isUntouched =
+      inputs.earningsHistory.length === oldBaseline.length &&
+      inputs.earningsHistory.every((r, i) =>
+        oldBaseline[i] !== undefined &&
+        r.year === oldBaseline[i].year &&
+        r.pensionableEarnings === oldBaseline[i].pensionableEarnings,
+      );
+    if (isUntouched) {
+      onChange(patch(inputs, {
+        birthYear: newBirthYear,
+        earningsHistory: buildYmpeMaxEarnings(newBirthYear),
+      }));
+    } else {
+      onChange(patch(inputs, { birthYear: newBirthYear }));
+    }
+  }
+
   function commitBirthYear(raw: string) {
     const n = Number(raw);
     if (!Number.isFinite(n)) {
@@ -139,9 +167,7 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
     }
     const clamped = Math.min(2100, Math.max(1900, Math.trunc(n)));
     setBirthYearDraft(String(clamped));
-    if (clamped !== inputs.birthYear) {
-      onChange(patch(inputs, { birthYear: clamped }));
-    }
+    applyBirthYearChange(clamped);
   }
 
   return (
@@ -163,9 +189,7 @@ function PersonForm({ inputs, onChange }: InputsPanelProps) {
               // 4-digit year — partial values stay local until blur.
               const n = Number(raw);
               if (Number.isFinite(n) && n >= 1900 && n <= 2100 && raw.length === 4) {
-                if (Math.trunc(n) !== inputs.birthYear) {
-                  onChange(patch(inputs, { birthYear: Math.trunc(n) }));
-                }
+                applyBirthYearChange(Math.trunc(n));
               }
             }}
             onBlur={(e) => commitBirthYear(e.target.value)}
