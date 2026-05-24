@@ -10,6 +10,16 @@
  */
 
 import type { EarningsRecord } from "./types";
+import { YAMPE_HISTORY, YMPE_HISTORY } from "./constants";
+
+/**
+ * Year CPP2 (Tier 2) launched. SOC PDFs for 2024+ may include a
+ * "Second additional pensionable earnings" column for the YAMPE band
+ * (earnings between YMPE and YAMPE) — when present, those dollars must be
+ * added to the regular pensionable-earnings column to obtain the total
+ * YAMPE-level earnings the engine expects.
+ */
+const TIER2_LAUNCH_YEAR = 2024;
 
 export interface SocParseResult {
   records: EarningsRecord[];
@@ -103,22 +113,60 @@ export function parseSoc(input: string): SocParseResult {
     // Service Canada SOC PDF rows show year + several smaller dollar amounts
     // (Total contribution, Base contribution, optional First/Second additional
     // contributions, optional First/Second additional earnings) plus the user's
-    // Pensionable Earnings. Pensionable earnings is always the LARGEST value on
-    // the row because contributions and additional sub-portions are by
-    // definition smaller than the gross earnings they're computed from.
+    // Pensionable Earnings. Pensionable earnings (Tier 1, capped at YMPE) is
+    // always the LARGEST value on the row because contributions and additional
+    // sub-portions are by definition smaller than the gross earnings they're
+    // computed from.
     //
     // For simple "year, earnings" CSV input there's only one non-year number,
     // so picking the largest is equivalent.
     let year: number | null = null;
     let earnings: number | null = null;
+    // Locate the year first, then consider every other token.
+    const nonYearTokens: number[] = [];
     for (const n of numericTokens) {
       if (year === null && looksLikeYear(n)) {
         year = n;
         continue;
       }
+      nonYearTokens.push(n);
+    }
+    for (const n of nonYearTokens) {
       // Earnings: non-negative, plausibly under $1M, take the maximum on the row.
       if (n >= 0 && n < 1_000_000 && (earnings === null || n > earnings)) {
         earnings = n;
+      }
+    }
+
+    // 2024+ SOC PDFs from Service Canada include a "Second additional
+    // pensionable earnings" column for the YAMPE band (the slice between
+    // YMPE and YAMPE). The engine expects ONE earnings number per year
+    // representing the total pensionable earnings up to YAMPE — so when the
+    // SOC row is rich enough to be a full PDF transcript (≥ 7 non-year
+    // tokens, matching the 2024+ 8-column layout: base / 1st add'l / 2nd
+    // add'l / total contribution + pensionable / 1st add'l pensionable /
+    // 2nd add'l pensionable earnings) we add the rightmost token (the YAMPE
+    // band) to the Tier 1 max.
+    //
+    // We rely on column POSITION rather than magnitude because the Total
+    // contribution and Tier 2 earnings can be similar dollar amounts and
+    // can't be distinguished by size alone (e.g. a sub-YMPE earner with
+    // $2,700 total contributions and $0 Tier 2 earnings).
+    if (
+      year !== null &&
+      earnings !== null &&
+      year >= TIER2_LAUNCH_YEAR &&
+      nonYearTokens.length >= 7
+    ) {
+      const ympe = YMPE_HISTORY[year];
+      const yampe = YAMPE_HISTORY[year];
+      if (ympe !== undefined && yampe !== undefined && yampe > ympe) {
+        // Allow a $50 rounding buffer over the published YAMPE − YMPE band.
+        const tier2Cap = yampe - ympe + 50;
+        const last = nonYearTokens[nonYearTokens.length - 1];
+        if (last > 0 && last < earnings && last <= tier2Cap) {
+          earnings += last;
+        }
       }
     }
 

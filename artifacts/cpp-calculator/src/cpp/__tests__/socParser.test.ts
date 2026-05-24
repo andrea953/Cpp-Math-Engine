@@ -133,6 +133,43 @@ describe("SOC parser — Service Canada flag suffixes (M/S/B/A)", () => {
   });
 });
 
+describe("SOC parser — Tier 2 (YAMPE band) for 2024+", () => {
+  // Service Canada SOC PDFs for 2024+ include a "Second additional pensionable
+  // earnings" column for the YAMPE band (earnings between YMPE and YAMPE).
+  // The engine expects ONE earnings number per year up to YAMPE, so the
+  // parser must sum the regular pensionable earnings + second additional
+  // pensionable earnings for 2024+ full SOC rows.
+
+  it("sums Tier 1 pensionable + Tier 2 second additional for 2024 max earner", () => {
+    // 2024: YMPE $68,500, YAMPE $73,200 (YAMPE−YMPE band = $4,700)
+    // Columns: Year | Base | 1st add'l | 2nd add'l | Total | Pensionable | 1st add'l pensionable | 2nd add'l pensionable
+    const input = "2024  $3,867.50  $307.50  $188.00  $4,363.00  $68,500.00 M  $68,500.00 M  $4,700.00 M";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2024, pensionableEarnings: 73200 }]);
+  });
+
+  it("sums Tier 1 + Tier 2 for 2025 max earner", () => {
+    // 2025: YMPE $71,300, YAMPE $81,200 (band = $9,900)
+    const input = "2025  $4,034.10  $317.85  $396.00  $4,747.95  $71,300.00 M  $71,300.00 M  $9,900.00 M";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2025, pensionableEarnings: 81200 }]);
+  });
+
+  it("does not double-count for a 2024 row with no Tier 2 earnings", () => {
+    // Sub-YMPE earner — second additional pensionable earnings = $0
+    const input = "2024  $2,500.00  $200.00  $0.00  $2,700.00  $50,000.00  $50,000.00  $0.00";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2024, pensionableEarnings: 50000 }]);
+  });
+
+  it("does not add Tier 2 for a bare CSV `2024,earnings` row", () => {
+    // CSV inputs already represent total YAMPE-level earnings — no second pass.
+    const input = "2024,73200";
+    const result = parseSoc(input);
+    expect(result.records).toEqual([{ year: 2024, pensionableEarnings: 73200 }]);
+  });
+});
+
 describe("SOC parser — duplicates", () => {
   it("dedupes by year, keeping the last occurrence", () => {
     const input = "2024,50000\n2024,55000\n2025,60000";
