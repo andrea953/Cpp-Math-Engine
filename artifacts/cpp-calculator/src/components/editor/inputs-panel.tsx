@@ -353,6 +353,26 @@ function EarningsForm({ inputs, onChange }: InputsPanelProps) {
               Pre-populate the table with the YMPE maximum from age 18 through the most recent published year. Existing rows are preserved — use this for a quick max-earner baseline, then override individual years (or import a Statement of Contributions).
             </TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (sorted.length === 0) return;
+                  if (window.confirm(`Clear all ${sorted.length} earnings rows? This cannot be undone.`)) {
+                    setRecords([]);
+                  }
+                }}
+                disabled={sorted.length === 0}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Clear all
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              Remove every row from the earnings table. Useful when you want to start fresh from an empty table before importing a Statement of Contributions or entering rows by hand.
+            </TooltipContent>
+          </Tooltip>
           <Dialog open={importOpen} onOpenChange={setImportOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
