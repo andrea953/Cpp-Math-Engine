@@ -808,6 +808,149 @@ function PercentInput({
   );
 }
 
+// Convert (year, month) → fractional age in years, using whole-month precision
+// so it round-trips losslessly with `ageToYearMonth` in calculate.ts (which
+// derives extra months as `round((age - floor(age)) * 12)`).
+function dateToStopWorkAge(
+  birthYear: number,
+  birthMonth: number,
+  stopYear: number,
+  stopMonth: number,
+): number {
+  const months = (stopYear - birthYear) * 12 + (stopMonth - birthMonth);
+  return months / 12;
+}
+
+function stopWorkAgeToDate(
+  birthYear: number,
+  birthMonth: number,
+  stopWorkAge: number,
+): { year: number; month: number } {
+  // Mirrors ageToYearMonth in src/cpp/calculate.ts.
+  const wholeYears = Math.floor(stopWorkAge);
+  const extraMonths = Math.round((stopWorkAge - wholeYears) * 12);
+  let month = birthMonth + extraMonths;
+  let year = birthYear + wholeYears;
+  while (month > 12) {
+    month -= 12;
+    year += 1;
+  }
+  while (month < 1) {
+    month += 12;
+    year -= 1;
+  }
+  return { year, month };
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+interface StopWorkFieldProps {
+  stopWorkAge: number;
+  birthYear: number;
+  birthMonth: number;
+  onChange: (stopWorkAge: number) => void;
+}
+
+function StopWorkField({ stopWorkAge, birthYear, birthMonth, onChange }: StopWorkFieldProps) {
+  // Engine canon is `stopWorkAge` (fractional years). The UI lets planners
+  // enter the value either as an age or as a concrete month/year — both
+  // modes write back to the same fractional age so the engine, persisted
+  // scenarios, and tests don't need to change.
+  const [mode, setMode] = useState<"age" | "date">("age");
+  const date = stopWorkAgeToDate(birthYear, birthMonth, stopWorkAge);
+  const currentYear = new Date().getFullYear();
+  // Allow a generous range either side of "now" so future-dated retirements
+  // and back-dated stop-work events (e.g. already retired) both fit.
+  const yearOptions: number[] = [];
+  for (let y = birthYear + 18; y <= currentYear + 50; y++) yearOptions.push(y);
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <Label htmlFor="stop-work-age">Stop work</Label>
+        <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setMode("age")}
+            className={`rounded px-2 py-0.5 transition ${
+              mode === "age"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Age
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("date")}
+            className={`rounded px-2 py-0.5 transition ${
+              mode === "date"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Date
+          </button>
+        </div>
+      </div>
+      {mode === "age" ? (
+        <Input
+          id="stop-work-age"
+          type="number"
+          value={stopWorkAge}
+          onChange={(e) => onChange(Number(e.target.value) || 65)}
+          className="tabular-nums"
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={String(date.month)}
+            onValueChange={(v) =>
+              onChange(dateToStopWorkAge(birthYear, birthMonth, date.year, Number(v)))
+            }
+          >
+            <SelectTrigger id="stop-work-age">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONTH_NAMES.map((name, i) => (
+                <SelectItem key={i} value={String(i + 1)}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={String(date.year)}
+            onValueChange={(v) =>
+              onChange(dateToStopWorkAge(birthYear, birthMonth, Number(v), date.month))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <p className="mt-1 text-xs text-muted-foreground">
+        {mode === "age"
+          ? `Future contributions stop ${MONTH_NAMES[date.month - 1]} ${date.year} (when the client turns ${stopWorkAge}).`
+          : `Client is age ${Number.isInteger(stopWorkAge) ? stopWorkAge : stopWorkAge.toFixed(2)} when contributions stop.`}
+      </p>
+    </div>
+  );
+}
+
 function AssumptionsForm({ inputs, onChange }: InputsPanelProps) {
   const a = inputs.assumptions;
   function setA(partial: Partial<typeof a>) {
@@ -856,37 +999,12 @@ function AssumptionsForm({ inputs, onChange }: InputsPanelProps) {
             <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
           </div>
         </div>
-        <div>
-          <Label htmlFor="stop-work-age">Stop work age</Label>
-          <Input
-            id="stop-work-age"
-            type="number"
-            value={a.stopWorkAge}
-            onChange={(e) => setA({ stopWorkAge: Number(e.target.value) || 65 })}
-            className="tabular-nums"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {(() => {
-              // Resolve "stop work age" to a concrete calendar month/year so
-              // planners can see exactly when future contributions stop.
-              // Convention: contributions are projected up to and including
-              // the month the client reaches stopWorkAge (matches the engine
-              // — see ageToYearMonth in calculate.ts).
-              const wholeYears = Math.floor(a.stopWorkAge);
-              const extraMonths = Math.round((a.stopWorkAge - wholeYears) * 12);
-              let month = inputs.birthMonth + extraMonths;
-              let year = inputs.birthYear + wholeYears;
-              while (month > 12) {
-                month -= 12;
-                year += 1;
-              }
-              const monthName = new Date(2000, month - 1, 1).toLocaleString("en-CA", {
-                month: "long",
-              });
-              return `Future contributions stop ${monthName} ${year} (when the client turns ${a.stopWorkAge}).`;
-            })()}
-          </p>
-        </div>
+        <StopWorkField
+          stopWorkAge={a.stopWorkAge}
+          birthYear={inputs.birthYear}
+          birthMonth={inputs.birthMonth}
+          onChange={(stopWorkAge) => setA({ stopWorkAge })}
+        />
       </div>
     </div>
   );
