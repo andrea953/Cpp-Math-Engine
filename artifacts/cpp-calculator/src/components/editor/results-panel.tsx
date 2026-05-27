@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Bar,
   BarChart,
@@ -16,6 +17,7 @@ import {
 } from "recharts";
 import {
   AlertTriangle,
+  ChevronDown,
   Download,
   Sparkles,
   TrendingUp,
@@ -474,6 +476,17 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
   const t1Share = total > 0 ? result.tier1Monthly / total : 0;
   const t2Share = total > 0 ? result.tier2Monthly / total : 0;
 
+  // Per-tier breakdown of "% of max at this age". Each slice is that tier's
+  // monthly amount divided by the SAME max-at-this-age denominator used by
+  // the headline % bar, so the three add up to that overall percentage.
+  // See src/cpp/__tests__/tierBreakdown.test.ts.
+  const max = result.maxMonthlyAtStart;
+  const basePctOfMax = max > 0 ? (result.baseMonthly / max) * 100 : 0;
+  const t1PctOfMax = max > 0 ? (result.tier1Monthly / max) * 100 : 0;
+  const t2PctOfMax = max > 0 ? (result.tier2Monthly / max) * 100 : 0;
+  const totalPctOfMax = max > 0 ? (result.totalMonthly / max) * 100 : 0;
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
   const adj = result.adjustmentFactor;
   const adjLabel = adj === 1 ? "0%" : adj > 1 ? `+${((adj - 1) * 100).toFixed(0)}%` : `${((adj - 1) * 100).toFixed(0)}%`;
 
@@ -546,6 +559,41 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
                 <div className="text-[10px] text-muted-foreground">
                   Max at age {result.startAge} in {result.startYear}: {formatMoney(result.maxMonthlyAtStart, true)}/mo
                 </div>
+                <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
+                  <CollapsibleTrigger
+                    className="mt-1 flex w-full items-center justify-between gap-1 rounded text-[10px] text-muted-foreground hover:text-foreground"
+                    data-testid="button-toggle-tier-breakdown"
+                  >
+                    <span>{breakdownOpen ? "Hide" : "Show"} per-tier breakdown</span>
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform ${breakdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-1.5 space-y-1">
+                    <TierPctRow
+                      label="Base"
+                      color="chart-1"
+                      monthly={result.baseMonthly}
+                      pct={basePctOfMax}
+                    />
+                    <TierPctRow
+                      label="Tier 1"
+                      color="chart-2"
+                      monthly={result.tier1Monthly}
+                      pct={t1PctOfMax}
+                    />
+                    <TierPctRow
+                      label="Tier 2"
+                      color="chart-4"
+                      monthly={result.tier2Monthly}
+                      pct={t2PctOfMax}
+                    />
+                    <div className="flex items-baseline justify-between gap-2 border-t border-border/50 pt-1 text-[11px] font-medium tabular-nums">
+                      <span>Total</span>
+                      <span className="font-mono">{totalPctOfMax.toFixed(2)}%</span>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
               <div className="space-y-1">
                 <div className="flex items-baseline justify-between gap-2 text-xs">
@@ -584,6 +632,31 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function TierPctRow({
+  label,
+  color,
+  monthly,
+  pct,
+}: {
+  label: string;
+  color: string;
+  monthly: number;
+  pct: number;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 text-[11px] tabular-nums">
+      <span className="flex items-center gap-1.5 text-muted-foreground">
+        <span className={`h-2 w-2 shrink-0 rounded-sm bg-[hsl(var(--${color}))]`} />
+        <span>{label}</span>
+      </span>
+      <span className="font-mono">
+        <span className="text-muted-foreground">{formatMoney(monthly, true)} · </span>
+        <span className="font-medium">{pct.toFixed(2)}%</span>
+      </span>
+    </div>
   );
 }
 

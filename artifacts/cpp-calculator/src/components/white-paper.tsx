@@ -1366,6 +1366,55 @@ export function WhitePaper() {
                 <InlineMath>100%</InlineMath>, and any client&apos;s percentage is bounded above by
                 their birth year&apos;s enhancement phase-in.
               </p>
+              <p>
+                Inside each result card, the <strong>Show per-tier breakdown</strong> toggle
+                splits that headline % into its three components — Base, Tier 1, and Tier 2 —
+                each as a share of the same denominator. The three slices always sum to the
+                overall %. This is the same decomposition shown in the reference table below.
+              </p>
+              <div className="overflow-x-auto rounded-md border border-border/60 bg-card/40">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">Take-up year</th>
+                      <th className="px-4 py-2 text-left font-medium">Profile</th>
+                      <th className="px-4 py-2 text-right font-medium">Base</th>
+                      <th className="px-4 py-2 text-right font-medium">Tier 1</th>
+                      <th className="px-4 py-2 text-right font-medium">Tier 2</th>
+                      <th className="px-4 py-2 text-right font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    <tr>
+                      <td className="px-4 py-2">2026</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        Max earner, age 65 (8 yrs Tier 1, 3 yrs Tier 2)
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono">95.81%</td>
+                      <td className="px-4 py-2 text-right font-mono">3.55%</td>
+                      <td className="px-4 py-2 text-right font-mono">0.64%</td>
+                      <td className="px-4 py-2 text-right font-mono font-semibold">100.00%</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-2">2070</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        Max earner, age 65 (both clocks fully accrued)
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono">66.25%</td>
+                      <td className="px-4 py-2 text-right font-mono">21.47%</td>
+                      <td className="px-4 py-2 text-right font-mono">12.28%</td>
+                      <td className="px-4 py-2 text-right font-mono font-semibold">100.00%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Two things to notice. First, today the CPP maximum is still ~96¢ on the dollar
+                Base CPP — the enhancement clocks have barely started. Second, by ~2070 the mix
+                shifts to roughly two-thirds Base, one-third enhancement; that is the eventual
+                structural shape of the maximum once both 40-year clocks finish running.
+                Locked in by <code>src/cpp/__tests__/tierBreakdown.test.ts</code>.
+              </p>
             </Section>
 
             <Section>
