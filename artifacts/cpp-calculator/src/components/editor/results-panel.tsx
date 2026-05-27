@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Bar,
@@ -52,8 +52,72 @@ interface ResultsPanelProps {
   scenarioTitle: string;
 }
 
+// ---------------------------------------------------------------------------
+// Display-mode context: lets every sub-card (cards, charts, diagnostics)
+// reframe start-year nominal $ into today's dollars on demand.
+//
+// PWL's CPP calculator and most client-facing planning tools default to
+// today's-dollars. Our engine returns start-year nominal, which is the right
+// number for breakeven math (it's what the cheque actually says) but feels
+// inflated to a 60-year-old looking at age-70 numbers. The toggle lets a
+// planner switch between the two without re-running the engine.
+//
+// Deflator convention: divide by (1 + indexingRate) ^ max(0, targetYear -
+// todayYear - 1). The minus-one matches PWL's convention where the first
+// deflation step begins the calendar year *after* today (i.e. "year 0" is
+// next year, not this year). This reproduces PWL's $1,342 against our
+// $1,491.78 to within $3 for a 1967-born client retiring at 65 with
+// indexing = 2.1%.
+// ---------------------------------------------------------------------------
+
+type DisplayMode = "nominal" | "today";
+
+interface DisplayCtxValue {
+  mode: DisplayMode;
+  todayYear: number;
+  indexingRate: number;
+  /** Deflate a start-year nominal $ amount to today's dollars (no-op in "nominal" mode). */
+  deflate: (value: number, targetYear: number) => number;
+  /** The deflation divisor for a target year (for chart axis labelling, etc.) */
+  deflator: (targetYear: number) => number;
+}
+
+const DisplayCtx = createContext<DisplayCtxValue>({
+  mode: "nominal",
+  todayYear: new Date().getFullYear(),
+  indexingRate: 0,
+  deflate: (v) => v,
+  deflator: () => 1,
+});
+
+function useDisplay(): DisplayCtxValue {
+  return useContext(DisplayCtx);
+}
+
 export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
   const result = useMemo(() => calculateCpp(inputs), [inputs]);
+
+  const todayYear = useMemo(() => new Date().getFullYear(), []);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>(() => {
+    if (typeof window === "undefined") return "nominal";
+    const stored = window.localStorage.getItem("cpp:display-mode");
+    return stored === "today" ? "today" : "nominal";
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("cpp:display-mode", displayMode);
+  }, [displayMode]);
+
+  const displayCtxValue = useMemo<DisplayCtxValue>(() => {
+    const rate = inputs.assumptions.indexingRate;
+    const deflator = (targetYear: number) =>
+      Math.pow(1 + rate, Math.max(0, targetYear - todayYear - 1));
+    const deflate =
+      displayMode === "today"
+        ? (v: number, year: number) => v / deflator(year)
+        : (v: number) => v;
+    return { mode: displayMode, todayYear, indexingRate: rate, deflate, deflator };
+  }, [displayMode, todayYear, inputs.assumptions.indexingRate]);
 
   const sortedAges = [...result.byStartAge].sort((a, b) => a.startAge - b.startAge);
   const optimal = useMemo(() => {
@@ -117,6 +181,7 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
   }
 
   return (
+    <DisplayCtx.Provider value={displayCtxValue}>
     <div className="space-y-4">
       {result.warnings.length > 0 && (
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
@@ -135,9 +200,45 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Calculation</h2>
-          <p className="text-xs text-muted-foreground">All amounts in start-year dollars unless noted.</p>
+          <p className="text-xs text-muted-foreground">
+            {displayMode === "today"
+              ? `All amounts shown in today's dollars (${todayYear}), deflated at ${(inputs.assumptions.indexingRate * 100).toFixed(2)}% CPI.`
+              : `All amounts in start-year (future) dollars unless noted.`}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="inline-flex rounded-md border bg-background p-0.5 text-xs"
+            role="group"
+            aria-label="Display mode"
+          >
+            <button
+              type="button"
+              onClick={() => setDisplayMode("today")}
+              className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
+                displayMode === "today"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={displayMode === "today"}
+              data-testid="button-display-today"
+            >
+              Today&rsquo;s $
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayMode("nominal")}
+              className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
+                displayMode === "nominal"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={displayMode === "nominal"}
+              data-testid="button-display-nominal"
+            >
+              Future $
+            </button>
+          </div>
           <Button variant="outline" size="sm" onClick={exportSummary}>
             <Download className="mr-2 h-4 w-4" /> Summary CSV
           </Button>
@@ -182,6 +283,7 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
 
       {inputs.survivor?.enabled ? <SurvivorCard inputs={inputs} /> : null}
     </div>
+    </DisplayCtx.Provider>
   );
 }
 
@@ -315,6 +417,7 @@ function ContributionTile({
 // ---------------------------------------------------------------------------
 
 function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
+  const { deflate } = useDisplay();
   const survivor: SurvivorResult | null = useMemo(() => {
     if (!inputs.survivor?.enabled) return null;
     try {
@@ -325,6 +428,11 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
   }, [inputs]);
 
   if (!survivor) return null;
+  // Survivor numbers are denominated in the survivor's start year. Use that
+  // year as the deflation target. The $2,500 death benefit is a fixed
+  // statutory lump sum (not indexed), so we leave it nominal.
+  const sy = survivor.startYear;
+  const d = (v: number) => deflate(v, sy);
 
   return (
     <Card className="border-[hsl(var(--chart-3))]/40 bg-gradient-to-br from-card to-[hsl(var(--chart-3))]/5">
@@ -339,8 +447,8 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           <SurvivorTile
             icon={<HeartHandshake className="h-4 w-4" />}
             label="Survivor's pension"
-            primary={formatMoney(survivor.survivorMonthlyTotal, true)}
-            secondary={`per month · ${formatMoney(survivor.survivorAnnualTotal)} per year`}
+            primary={formatMoney(d(survivor.survivorMonthlyTotal), true)}
+            secondary={`per month · ${formatMoney(d(survivor.survivorAnnualTotal))} per year`}
           />
           <SurvivorTile
             icon={<Wallet className="h-4 w-4" />}
@@ -351,10 +459,10 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           <SurvivorTile
             icon={<Users className="h-4 w-4" />}
             label="Children's benefit"
-            primary={formatMoney(survivor.childrensBenefitMonthlyTotal, true)}
+            primary={formatMoney(d(survivor.childrensBenefitMonthlyTotal), true)}
             secondary={
               survivor.childrensBenefitMonthlyTotal > 0
-                ? `${formatMoney(survivor.childrensBenefitPerChild, true)}/mo × ${(survivor.childrensBenefitMonthlyTotal / survivor.childrensBenefitPerChild).toFixed(0)} child(ren)`
+                ? `${formatMoney(d(survivor.childrensBenefitPerChild), true)}/mo × ${(survivor.childrensBenefitMonthlyTotal / survivor.childrensBenefitPerChild).toFixed(0)} child(ren)`
                 : "no eligible children"
             }
           />
@@ -365,42 +473,42 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 tabular-nums">
             <SurvivorRow
               label={`Deceased's calc'd retirement at 65 (base + Tier 1)`}
-              value={formatMoney(survivor.deceasedCalculatedRetirementBaseTier1, true)}
+              value={formatMoney(d(survivor.deceasedCalculatedRetirementBaseTier1), true)}
             />
             <SurvivorRow
               label={`Deceased's calc'd retirement at 65 (Tier 2)`}
-              value={formatMoney(survivor.deceasedCalculatedRetirementTier2, true)}
+              value={formatMoney(d(survivor.deceasedCalculatedRetirementTier2), true)}
             />
             <SurvivorRow
               label={`× ${survivor.survivorAge >= 65 ? "60%" : "37.5%"} (survivor rate, age ${survivor.survivorAge})`}
-              value={formatMoney(survivor.survivorPensionBaseTier1, true)}
+              value={formatMoney(d(survivor.survivorPensionBaseTier1), true)}
             />
             <SurvivorRow
               label="× 37.5% Tier 2 enhancement"
-              value={formatMoney(survivor.survivorPensionTier2, true)}
+              value={formatMoney(d(survivor.survivorPensionTier2), true)}
             />
             {survivor.survivorFlatRate > 0 ? (
               <SurvivorRow
                 label="+ flat-rate component (under-65)"
-                value={formatMoney(survivor.survivorFlatRate, true)}
+                value={formatMoney(d(survivor.survivorFlatRate), true)}
               />
             ) : null}
             {survivor.combinedCapReduction > 0 ? (
               <SurvivorRow
-                label={`− combined-benefit cap (max @65 = ${formatMoney(survivor.combinedBenefitCap, true)})`}
-                value={`-${formatMoney(survivor.combinedCapReduction, true)}`}
+                label={`− combined-benefit cap (max @65 = ${formatMoney(d(survivor.combinedBenefitCap), true)})`}
+                value={`-${formatMoney(d(survivor.combinedCapReduction), true)}`}
                 negative
               />
             ) : null}
             <SurvivorRow
               label="= survivor pension payable"
-              value={formatMoney(survivor.survivorMonthlyTotal, true)}
+              value={formatMoney(d(survivor.survivorMonthlyTotal), true)}
               bold
             />
             {survivor.combinedMonthlyTotal !== survivor.survivorMonthlyTotal ? (
               <SurvivorRow
                 label="combined: own retirement + survivor pension"
-                value={formatMoney(survivor.combinedMonthlyTotal, true)}
+                value={formatMoney(d(survivor.combinedMonthlyTotal), true)}
               />
             ) : null}
           </div>
@@ -471,20 +579,32 @@ function SurvivorRow({
 // ---------------------------------------------------------------------------
 
 function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal: boolean }) {
-  const total = result.totalMonthly;
-  const baseShare = total > 0 ? result.baseMonthly / total : 0;
-  const t1Share = total > 0 ? result.tier1Monthly / total : 0;
-  const t2Share = total > 0 ? result.tier2Monthly / total : 0;
+  const { deflate } = useDisplay();
+  // All headline $ amounts are start-year nominal from the engine. Deflating
+  // by the same start-year divisor preserves all ratios (% of max, tier
+  // shares), so only the displayed currency values change.
+  const baseMonthly = deflate(result.baseMonthly, result.startYear);
+  const tier1Monthly = deflate(result.tier1Monthly, result.startYear);
+  const tier2Monthly = deflate(result.tier2Monthly, result.startYear);
+  const totalMonthly = deflate(result.totalMonthly, result.startYear);
+  const totalAnnual = deflate(result.totalAnnual, result.startYear);
+  const maxMonthlyAtStart = deflate(result.maxMonthlyAtStart, result.startYear);
+  const maxMonthlyAtAge65 = deflate(result.maxMonthlyAtAge65, result.startYear);
+
+  const total = totalMonthly;
+  const baseShare = total > 0 ? baseMonthly / total : 0;
+  const t1Share = total > 0 ? tier1Monthly / total : 0;
+  const t2Share = total > 0 ? tier2Monthly / total : 0;
 
   // Per-tier breakdown of "% of max at this age". Each slice is that tier's
   // monthly amount divided by the SAME max-at-this-age denominator used by
   // the headline % bar, so the three add up to that overall percentage.
   // See src/cpp/__tests__/tierBreakdown.test.ts.
-  const max = result.maxMonthlyAtStart;
-  const basePctOfMax = max > 0 ? (result.baseMonthly / max) * 100 : 0;
-  const t1PctOfMax = max > 0 ? (result.tier1Monthly / max) * 100 : 0;
-  const t2PctOfMax = max > 0 ? (result.tier2Monthly / max) * 100 : 0;
-  const totalPctOfMax = max > 0 ? (result.totalMonthly / max) * 100 : 0;
+  const max = maxMonthlyAtStart;
+  const basePctOfMax = max > 0 ? (baseMonthly / max) * 100 : 0;
+  const t1PctOfMax = max > 0 ? (tier1Monthly / max) * 100 : 0;
+  const t2PctOfMax = max > 0 ? (tier2Monthly / max) * 100 : 0;
+  const totalPctOfMax = max > 0 ? (totalMonthly / max) * 100 : 0;
   const [breakdownOpen, setBreakdownOpen] = useState(false);
 
   const adj = result.adjustmentFactor;
@@ -510,10 +630,10 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
       <CardContent className="space-y-3">
         <div>
           <div className="font-mono text-3xl font-semibold tabular-nums tracking-tight">
-            {formatMoney(result.totalMonthly, true)}
+            {formatMoney(totalMonthly, true)}
           </div>
           <div className="text-xs text-muted-foreground">
-            per month · {formatMoney(result.totalAnnual)} per year
+            per month · {formatMoney(totalAnnual)} per year
           </div>
         </div>
 
@@ -557,7 +677,7 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
                   <div className="h-full bg-primary" style={{ width: `${atAgeClamped}%` }} />
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  Max at age {result.startAge} in {result.startYear}: {formatMoney(result.maxMonthlyAtStart, true)}/mo
+                  Max at age {result.startAge} in {result.startYear}: {formatMoney(maxMonthlyAtStart, true)}/mo
                 </div>
                 <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
                   <CollapsibleTrigger
@@ -573,19 +693,19 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
                     <TierPctRow
                       label="Base"
                       color="chart-1"
-                      monthly={result.baseMonthly}
+                      monthly={baseMonthly}
                       pct={basePctOfMax}
                     />
                     <TierPctRow
                       label="Tier 1"
                       color="chart-2"
-                      monthly={result.tier1Monthly}
+                      monthly={tier1Monthly}
                       pct={t1PctOfMax}
                     />
                     <TierPctRow
                       label="Tier 2"
                       color="chart-4"
-                      monthly={result.tier2Monthly}
+                      monthly={tier2Monthly}
                       pct={t2PctOfMax}
                     />
                     <div className="flex items-baseline justify-between gap-2 border-t border-border/50 pt-1 text-[11px] font-medium tabular-nums">
@@ -611,7 +731,7 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
                   <div className="h-full bg-primary/60" style={{ width: `${vs65Clamped}%` }} />
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  Age-65 max in {result.startYear}: {formatMoney(result.maxMonthlyAtAge65, true)}/mo
+                  Age-65 max in {result.startYear}: {formatMoney(maxMonthlyAtAge65, true)}/mo
                 </div>
               </div>
             </div>
@@ -625,9 +745,9 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
             <div className="bg-[hsl(var(--chart-4))]" style={{ width: `${t2Share * 100}%` }} />
           </div>
           <div className="grid grid-cols-3 gap-2 text-[11px] tabular-nums">
-            <Legend2 color="chart-1" label="Base" amount={result.baseMonthly} />
-            <Legend2 color="chart-2" label="Tier 1" amount={result.tier1Monthly} />
-            <Legend2 color="chart-4" label="Tier 2" amount={result.tier2Monthly} />
+            <Legend2 color="chart-1" label="Base" amount={baseMonthly} />
+            <Legend2 color="chart-2" label="Tier 1" amount={tier1Monthly} />
+            <Legend2 color="chart-4" label="Tier 2" amount={tier2Monthly} />
           </div>
         </div>
       </CardContent>
@@ -677,15 +797,22 @@ function Legend2({ color, label, amount }: { color: string; label: string; amoun
 // ---------------------------------------------------------------------------
 
 function ComparisonChart({ sortedAges }: { sortedAges: StartAgeResult[] }) {
-  const data = sortedAges.map((r) => ({
-    age: `Age ${r.startAge}`,
-    Base: Math.round(r.baseMonthly),
-    "Tier 1": Math.round(r.tier1Monthly),
-    "Tier 2": Math.round(r.tier2Monthly),
-  }));
+  const { deflate, mode, todayYear } = useDisplay();
+  const data = useMemo(
+    () =>
+      sortedAges.map((r) => ({
+        age: `Age ${r.startAge}`,
+        Base: Math.round(deflate(r.baseMonthly, r.startYear)),
+        "Tier 1": Math.round(deflate(r.tier1Monthly, r.startYear)),
+        "Tier 2": Math.round(deflate(r.tier2Monthly, r.startYear)),
+      })),
+    [sortedAges, deflate],
+  );
+  const unitLabel = mode === "today" ? `today's $ (${todayYear})` : "start-year nominal $";
   return (
     <Card>
       <CardContent className="pt-5">
+        <div className="mb-2 text-xs text-muted-foreground">Monthly benefit at start age — {unitLabel}</div>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data} stackOffset="sign">
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -704,24 +831,57 @@ function ComparisonChart({ sortedAges }: { sortedAges: StartAgeResult[] }) {
 }
 
 function BreakevenChart({ sortedAges }: { sortedAges: StartAgeResult[] }) {
-  // Build merged data keyed by age
-  const ages = new Set<number>();
-  sortedAges.forEach((r) => r.cumulativeByAge.forEach((p) => ages.add(p.age)));
-  const sortedAgesAll = Array.from(ages).sort((a, b) => a - b);
-  const data = sortedAgesAll.map((age) => {
-    const row: Record<string, number> = { age };
-    for (const r of sortedAges) {
-      const point = r.cumulativeByAge.find((p) => p.age === age);
-      if (point) row[`Age ${r.startAge}`] = Math.round(point.cumulativeNominal);
+  const { deflate, mode, todayYear } = useDisplay();
+  // Build merged data keyed by age. In today's-dollars mode we re-cumulate
+  // each year's `annualNominal` after deflating by the year-at-age divisor.
+  // Because the engine grows the monthly benefit at exactly indexingRate and
+  // we deflate at the same rate, today's-dollars cumulative grows linearly
+  // (each year contributes a constant real amount).
+  const data = useMemo(() => {
+    const ages = new Set<number>();
+    sortedAges.forEach((r) => r.cumulativeByAge.forEach((p) => ages.add(p.age)));
+    const sortedAgesAll = Array.from(ages).sort((a, b) => a - b);
+
+    // Pre-compute today's-dollars running totals per start-age series so we
+    // don't redo the O(n) sum inside the outer O(ages) loop.
+    const realCumulativeBySeries = new Map<number, Map<number, number>>();
+    if (mode === "today") {
+      for (const r of sortedAges) {
+        const m = new Map<number, number>();
+        let acc = 0;
+        for (const p of r.cumulativeByAge) {
+          const yearAtAge = r.startYear + (p.age - r.startAge);
+          acc += deflate(p.annualNominal, yearAtAge);
+          m.set(p.age, acc);
+        }
+        realCumulativeBySeries.set(r.startAge, m);
+      }
     }
-    return row;
-  });
+
+    return sortedAgesAll.map((age) => {
+      const row: Record<string, number> = { age };
+      for (const r of sortedAges) {
+        const point = r.cumulativeByAge.find((p) => p.age === age);
+        if (!point) continue;
+        if (mode === "today") {
+          const real = realCumulativeBySeries.get(r.startAge)?.get(age) ?? 0;
+          row[`Age ${r.startAge}`] = Math.round(real);
+        } else {
+          row[`Age ${r.startAge}`] = Math.round(point.cumulativeNominal);
+        }
+      }
+      return row;
+    });
+  }, [sortedAges, mode, deflate]);
 
   return (
     <Card>
       <CardContent className="pt-5">
         <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <TrendingUp className="h-4 w-4" /> Cumulative lifetime benefit (nominal, indexed)
+          <TrendingUp className="h-4 w-4" />
+          {mode === "today"
+            ? `Cumulative lifetime benefit (today's dollars, ${todayYear})`
+            : `Cumulative lifetime benefit (nominal, indexed)`}
         </div>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={data}>
@@ -759,15 +919,19 @@ function EarningsChart({
     return ys.length > 0 ? Math.max(...ys) : -Infinity;
   }, [inputs.earningsHistory]);
 
-  const data = effectiveEarnings
-    .filter((r) => r.year >= 1966)
-    .map((r) => ({
-      year: r.year,
-      Earnings: Math.round(r.pensionableEarnings),
-      YMPE: YMPE_HISTORY[r.year] ?? null,
-      YAMPE: YAMPE_HISTORY[r.year] ?? null,
-      isProjected: r.year > lastHistYear,
-    }));
+  const data = useMemo(
+    () =>
+      effectiveEarnings
+        .filter((r) => r.year >= 1966)
+        .map((r) => ({
+          year: r.year,
+          Earnings: Math.round(r.pensionableEarnings),
+          YMPE: YMPE_HISTORY[r.year] ?? null,
+          YAMPE: YAMPE_HISTORY[r.year] ?? null,
+          isProjected: r.year > lastHistYear,
+        })),
+    [effectiveEarnings, lastHistYear],
+  );
 
   return (
     <Card>
@@ -817,6 +981,7 @@ function EarningsChart({
 // ---------------------------------------------------------------------------
 
 function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
+  const { deflate } = useDisplay();
   return (
     <Card>
       <CardHeader>
@@ -827,7 +992,7 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
           {sortedAges.map((r) => (
             <AccordionItem key={r.startAge} value={`age-${r.startAge}`}>
               <AccordionTrigger className="text-sm">
-                Age {r.startAge} · {formatMoney(r.totalMonthly, true)}/mo · adj {formatPercent(r.adjustmentFactor - 1, true)}
+                Age {r.startAge} · {formatMoney(deflate(r.totalMonthly, r.startYear), true)}/mo · adj {formatPercent(r.adjustmentFactor - 1, true)}
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 gap-4 text-xs md:grid-cols-2">
@@ -839,18 +1004,18 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                     <DiagRow label="General 17% drop-out months" value={r.base.generalDropoutMonths} />
                     <DiagRow label="Post-65 drop-out months" value={r.base.post65DropoutMonths} />
                     <DiagRow label="Months retained" value={r.base.monthsRetained} />
-                    <DiagRow label="AMPE (monthly)" value={formatMoney(r.base.ampe, true)} />
-                    <DiagRow label="AYMPE in start year" value={formatMoney(r.base.aympeStartYear)} />
+                    <DiagRow label="AMPE (monthly)" value={formatMoney(deflate(r.base.ampe, r.startYear), true)} />
+                    <DiagRow label="AYMPE in start year" value={formatMoney(deflate(r.base.aympeStartYear, r.startYear))} />
                     <DiagRow label="Adjustment factor" value={r.adjustmentFactor.toFixed(4)} />
                   </div>
                   <div>
                     <div className="mb-2 font-semibold uppercase tracking-wide text-muted-foreground">Enhancement</div>
                     <DiagRow label="Tier 1 contribution years" value={r.enhancement.tier1ContributionYears} />
                     <DiagRow label="Tier 1 accrual" value={formatPercent(r.enhancement.tier1AccrualFactor)} />
-                    <DiagRow label="Tier 1 indexed earnings (sum)" value={formatMoney(r.enhancement.tier1IndexedEarningsSum)} />
+                    <DiagRow label="Tier 1 indexed earnings (sum)" value={formatMoney(deflate(r.enhancement.tier1IndexedEarningsSum, r.startYear))} />
                     <DiagRow label="Tier 2 contribution years" value={r.enhancement.tier2ContributionYears} />
                     <DiagRow label="Tier 2 accrual" value={formatPercent(r.enhancement.tier2AccrualFactor)} />
-                    <DiagRow label="Tier 2 indexed earnings (sum)" value={formatMoney(r.enhancement.tier2IndexedEarningsSum)} />
+                    <DiagRow label="Tier 2 indexed earnings (sum)" value={formatMoney(deflate(r.enhancement.tier2IndexedEarningsSum, r.startYear))} />
                   </div>
                 </div>
               </AccordionContent>
