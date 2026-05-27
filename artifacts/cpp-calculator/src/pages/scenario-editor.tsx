@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Copy, Printer, Save, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Calculator, Columns2, Copy, Printer, Save, Share2, Trash2, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetScenario,
@@ -39,6 +39,18 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   const [inputs, setInputs] = useState<ScenarioInputs>(() => buildDefaultInputs());
   const [dirty, setDirty] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  // Split-pane focus mode. "both" = side-by-side (default on wide screens),
+  // "person" = inputs only, "calc" = results only. Persists across the
+  // session so a planner who works in focus mode stays there.
+  const [paneMode, setPaneMode] = useState<"both" | "person" | "calc">(() => {
+    if (typeof window === "undefined") return "both";
+    const stored = window.localStorage.getItem("cpp:editor-pane-mode");
+    return stored === "person" || stored === "calc" ? stored : "both";
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("cpp:editor-pane-mode", paneMode);
+  }, [paneMode]);
 
   useEffect(() => {
     if (scenario) {
@@ -167,6 +179,36 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           {dirty && <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">Unsaved changes</span>}
         </div>
         <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+          <div
+            className="hidden md:inline-flex rounded-md border bg-card p-0.5"
+            role="group"
+            aria-label="Pane view"
+          >
+            <PaneButton
+              active={paneMode === "person"}
+              onClick={() => setPaneMode("person")}
+              label="Person only"
+              testid="button-pane-person"
+            >
+              <User className="h-4 w-4" />
+            </PaneButton>
+            <PaneButton
+              active={paneMode === "both"}
+              onClick={() => setPaneMode("both")}
+              label="Split view"
+              testid="button-pane-both"
+            >
+              <Columns2 className="h-4 w-4" />
+            </PaneButton>
+            <PaneButton
+              active={paneMode === "calc"}
+              onClick={() => setPaneMode("calc")}
+              label="Calculation only"
+              testid="button-pane-calc"
+            >
+              <Calculator className="h-4 w-4" />
+            </PaneButton>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -228,11 +270,19 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
         />
       )}
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div>
-          <InputsPanel inputs={inputs} onChange={setInputsAndDirty} />
-        </div>
-        <ResultsWrapper inputs={inputs} title={title} />
+      <div
+        className={
+          paneMode === "both"
+            ? "grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+            : "grid grid-cols-1 gap-6"
+        }
+      >
+        {paneMode !== "calc" && (
+          <div>
+            <InputsPanel inputs={inputs} onChange={setInputsAndDirty} />
+          </div>
+        )}
+        {paneMode !== "person" && <ResultsWrapper inputs={inputs} title={title} />}
       </div>
     </div>
 
@@ -240,6 +290,36 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
       <PrintScenario inputs={inputs} scenarioTitle={title} />
     </div>
     </>
+  );
+}
+
+function PaneButton({
+  active,
+  onClick,
+  label,
+  testid,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  testid: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      data-testid={testid}
+      className={`inline-flex h-7 w-8 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground ${
+        active ? "bg-primary text-primary-foreground hover:text-primary-foreground" : ""
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
