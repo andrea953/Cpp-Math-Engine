@@ -42,6 +42,7 @@ const TOC: TocItem[] = [
   { id: "wp-base", label: "Base CPP", part: 2 },
   { id: "wp-tier1", label: "Tier 1 enhancement (post-2018)", part: 2 },
   { id: "wp-tier2", label: "Tier 2 enhancement (post-2023)", part: 2 },
+  { id: "wp-enhancement-accrual", label: "Enhanced CPP accrual (years contributed)", part: 2 },
   { id: "wp-dropouts", label: "Drop-out provisions", part: 2 },
   { id: "wp-adjustments", label: "Early / late take-up adjustments", part: 2 },
   { id: "wp-percent-of-maximum", label: "Percent of the maximum CPP retirement pension", part: 2 },
@@ -960,6 +961,105 @@ export function WhitePaper() {
               <p>
                 Tier 2 only contributes to the result when the client has earnings above the YMPE
                 ceiling in 2024 or later.
+              </p>
+            </Section>
+
+            <Section>
+              <SectionHeading
+                id="wp-enhancement-accrual"
+                eyebrow="How the 40-year clock works"
+                title="Enhanced CPP accrual (years contributed)"
+                icon={<Calculator className="h-5 w-5" />}
+              />
+              <p>
+                Unlike base CPP — which spreads earnings over the entire contributory period and
+                forgives the lowest <InlineMath>17%</InlineMath> of years — the Tier 1 and Tier 2
+                enhancements credit each calendar year of contributions on a strictly linear
+                clock. A contributor needs <InlineMath>40</InlineMath> years inside the
+                enhancement window to earn the full enhanced benefit; fewer years scale the
+                benefit down proportionally.
+              </p>
+              <Formula>
+                accrual = min(1, contribution years / 40)
+                <br />
+                enhanced benefit = (average indexed pensionable earnings × replacement rate) ×
+                accrual
+              </Formula>
+              <Example>
+                <div className="text-xs text-muted-foreground">
+                  Example: 20 years of full Tier 1 contributions.
+                </div>
+                <ExampleLine>contribution years = 20</ExampleLine>
+                <ExampleLine>accrual = min(1, 20 / 40) = 0.500</ExampleLine>
+                <ExampleLine>
+                  enhanced benefit = (average indexed YMPE-band earnings × 8⅓%) × 0.500
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  The same client with 40 years of identical contributions would land at accrual
+                  = 1.000 — exactly twice the monthly Tier 1 amount.
+                </div>
+              </Example>
+              <p>
+                Tier 1 and Tier 2 each maintain their own accrual count. Because Tier 1 starts in
+                2019 and Tier 2 in 2024, the earliest year either component can reach a full
+                <InlineMath>1.0</InlineMath> accrual is 2058 (Tier 1) and 2063 (Tier 2). For any
+                client retiring before then, the enhanced benefit is mechanically capped by the
+                accrual fraction — regardless of how high their earnings are.
+              </p>
+              <div className="overflow-x-auto rounded-md border border-border/60 bg-card/40">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">Years contributed</th>
+                      <th className="px-4 py-2 text-right font-medium">Accrual fraction</th>
+                      <th className="px-4 py-2 text-right font-medium">% of full enhanced benefit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40 tabular-nums">
+                    <tr><td className="px-4 py-2">5</td><td className="px-4 py-2 text-right">5 / 40</td><td className="px-4 py-2 text-right">12.5%</td></tr>
+                    <tr><td className="px-4 py-2">10</td><td className="px-4 py-2 text-right">10 / 40</td><td className="px-4 py-2 text-right">25.0%</td></tr>
+                    <tr><td className="px-4 py-2">15</td><td className="px-4 py-2 text-right">15 / 40</td><td className="px-4 py-2 text-right">37.5%</td></tr>
+                    <tr><td className="px-4 py-2">20</td><td className="px-4 py-2 text-right">20 / 40</td><td className="px-4 py-2 text-right">50.0%</td></tr>
+                    <tr><td className="px-4 py-2">25</td><td className="px-4 py-2 text-right">25 / 40</td><td className="px-4 py-2 text-right">62.5%</td></tr>
+                    <tr><td className="px-4 py-2">30</td><td className="px-4 py-2 text-right">30 / 40</td><td className="px-4 py-2 text-right">75.0%</td></tr>
+                    <tr><td className="px-4 py-2">35</td><td className="px-4 py-2 text-right">35 / 40</td><td className="px-4 py-2 text-right">87.5%</td></tr>
+                    <tr><td className="px-4 py-2">40 (or more)</td><td className="px-4 py-2 text-right">40 / 40</td><td className="px-4 py-2 text-right">100.0%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Three caveats make the picture less generous than the table alone suggests:
+              </p>
+              <ul className="ml-5 list-disc space-y-2 text-muted-foreground">
+                <li>
+                  <span className="font-medium text-foreground">No drop-outs.</span> The general
+                  <InlineMath>17%</InlineMath> drop-out, CRDO and disability drop-outs all apply
+                  to base CPP only. Every calendar year between the enhancement start year (2019
+                  for Tier 1, 2024 for Tier 2) and take-up that the client did not work counts as
+                  a zero in the numerator average — even though it still consumes a slot in the
+                  <InlineMath>40</InlineMath>-year denominator. A career break or early
+                  retirement bites both ways.
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Phase-in years count, but
+                  partially.</span> Tier 1 years 2019 through 2022 are credited toward the
+                  accrual count as full years, but their indexed earnings are weighted down by
+                  the phase-in factor (15% → 30% → 50% → 75%). A contributor who maxed every year
+                  from 2019 onward gets the full year count, but the early years contribute less
+                  to the average than later years.
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Tier 2 only fires above the
+                  YMPE.</span> Years where the client earned below the YMPE add nothing to the
+                  Tier 2 contribution count — the enhancement formula treats the year as if no
+                  Tier 2 contribution was made. This means a moderate earner can build up Tier 1
+                  accrual while making no Tier 2 progress at all.
+                </li>
+              </ul>
+              <p>
+                In practice, the accrual fraction is the single biggest reason mid-career and
+                late-career clients see modest enhanced amounts even when their recent earnings
+                are at the YMPE. The clock simply has not finished running.
               </p>
             </Section>
 
