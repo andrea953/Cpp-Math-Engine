@@ -180,7 +180,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
         </div>
         <div className="flex items-center justify-end gap-1.5 sm:gap-2">
           <div
-            className="hidden md:inline-flex rounded-md border bg-card p-0.5"
+            className="inline-flex rounded-md border bg-card p-0.5"
             role="group"
             aria-label="Pane view"
           >
