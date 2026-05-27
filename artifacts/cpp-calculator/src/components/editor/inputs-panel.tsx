@@ -797,7 +797,7 @@ function PercentInput({
       <div className="relative">
         <Input
           type="number"
-          step={0.1}
+          step={0.01}
           value={(value * 100).toFixed(2)}
           onChange={(e) => onChange((Number(e.target.value) || 0) / 100)}
           className="pr-8 tabular-nums"
