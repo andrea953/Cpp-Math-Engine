@@ -795,16 +795,44 @@ function PercentInput({
         ) : null}
       </div>
       <div className="relative">
-        <Input
-          type="number"
-          step={0.01}
-          value={(value * 100).toFixed(2)}
-          onChange={(e) => onChange((Number(e.target.value) || 0) / 100)}
-          className="pr-8 tabular-nums"
-        />
+        <RateInput value={value} onChange={onChange} />
         <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
       </div>
     </div>
+  );
+}
+
+function RateInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const formatted = (value * 100).toFixed(2);
+  const [draft, setDraft] = useState<string>(formatted);
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setDraft(formatted);
+  }, [formatted, focused]);
+
+  return (
+    <Input
+      type="number"
+      step={0.01}
+      value={draft}
+      onFocus={() => setFocused(true)}
+      onChange={(e) => {
+        const next = e.target.value;
+        setDraft(next);
+        if (next === "" || next === "-" || next.endsWith(".")) return;
+        const parsed = Number(next);
+        if (Number.isFinite(parsed)) onChange(parsed / 100);
+      }}
+      onBlur={() => {
+        setFocused(false);
+        const parsed = Number(draft);
+        const next = Number.isFinite(parsed) ? parsed / 100 : value;
+        onChange(next);
+        setDraft((next * 100).toFixed(2));
+      }}
+      className="pr-8 tabular-nums"
+    />
   );
 }
 
