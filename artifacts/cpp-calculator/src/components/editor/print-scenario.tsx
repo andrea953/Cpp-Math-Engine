@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
@@ -30,6 +31,13 @@ const MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
+
+// Brand palette for print, derived from the app's on-screen color tokens
+// (primary hsl(248 75% 64%) and --chart-1..5). Slightly deeper than the
+// on-screen values so they stay legible at typical printer ink densities.
+const BRAND = "#5a4dd0";
+const BRAND_SOFT = "#b8b1ec";
+const CHART_COLORS = ["#5a99f2", "#4dcce6", "#8b7de8", "#f7a964", "#ef80ae"];
 
 function formatBirth(year: number, month: number): string {
   const m = MONTHS[(month - 1) % 12] ?? "";
@@ -251,6 +259,7 @@ function MonthlyByAgeSection({
   const data = sortedAges.map((r) => ({
     age: `Age ${formatAge(r.startAge)}`,
     Monthly: Math.round(r.totalMonthly),
+    isBest: optimal?.startAge === r.startAge,
   }));
 
   return (
@@ -303,10 +312,15 @@ function MonthlyByAgeSection({
             tick={{ fontSize: 11, fill: "#000" }}
             stroke="#000"
           />
-          <Bar dataKey="Monthly" fill="#555555" />
+          <Bar dataKey="Monthly" radius={[3, 3, 0, 0]}>
+            {data.map((d) => (
+              <Cell key={d.age} fill={d.isBest ? BRAND : BRAND_SOFT} />
+            ))}
+          </Bar>
         </BarChart>
         <p className="print-scenario-caption">
-          Estimated monthly CPP payment for each age you could start.
+          Estimated monthly CPP payment for each age you could start — the best
+          option is highlighted.
         </p>
       </div>
     </section>
@@ -371,18 +385,21 @@ function GrowthOverTimeSection({
             stroke="#000"
           />
           <Legend wrapperStyle={{ fontSize: 11, color: "#000" }} />
-          {sortedAges.map((r, i) => (
-            <Line
-              key={r.startAge}
-              type="monotone"
-              dataKey={`Start at ${formatAge(r.startAge)}`}
-              stroke="#000"
-              strokeWidth={optimal?.startAge === r.startAge ? 2.5 : 1.25}
-              strokeDasharray={BREAKEVEN_DASH[i % BREAKEVEN_DASH.length]}
-              dot={false}
-              isAnimationActive={false}
-            />
-          ))}
+          {sortedAges.map((r, i) => {
+            const isBest = optimal?.startAge === r.startAge;
+            return (
+              <Line
+                key={r.startAge}
+                type="monotone"
+                dataKey={`Start at ${formatAge(r.startAge)}`}
+                stroke={isBest ? BRAND : CHART_COLORS[i % CHART_COLORS.length]}
+                strokeWidth={isBest ? 2.75 : 1.75}
+                strokeDasharray={BREAKEVEN_DASH[i % BREAKEVEN_DASH.length]}
+                dot={false}
+                isAnimationActive={false}
+              />
+            );
+          })}
         </LineChart>
       </div>
     </section>

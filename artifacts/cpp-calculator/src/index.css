@@ -746,6 +746,8 @@
   .print-scenario .print-scenario-chart svg {
     max-width: 100%;
     height: auto;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .print-scenario .print-scenario-caption {
