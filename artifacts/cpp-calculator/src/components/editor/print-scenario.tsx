@@ -131,8 +131,6 @@ export function PrintScenario({
 
           {survivor ? <FamilySection survivor={survivor} /> : null}
 
-          <EarningsHistorySection inputs={inputs} />
-
           {result.warnings.length > 0 ? (
             <section className="print-scenario-section print-scenario-warnings">
               <h2>Things to keep in mind</h2>
@@ -439,52 +437,6 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
           ))}
         </ul>
       ) : null}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Earnings history
-// ---------------------------------------------------------------------------
-
-function EarningsHistorySection({ inputs }: { inputs: ScenarioInputs }) {
-  const sorted = [...inputs.earningsHistory].sort((a, b) => a.year - b.year);
-  if (sorted.length === 0) return null;
-
-  // Pair rows two-across in a single real table so the list stays compact but
-  // still paginates cleanly (row-by-row) instead of breaking awkwardly the way
-  // a side-by-side grid of two tables does.
-  const half = Math.ceil(sorted.length / 2);
-  const left = sorted.slice(0, half);
-  const right = sorted.slice(half);
-  const pairs = left.map((row, i) => ({ left: row, right: right[i] }));
-
-  return (
-    <section className="print-scenario-section">
-      <h2>Your earnings on record</h2>
-      <p className="print-scenario-note">
-        The yearly earnings used in this estimate, as provided to your planner.
-      </p>
-      <table className="print-scenario-table print-scenario-table-list print-scenario-earnings-table">
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th className="num">Earnings</th>
-            <th>Year</th>
-            <th className="num">Earnings</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pairs.map(({ left: l, right: r }) => (
-            <tr key={l.year}>
-              <td>{l.year}</td>
-              <td className="num">{formatMoney(l.pensionableEarnings)}</td>
-              <td>{r ? r.year : ""}</td>
-              <td className="num">{r ? formatMoney(r.pensionableEarnings) : ""}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </section>
   );
 }
