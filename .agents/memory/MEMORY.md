@@ -1,0 +1,1 @@
+- [Recharts in print](recharts-print-animation.md) — charts need isAnimationActive={false} or they render empty/partial in print/PDF snapshots.

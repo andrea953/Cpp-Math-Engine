@@ -301,7 +301,7 @@ function MonthlyByAgeSection({
             tick={{ fontSize: 11, fill: "#000" }}
             stroke="#000"
           />
-          <Bar dataKey="Monthly" radius={[3, 3, 0, 0]}>
+          <Bar dataKey="Monthly" radius={[3, 3, 0, 0]} isAnimationActive={false}>
             {data.map((d) => (
               <Cell key={d.age} fill={d.isBest ? BRAND : BRAND_SOFT} />
             ))}
