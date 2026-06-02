@@ -537,6 +537,21 @@
     break-after: avoid-page;
   }
 
+  .print-scenario .print-scenario-brandrow {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .print-scenario .print-scenario-logo {
+    height: 0.42in;
+    width: 0.42in;
+    border-radius: 5px;
+    object-fit: cover;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
   .print-scenario .print-scenario-brand {
     font-size: 9pt;
     letter-spacing: 0.08em;

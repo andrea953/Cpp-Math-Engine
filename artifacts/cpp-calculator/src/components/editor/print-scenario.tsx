@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
 import {
   calculateCpp,
   calculateSurvivor,
@@ -105,7 +106,10 @@ export function PrintScenario({
     <article className="print-scenario-article">
       {/* ---------- COVER / SUMMARY PAGE ---------- */}
       <header className="print-scenario-header">
-        <div className="print-scenario-brand">Your CPP Retirement Estimate</div>
+        <div className="print-scenario-brandrow">
+          <img src={logoUrl} alt="Modern Cents" className="print-scenario-logo" />
+          <div className="print-scenario-brand">Modern Cents · Your CPP Retirement Estimate</div>
+        </div>
         <h1 className="print-scenario-title">{scenarioTitle || "Untitled scenario"}</h1>
         <div className="print-scenario-meta">
           <span>Prepared {todayLong()}</span>
@@ -263,7 +267,7 @@ function MonthlyByAgeSection({
   }));
 
   return (
-    <section className="print-scenario-section print-scenario-pagebreak">
+    <section className="print-scenario-section">
       <h2>What you'd receive at each start age</h2>
       <table className="print-scenario-table print-scenario-table-list">
         <thead>
@@ -353,7 +357,7 @@ function GrowthOverTimeSection({
   });
 
   return (
-    <section className="print-scenario-section print-scenario-pagebreak">
+    <section className="print-scenario-section">
       <h2>How your total adds up over time</h2>
       <p className="print-scenario-note">
         Each line shows the total CPP you'd have received as the years go by, for
@@ -412,7 +416,7 @@ function GrowthOverTimeSection({
 
 function FamilySection({ survivor }: { survivor: SurvivorResult }) {
   return (
-    <section className="print-scenario-section print-scenario-pagebreak">
+    <section className="print-scenario-section">
       <h2>Benefits for your family</h2>
       <p className="print-scenario-note">
         If something happens to you, CPP may provide the following support to
@@ -462,7 +466,7 @@ function YourDetailsSection({ inputs }: { inputs: ScenarioInputs }) {
   const worksAfterStart = inputs.postRetirementBenefit?.continuesWorkingAfterStart;
 
   return (
-    <section className="print-scenario-section print-scenario-pagebreak">
+    <section className="print-scenario-section">
       <h2>The details behind this estimate</h2>
       <p className="print-scenario-note">
         These are the personal details and assumptions your planner used. If any
@@ -552,7 +556,7 @@ function EarningsHistorySection({ inputs }: { inputs: ScenarioInputs }) {
   const right = sorted.slice(half);
 
   return (
-    <section className="print-scenario-section print-scenario-pagebreak">
+    <section className="print-scenario-section">
       <h2>Your earnings on record</h2>
       <p className="print-scenario-note">
         The yearly earnings used in this estimate, as provided to your planner.
