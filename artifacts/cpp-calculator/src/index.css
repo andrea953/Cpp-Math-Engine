@@ -633,6 +633,22 @@
     break-before: avoid-page;
   }
 
+  .print-scenario .print-scenario-headline {
+    border: 1px solid var(--print-primary) !important;
+    background: var(--print-tint) !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    padding: 0.5rem 0.7rem;
+    margin: 0.4rem 0 0.6rem;
+    border-radius: 4px;
+  }
+
+  .print-scenario .print-scenario-headline p {
+    margin: 0;
+    font-size: 11.5pt;
+    line-height: 1.45;
+  }
+
   .print-scenario .print-scenario-table {
     width: 100%;
     border-collapse: collapse;
