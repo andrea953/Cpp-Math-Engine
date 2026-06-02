@@ -16,7 +16,6 @@ import {
   calculateSurvivor,
   formatAge,
   formatMoney,
-  formatPercent,
   type ScenarioInputs,
   type StartAgeResult,
   type SurvivorResult,
@@ -28,22 +27,12 @@ interface PrintScenarioProps {
   notes?: string;
 }
 
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
-
 // Brand palette for print, derived from the app's on-screen color tokens
 // (primary hsl(248 75% 64%) and --chart-1..5). Slightly deeper than the
 // on-screen values so they stay legible at typical printer ink densities.
 const BRAND = "#5a4dd0";
 const BRAND_SOFT = "#b8b1ec";
 const CHART_COLORS = ["#5a99f2", "#4dcce6", "#8b7de8", "#f7a964", "#ef80ae"];
-
-function formatBirth(year: number, month: number): string {
-  const m = MONTHS[(month - 1) % 12] ?? "";
-  return `${m} ${year}`;
-}
 
 function todayLong(): string {
   return new Date().toLocaleDateString("en-CA", {
@@ -141,8 +130,6 @@ export function PrintScenario({
           <GrowthOverTimeSection sortedAges={sortedAges} optimal={optimal} />
 
           {survivor ? <FamilySection survivor={survivor} /> : null}
-
-          <YourDetailsSection inputs={inputs} />
 
           <EarningsHistorySection inputs={inputs} />
 
@@ -451,92 +438,6 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
             <li key={i}>{n}</li>
           ))}
         </ul>
-      ) : null}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Your details & assumptions (plain language)
-// ---------------------------------------------------------------------------
-
-function YourDetailsSection({ inputs }: { inputs: ScenarioInputs }) {
-  const a = inputs.assumptions;
-  const dropouts = inputs.dropoutPeriods ?? [];
-  const worksAfterStart = inputs.postRetirementBenefit?.continuesWorkingAfterStart;
-
-  return (
-    <section className="print-scenario-section">
-      <h2>The details behind this estimate</h2>
-      <p className="print-scenario-note">
-        These are the personal details and assumptions your planner used. If any
-        of these change, your estimate may change too.
-      </p>
-
-      <table className="print-scenario-table">
-        <tbody>
-          <tr>
-            <th>Date of birth</th>
-            <td>{formatBirth(inputs.birthYear, inputs.birthMonth)}</td>
-          </tr>
-          {inputs.province ? (
-            <tr>
-              <th>Province</th>
-              <td>{inputs.province}</td>
-            </tr>
-          ) : null}
-          <tr>
-            <th>When you stop working</th>
-            <td>Age {formatAge(a.stopWorkAge)}</td>
-          </tr>
-          <tr>
-            <th>Expected earnings next year</th>
-            <td>{formatMoney(a.assumedFutureEarnings)}</td>
-          </tr>
-          {worksAfterStart ? (
-            <tr>
-              <th>Working after CPP starts</th>
-              <td>
-                Yes — about{" "}
-                {formatMoney(
-                  inputs.postRetirementBenefit?.annualEarningsAfterStart ?? 0,
-                )}
-                /year until age{" "}
-                {formatAge(
-                  inputs.postRetirementBenefit?.stopAge ?? a.stopWorkAge,
-                )}
-              </td>
-            </tr>
-          ) : null}
-          <tr>
-            <th>Assumed annual inflation (cost-of-living increases)</th>
-            <td>{formatPercent(a.indexingRate)}</td>
-          </tr>
-          <tr>
-            <th>Assumed annual wage growth</th>
-            <td>{formatPercent(a.futureEarningsGrowthRate)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {dropouts.length > 0 ? (
-        <div className="print-scenario-subblock">
-          <h3>Special periods included</h3>
-          <p className="print-scenario-note">
-            CPP lets certain low- or no-earning years be set aside so they don't
-            lower your pension. The following were applied:
-          </p>
-          <ul className="print-scenario-list">
-            {dropouts.map((d, i) => (
-              <li key={i}>
-                {d.kind === "crdo"
-                  ? "Time at home raising young children"
-                  : "A period of disability"}
-                {d.notes ? ` — ${d.notes}` : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
       ) : null}
     </section>
   );
