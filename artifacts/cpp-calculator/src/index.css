@@ -727,10 +727,13 @@
     width: 38%;
   }
 
-  .print-scenario .print-scenario-twocol {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.6rem;
+  /* Earnings list: pairs of (Year, Earnings) sit two-across in one table.
+     A divider before the second pair keeps the two halves visually distinct. */
+  .print-scenario .print-scenario-earnings-table th:nth-child(3),
+  .print-scenario .print-scenario-earnings-table td:nth-child(3) {
+    border-left: 2px solid var(--print-primary) !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .print-scenario .print-scenario-subblock {
