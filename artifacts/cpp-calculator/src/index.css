@@ -339,6 +339,28 @@
     }
   }
 
+  /* Client scenario report: its own running header (not the white-paper's
+     "Methodology" label). Margins and the page-number footer cascade from the
+     generic @page above; only the header text differs. */
+  @page scenarioReport {
+    @top-left {
+      content: "Modern Cents · CPP Retirement Estimate";
+      font-family: 'Inter', sans-serif;
+      font-size: 9pt;
+      font-weight: 500;
+      color: #5a4dd0;
+      padding-bottom: 0.18in;
+      vertical-align: bottom;
+    }
+  }
+
+  /* Cover page of the scenario report: suppress the running header. */
+  @page scenarioReport:first {
+    @top-left {
+      content: "";
+    }
+  }
+
   /* Cross-browser running header / footer fallback for Safari and Firefox.
      Those browsers ignore @page margin boxes, so `useCrossBrowserPrintMargins`
      in white-paper.tsx injects per-page absolutely-positioned divs. The divs
@@ -520,6 +542,17 @@
     font-family: Georgia, "Times New Roman", serif;
     font-size: 10.5pt;
     line-height: 1.45;
+  }
+
+  /* Scope the named page at the document root (not on .print-scenario itself):
+     applying `page` to a nested element forces a trailing break onto the
+     default page, leaving a blank page that still shows the white-paper's
+     "Methodology" header. Setting it on <body> keeps the whole scenario
+     document on the scenarioReport page with no stray default-page break.
+     The white-paper document has no .print-scenario, so it keeps the default
+     @page (with its "Methodology" running header) untouched. */
+  body:has(.print-scenario) {
+    page: scenarioReport;
   }
 
   .print-scenario .print-scenario-article {
