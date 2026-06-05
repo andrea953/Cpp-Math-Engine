@@ -174,6 +174,41 @@ deploy as usual.
 
 ---
 
+## Automated January reminder
+
+To avoid relying on someone remembering, an automated email reminder runs once a
+year and prompts the maintainer to work through this runbook.
+
+- **Script:** `scripts/src/sendCppReminder.ts` (bundled to
+  `scripts/dist/sendCppReminder.mjs`). It emails a summary + checklist to the
+  maintainer.
+- **Recipient:** defaults to `andrea@moderncents.ca`; override with the
+  `CPP_REMINDER_TO` environment variable (comma-separate multiple addresses).
+- **Email transport:** the Gmail integration (Replit Connectors), so the message
+  is sent from the connected Google account. That integration must stay connected
+  for the reminder to work.
+- **Test it any time:**
+  - Send for real: `pnpm --filter @workspace/scripts run send-cpp-reminder`
+  - Dry-run (build the message, send nothing): `CPP_REMINDER_DRY_RUN=1 pnpm --filter @workspace/scripts run send-cpp-reminder`
+
+### Publishing it as a Scheduled Deployment (one-time setup)
+
+The reminder runs as a **separate** Scheduled Deployment so it does not disturb
+the live web app's deployment. In the **Publishing / Deployments** tool, create a
+new deployment:
+
+- **Type:** Scheduled
+- **Build command:** `pnpm --filter @workspace/scripts run build:reminder`
+- **Run command:** `pnpm --filter @workspace/scripts run start:reminder`
+- **Schedule (cron):** `0 14 6 1 *` — 14:00 UTC on January 6 each year (~9:00 AM
+  Eastern). Adjust the day/hour if you prefer.
+
+The job sends the email and exits; the schedule controls when it fires (the script
+itself has no date logic, so don't set a more frequent cron unless you want more
+emails).
+
+---
+
 ## Quick checklist
 
 - [ ] `YMPE_HISTORY` — new year added

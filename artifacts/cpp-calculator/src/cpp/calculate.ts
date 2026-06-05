@@ -260,7 +260,11 @@ function calculateBase(
   const disabilityMonthsDropped = points.filter((p) => p.inDisability && !p.inCrdo).length;
   const remainingAfterSpecialDropouts = points.filter((p) => !p.inCrdo && !p.inDisability);
 
-  // Index each remaining month's earnings to start-year dollars using AYMPE ratio
+  // Index each remaining month's earnings to start-year dollars using the AYMPE
+  // ratio. CPP Act s. 53: each year's pensionable earnings are restated in
+  // start-year dollars via (Maximum Pensionable Earnings Average / that year's
+  // YMPE), where the MPEA is the 5-year average ending in the benefit year
+  // (AYMPE; see getAympe / s. 42(1) in constants.ts).
   const aympeStart = getAympe(startYear, inputs.assumptions.ympeGrowthRate);
 
   const indexedPoints = remainingAfterSpecialDropouts.map((p) => {

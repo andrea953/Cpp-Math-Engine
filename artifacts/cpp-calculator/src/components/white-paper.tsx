@@ -695,6 +695,34 @@ export function WhitePaper() {
                 working after starting CPP, a Post-Retirement Benefit accrues each year and is added
                 to the indexed payment stream.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Three-component benefit formula</strong> — s. 46(1) of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    : (a) the 25% base, (b) the first additional (Tier 1) and (c) the second
+                    additional (Tier 2) components.
+                  </li>
+                  <li>
+                    <strong>Take-up adjustment (60–70)</strong> — CPP Act s. 46(3)–(6); the{" "}
+                    <strong>Post-Retirement Benefit</strong> — CPP Act s. 59.1. Each component&apos;s
+                    exact statute is cited in its own section below.
+                  </li>
+                  <li>
+                    Plain-language overview:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                      canada.ca — How much you could receive
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -1889,6 +1917,21 @@ export function WhitePaper() {
                 The result is a sorted list of <InlineMath>{`{year, pensionableEarnings}`}</InlineMath>{" "}
                 records that drops directly into the scenario's earnings history.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <p className="leading-relaxed">
+                  The input is the contributor&apos;s official{" "}
+                  <SourceLink href="https://www.canada.ca/en/employment-social-development/services/my-account.html">
+                    Statement of Contributions (via My Service Canada Account)
+                  </SourceLink>
+                  . The parser is a Modern Cents data-ingestion convenience, not a statutory rule — it
+                  only reshapes Service Canada&apos;s published pensionable-earnings figures into the
+                  engine&apos;s earnings history; none of the benefit math lives here.
+                </p>
+              </div>
             </Section>
           </article>
         </div>
