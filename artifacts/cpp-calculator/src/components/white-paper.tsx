@@ -749,6 +749,34 @@ export function WhitePaper() {
                   forward.
                 </div>
               </Example>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Contributory period</strong> — s. 49 of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    : January 1, 1966 or age 18 to the month before take-up, no later than age 70.
+                  </li>
+                  <li>
+                    <strong>YAMPE</strong> (Year&apos;s Additional Maximum Pensionable Earnings) — CPP
+                    Act s. 17.1. <strong>AYMPE / AYAMPE</strong> are the &quot;Maximum Pensionable
+                    Earnings Average&quot; (5-year average) used for indexing — CPP Act s. 42(1).
+                  </li>
+                  <li>
+                    <strong>Published YMPE, YAMPE and YBE values</strong> are the official annual
+                    figures from{" "}
+                    <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-contribution-rates-maximums-exemptions.html">
+                      canada.ca — CPP contribution rates, maximums and exemptions
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -809,6 +837,30 @@ export function WhitePaper() {
                   30 keep AMPE just below the ceiling even with the drop-out applied.
                 </div>
               </Example>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Average monthly pensionable earnings &amp; earnings indexing</strong> —
+                    s. 48 of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    . Indexing uses the &quot;Maximum Pensionable Earnings Average&quot; defined in
+                    s. 42(1).
+                  </li>
+                  <li>
+                    Plain-language overview of how the calculated amount is built:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                      canada.ca — How much you could receive
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -839,6 +891,28 @@ export function WhitePaper() {
                 Base CPP applies to the entire contributory period back to 1966 and continues to
                 exist alongside the Tier 1 and Tier 2 enhancements — it is not replaced by them.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>25% base replacement rate</strong> — s. 46(1)(a) of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    : the basic monthly amount is 25% of average monthly pensionable earnings.
+                  </li>
+                  <li>
+                    Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                      canada.ca — How much you could receive
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -926,6 +1000,33 @@ export function WhitePaper() {
                   contribution well below its eventual ceiling.
                 </div>
               </Example>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>8⅓% first additional replacement rate</strong> — s. 46(1)(b) of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    ; first additional monthly pensionable earnings are defined in s. 48.1 and the
+                    first additional contributory period in s. 49.1.
+                  </li>
+                  <li>
+                    <strong>Phase-in proportions</strong> (2019 × 0.15, 2020 × 0.3, 2021 × 0.5,
+                    2022 × 0.75, 2023+ × 1.0) — CPP Act s. 51.
+                  </li>
+                  <li>
+                    Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-enhancement.html">
+                      canada.ca — CPP and the CPP enhancement
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -975,6 +1076,29 @@ export function WhitePaper() {
                 Tier 2 only contributes to the result when the client has earnings above the YMPE
                 ceiling in 2024 or later.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>33⅓% second additional replacement rate</strong> — s. 46(1)(c) of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    ; second additional monthly pensionable earnings are defined in s. 48.2, applied
+                    to the band between YMPE and YAMPE (s. 17.1).
+                  </li>
+                  <li>
+                    Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-enhancement.html">
+                      canada.ca — CPP and the CPP enhancement
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -1074,6 +1198,32 @@ export function WhitePaper() {
                 late-career clients see modest enhanced amounts even when their recent earnings
                 are at the YMPE. The clock simply has not finished running.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>40-year (480-month) full-accrual basis</strong> follows from the
+                    enhanced pension being built on first/second additional monthly pensionable
+                    earnings averaged over the additional contributory period — s. 48.1 and s. 48.2
+                    of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    .
+                  </li>
+                  <li>
+                    The enhancement replaces a share of average career earnings over roughly 40
+                    years of contributions:{" "}
+                    <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-enhancement.html">
+                      canada.ca — CPP and the CPP enhancement
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -1348,6 +1498,30 @@ export function WhitePaper() {
                   scales the base, Tier 1, and Tier 2 portions together.
                 </div>
               </Example>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Actuarial adjustment for early/late take-up</strong> is authorized by
+                    s. 46(3)–(6) of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    ; the specific −0.6%/month (before 65) and +0.7%/month (after 65) factors are
+                    prescribed by regulation.
+                  </li>
+                  <li>
+                    Published rates (max −36% at 60, +42% at 70):{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/when-start.html">
+                      canada.ca — When to start your retirement pension
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -1469,6 +1643,23 @@ export function WhitePaper() {
                 structural shape of the maximum once both 40-year clocks finish running.
                 Locked in by <code>src/cpp/__tests__/tierBreakdown.test.ts</code>.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <p className="leading-relaxed">
+                  This benchmark is a derived ratio rather than a single statutory rule. The{" "}
+                  <strong>maximum monthly retirement pension</strong> figures are the official annual
+                  amounts published by{" "}
+                  <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                    canada.ca — How much you could receive
+                  </SourceLink>
+                  ; the maximum is wage-indexed (by YMPE growth) before take-up, consistent with the
+                  &quot;Maximum Pensionable Earnings Average&quot; in CPP Act s. 42(1) and the
+                  benefit formula in s. 46.
+                </p>
+              </div>
             </Section>
 
             <Section>
@@ -1516,6 +1707,31 @@ export function WhitePaper() {
                 over year and are themselves indexed forward at the same CPI rate as the rest of
                 the benefit stream.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Post-Retirement Benefit amount</strong> — s. 59.1 of the{" "}
+                    <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                      Canada Pension Plan Act (RSC 1985, c. C-8)
+                    </SourceLink>
+                    . The statute computes each year&apos;s PRB as 0.00625 × the Maximum Pensionable
+                    Earnings Average × the earnings-to-YMPE ratio × the age adjustment; the engine
+                    approximates this as ≈ 1/40 of the contributor&apos;s own starting pension scaled
+                    by the same earnings ratio.
+                  </li>
+                  <li>
+                    Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/cpp-post-retirement.html">
+                      canada.ca — Post-Retirement Benefit
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
@@ -1593,6 +1809,47 @@ export function WhitePaper() {
                 retirement pension at 65, truncating earnings at the death year so no future
                 contributions are projected.
               </p>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <p className="mb-2 leading-relaxed">
+                  Survivor-side benefits are codified in the{" "}
+                  <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                    Canada Pension Plan Act (RSC 1985, c. C-8)
+                  </SourceLink>
+                  :
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>Survivor&apos;s pension</strong> — s. 58: 60% of the deceased&apos;s
+                    retirement pension at age 65+, 37.5% plus a flat-rate component under 65, the
+                    under-45 reduction, and the combined-benefit cap at the maximum retirement
+                    pension. Plain-language:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/cpp-survivor-pension.html">
+                      canada.ca — Survivor&apos;s pension
+                    </SourceLink>
+                    .
+                  </li>
+                  <li>
+                    <strong>Children&apos;s benefit</strong> (flat monthly amount per eligible child)
+                    — s. 59. Plain-language:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/cpp-childrens-benefit.html">
+                      canada.ca — Benefits for children under 25
+                    </SourceLink>
+                    .
+                  </li>
+                  <li>
+                    <strong>Death benefit</strong> ($2,500 for deaths after December 31, 2018) — s.
+                    57(1)(b). Plain-language:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/cpp-death-benefit.html">
+                      canada.ca — Death benefit
+                    </SourceLink>
+                    .
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>

@@ -330,10 +330,10 @@ function calculateBase(
   const ampeCap = aympeStart / 12;
   const ampeCapped = Math.min(ampe, ampeCap);
 
-  // Base CPP at age 65 = AMPE × 25%
+  // Base CPP at age 65 = AMPE × 25% (CPP Act s. 46(1)(a))
   const baseAt65 = ampeCapped * 0.25;
 
-  // Adjustment factor for take-up age
+  // Adjustment factor for take-up age (CPP Act s. 46(3)–(6); factors by regulation)
   const adjustmentFactor = computeAdjustmentFactor(startAge);
   const monthly = baseAt65 * adjustmentFactor;
 
@@ -382,8 +382,9 @@ function calculateEnhancement(
     tier1Sum += indexed * phase;
     tier1Years += 1;
   }
+  // 40-year (480-month) accrual basis (CPP Act s. 48.1, s. 51 phase-in)
   const tier1Accrual = Math.min(1, tier1Years / ENHANCEMENT_FULL_YEARS);
-  // Annual benefit = (sum of indexed earnings × replacement rate) / years; then /12 for monthly
+  // Annual benefit = (sum of indexed earnings × 8.33%) / years (CPP Act s. 46(1)(b)); then /12 for monthly
   const tier1AnnualAt65 =
     tier1Years > 0
       ? (tier1Sum * TIER1_FULL_REPLACEMENT_RATE) / tier1Years * tier1Accrual
@@ -405,7 +406,9 @@ function calculateEnhancement(
     tier2Sum += indexed;
     tier2Years += 1;
   }
+  // 40-year (480-month) accrual basis (CPP Act s. 48.2)
   const tier2Accrual = Math.min(1, tier2Years / ENHANCEMENT_FULL_YEARS);
+  // Annual benefit = (sum of indexed earnings × 33.33%) / years (CPP Act s. 46(1)(c))
   const tier2AnnualAt65 =
     tier2Years > 0
       ? (tier2Sum * TIER2_REPLACEMENT_RATE) / tier2Years * tier2Accrual
@@ -471,11 +474,13 @@ function projectCumulative(
     cumulative += annualNominal;
     results.push({ age, cumulativeNominal: cumulative, annualNominal });
 
-    // PRB accrual: simplified - each year of work earns PRB equal to ~2.5% of annual benefit accrued
+    // Post-Retirement Benefit (CPP Act s. 59.1). The statute uses 0.00625 × the
+    // Maximum Pensionable Earnings Average × earnings ratio × age adjustment; here
+    // we approximate as ≈ 1/40 of the contributor's own starting pension × ratio.
     if (prb?.continuesWorkingAfterStart && (prb.stopAge ?? 65) > age && (prb.annualEarningsAfterStart ?? 0) > 0) {
       const ympeY = ympeAtStart * Math.pow(1 + ympeGrowthRate, age - startAge);
       const ratio = Math.min(1, (prb.annualEarningsAfterStart ?? 0) / ympeY);
-      // Annual PRB ≈ 1/40 × max retirement benefit × adjustment for take-up age × earnings ratio
+      // Annual PRB ≈ 1/40 × starting pension × earnings ratio (approximation of s. 59.1)
       const maxAnnualBaseAtStart = startMonthly * 12;
       const prbThisYear = (maxAnnualBaseAtStart / 40) * ratio;
       prbMonthly += prbThisYear / 12;

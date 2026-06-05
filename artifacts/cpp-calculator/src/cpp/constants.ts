@@ -1,14 +1,22 @@
 /**
  * CPP reference data.
  *
- * Sources (publicly published):
- *  - Year's Maximum Pensionable Earnings (YMPE), 1966–2026: Service Canada / CRA
- *  - Year's Additional Maximum Pensionable Earnings (YAMPE), 2024–2026
- *  - Year's Basic Exemption (YBE) is fixed at $3,500
+ * Primary source for all benefit rules: the Canada Pension Plan Act, RSC 1985,
+ * c. C-8 (https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html). Section
+ * references are noted next to each constant below. Plain-language references
+ * come from canada.ca (Service Canada / CRA).
+ *
+ * Published reference values (official annual figures from CRA/Service Canada):
+ *  - Year's Maximum Pensionable Earnings (YMPE), 1966–2026 (CPP Act s. 18)
+ *  - Year's Additional Maximum Pensionable Earnings (YAMPE), 2024–2026 (s. 17.1)
+ *  - Year's Basic Exemption (YBE) is fixed at $3,500 (s. 20)
  *  - Maximum CPP retirement pension at 65 by year (used for sanity checks only)
- *  - Benefit-calculation rules (drop-outs, contributory period, adjustment
- *    factors): Canada Pension Plan Act, RSC 1985, c. C-8 — see
- *    https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html
+ *    https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-contribution-rates-maximums-exemptions.html
+ *
+ * Benefit formula (basic monthly amount), CPP Act s. 46(1):
+ *  - (a) 25% of average monthly pensionable earnings (base)
+ *  - (b) 8.33% of first additional monthly pensionable earnings (Tier 1)
+ *  - (c) 33.33% of second additional monthly pensionable earnings (Tier 2)
  *
  * Values past 2026 are projected by the engine using the user's YMPE growth rate.
  */
@@ -21,6 +29,9 @@ export const YBE = 3500;
  * that applies to that year's contributions.
  *
  * Year 2019 = 15% × 8.33%, 2020 = 30% × 8.33%, ..., 2023+ = 100% × 8.33%
+ *
+ * CPP Act s. 51: the phase-in proportions (2019 × 0.15, 2020 × 0.3, 2021 × 0.5,
+ * 2022 × 0.75, 2023+ × 1.0).
  */
 export const TIER1_PHASE_IN: Record<number, number> = {
   2019: 0.15,
@@ -30,18 +41,22 @@ export const TIER1_PHASE_IN: Record<number, number> = {
   2023: 1.0,
 };
 
-/** Tier 1 fully accrued replacement rate (above the 25% base) */
+/** Tier 1 fully accrued replacement rate (above the 25% base). CPP Act s. 46(1)(b); first additional MPE s. 48.1. */
 export const TIER1_FULL_REPLACEMENT_RATE = 0.0833333; // 8 1/3 %
 
-/** Tier 2 replacement rate on earnings between YMPE and YAMPE (full accrual) */
+/** Tier 2 replacement rate on earnings between YMPE and YAMPE (full accrual). CPP Act s. 46(1)(c); second additional MPE s. 48.2. */
 export const TIER2_REPLACEMENT_RATE = 0.3333333; // 33 1/3 %
 
-/** Number of contribution years required to fully accrue the enhancement */
+/** Number of contribution years required to fully accrue the enhancement (40-year / 480-month basis, CPP Act s. 48.1, s. 48.2). */
 export const ENHANCEMENT_FULL_YEARS = 40;
 
-/** Adjustment factors for early/late take-up of the base + Tier 1 portion */
-export const EARLY_ADJUSTMENT_PER_MONTH = 0.006; // -0.6% per month before 65
-export const LATE_ADJUSTMENT_PER_MONTH = 0.007; // +0.7% per month after 65
+/**
+ * Adjustment factors for early/late take-up of the base + Tier 1 portion.
+ * Authorized by CPP Act s. 46(3)–(6); the specific monthly factors are
+ * prescribed by regulation (canada.ca — "When to start your retirement pension").
+ */
+export const EARLY_ADJUSTMENT_PER_MONTH = 0.006; // -0.6% per month before 65 (max -36% at 60)
+export const LATE_ADJUSTMENT_PER_MONTH = 0.007; // +0.7% per month after 65 (max +42% at 70)
 
 /**
  * General drop-out rate applied to the base contributory period.
@@ -88,11 +103,17 @@ export const MAX_BENEFIT_AT_65: Record<number, number> = {
 // ---------------------------------------------------------------------------
 // Survivor / death / children's benefit constants
 // ---------------------------------------------------------------------------
+// Statute: Canada Pension Plan Act, RSC 1985, c. C-8 —
+//  - Survivor's pension (rates, flat-rate, under-45 reduction, combined cap): s. 58
+//  - Death benefit: s. 57(1)(b)
+//  - Children's / orphan's benefit: s. 59
+// Plain-language: canada.ca CPP survivor's / death / children's benefit pages.
+// ---------------------------------------------------------------------------
 
 /**
  * Survivor's pension flat-rate component (paid in addition to 37.5% of the
  * deceased's calculated retirement pension when the survivor is under 65).
- * Monthly amount, indexed annually with CPI.
+ * Monthly amount, indexed annually with CPI. (CPP Act s. 58)
  */
 export const SURVIVOR_FLAT_RATE_HISTORY: Record<number, number> = {
   2019: 193.66,
@@ -105,10 +126,10 @@ export const SURVIVOR_FLAT_RATE_HISTORY: Record<number, number> = {
   2026: 238.34,
 };
 
-/** One-time CPP death benefit (lump sum). Fixed at $2,500 since 2019. */
+/** One-time CPP death benefit (lump sum). Fixed at $2,500 for deaths after Dec 31, 2018 (CPP Act s. 57(1)(b)). */
 export const DEATH_BENEFIT_AMOUNT = 2500;
 
-/** CPP children's benefit — flat monthly amount per eligible child. */
+/** CPP children's benefit — flat monthly amount per eligible child (CPP Act s. 59). */
 export const CHILDREN_BENEFIT_HISTORY: Record<number, number> = {
   2019: 250.27,
   2020: 255.03,
@@ -120,19 +141,19 @@ export const CHILDREN_BENEFIT_HISTORY: Record<number, number> = {
   2026: 309.62,
 };
 
-/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is 65+. */
+/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is 65+ (CPP Act s. 58). */
 export const SURVIVOR_RATE_65_PLUS = 0.60;
 
-/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is under 65. */
+/** Survivor's pension: percentage of deceased's calculated retirement pension when survivor is under 65 (CPP Act s. 58). */
 export const SURVIVOR_RATE_UNDER_65 = 0.375;
 
-/** Enhanced survivor's pension: 37.5% of deceased's enhanced (Tier 1 + Tier 2) retirement amount, regardless of survivor age. */
+/** Enhanced survivor's pension: 37.5% of deceased's enhanced (Tier 1 + Tier 2) retirement amount, regardless of survivor age (CPP Act s. 58). */
 export const SURVIVOR_ENHANCED_RATE = 0.375;
 
-/** Survivor's pension is unavailable to childless, non-disabled survivors under this age (deferred to 65). */
+/** Survivor's pension is unavailable to childless, non-disabled survivors under this age (deferred to 65) (CPP Act s. 58). */
 export const SURVIVOR_MIN_ELIGIBLE_AGE = 35;
 
-/** At ages 35–44 (no children, not disabled), the under-65 base is reduced by 1/120 per month under this age. */
+/** At ages 35–44 (no children, not disabled), the under-65 base is reduced by 1/120 per month under this age (CPP Act s. 58). */
 export const SURVIVOR_FULL_RATE_AGE = 45;
 
 /** Look up the survivor flat rate for a year. Projects unknown years from the latest known value. */

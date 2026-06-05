@@ -7,7 +7,12 @@
  *  - Children's benefit (per eligible dependent child)
  *  - Combined-benefit cap when the survivor is also receiving their own CPP retirement
  *
- * Reference: Service Canada — CPP survivor's, death and children's benefits.
+ * Statute: Canada Pension Plan Act, RSC 1985, c. C-8
+ *  - Survivor's pension (rates, flat-rate, under-45 reduction, combined cap): s. 58
+ *  - Death benefit ($2,500): s. 57(1)(b)
+ *  - Children's / orphan's benefit: s. 59
+ *  https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html
+ * Plain-language: Service Canada — CPP survivor's, death and children's benefits.
  */
 
 import {
@@ -190,7 +195,7 @@ export function calculateSurvivor(
     survivorRate = SURVIVOR_RATE_UNDER_65;
     flatRate = getSurvivorFlatRate(survivor.startYear, indexingRate);
 
-    // Under-45 reduction: only applies if no children and not disabled.
+    // Under-45 reduction: only applies if no children and not disabled (CPP Act s. 58).
     const exempt = survivor.hasDependentChildren || survivor.survivorDisabled;
     if (!exempt && survivor.survivorAge < SURVIVOR_FULL_RATE_AGE) {
       if (survivor.survivorAge < SURVIVOR_MIN_ELIGIBLE_AGE) {
@@ -220,7 +225,7 @@ export function calculateSurvivor(
   const survivorPensionTier2 = tier2Monthly * SURVIVOR_ENHANCED_RATE * underAgeReductionFactor;
 
   // ---------------------------------------------------------------------
-  // Combined-benefit cap (base + Tier 1 portion only)
+  // Combined-benefit cap (base + Tier 1 portion only) — CPP Act s. 58.
   // The sum of (own retirement base+Tier1) + (survivor pension base+Tier1)
   // cannot exceed the maximum retirement pension at 65 for the start year.
   // ---------------------------------------------------------------------
