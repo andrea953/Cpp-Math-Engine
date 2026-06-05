@@ -6,6 +6,9 @@
  *  - Year's Additional Maximum Pensionable Earnings (YAMPE), 2024–2026
  *  - Year's Basic Exemption (YBE) is fixed at $3,500
  *  - Maximum CPP retirement pension at 65 by year (used for sanity checks only)
+ *  - Benefit-calculation rules (drop-outs, contributory period, adjustment
+ *    factors): Canada Pension Plan Act, RSC 1985, c. C-8 — see
+ *    https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html
  *
  * Values past 2026 are projected by the engine using the user's YMPE growth rate.
  */
@@ -40,7 +43,11 @@ export const ENHANCEMENT_FULL_YEARS = 40;
 export const EARLY_ADJUSTMENT_PER_MONTH = 0.006; // -0.6% per month before 65
 export const LATE_ADJUSTMENT_PER_MONTH = 0.007; // +0.7% per month after 65
 
-/** General drop-out rate applied to the base contributory period */
+/**
+ * General drop-out rate applied to the base contributory period.
+ * CPP Act s. 48(4)(a)(i): the statutory rate phased up from 15% (before 2012)
+ * to 16% (2012–2013) to 17% (after December 2013).
+ */
 export const GENERAL_DROPOUT_RATE = 0.17;
 
 /** YMPE history (Year's Maximum Pensionable Earnings) */

@@ -1,1 +1,2 @@
 - [Recharts in print](recharts-print-animation.md) — charts need isAnimationActive={false} or they render empty/partial in print/PDF snapshots.
+- [White-paper print estimator snapshot](white-paper-print-estimator.md) — editing white-paper.tsx content drifts an inline estimator snapshot; update with vitest -u.

@@ -251,7 +251,11 @@ function calculateBase(
 
   const points = buildMonthlyPoints(inputs, effectiveEarnings, contribStart.year, contribStart.month, endY, endM);
 
-  // Apply CRDO + disability drop-outs first
+  // Apply CRDO + disability drop-outs first.
+  // CPP Act s. 48(2)(a) + s. 49(d): Child Rearing Drop-Out (months as a family
+  // allowance recipient with below-average earnings).
+  // CPP Act s. 49(c): disability drop-out (months excluded from the
+  // contributory period by reason of disability).
   const crdoMonthsDropped = points.filter((p) => p.inCrdo).length;
   const disabilityMonthsDropped = points.filter((p) => p.inDisability && !p.inCrdo).length;
   const remainingAfterSpecialDropouts = points.filter((p) => !p.inCrdo && !p.inDisability);
@@ -270,7 +274,8 @@ function calculateBase(
   // ---------------------------------------------------------------------------
   // Post-65 / late take-up drop-out ("age 65 drop-out")
   //
-  // CPP rule: if you delay starting your retirement pension past age 65, any
+  // CPP Act s. 48(3): deductions allowed where the contributory period ends
+  // after age 65. If you delay starting your retirement pension past age 65, any
   // months between age 65 and the date you start CPP are removed from the
   // contributory period IF doing so raises your benefit. This is a separate
   // provision from the 17% general drop-out and does not consume the 17%
@@ -310,7 +315,8 @@ function calculateBase(
     }
   }
 
-  // Apply general drop-out: drop the lowest 17% of remaining months
+  // Apply general drop-out: drop the lowest 17% of remaining months.
+  // CPP Act s. 48(4)(a)(i) (see GENERAL_DROPOUT_RATE in constants.ts).
   const totalMonths = workingPoints.length;
   const dropCount = Math.floor(totalMonths * GENERAL_DROPOUT_RATE);
   const sorted = [...workingPoints].sort((a, b) => a.indexedMonthly - b.indexedMonthly);

@@ -313,6 +313,19 @@ function InlineMath({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary print:text-black print:no-underline"
+    >
+      {children}
+    </a>
+  );
+}
+
 function SectionHeading({
   id,
   eyebrow,
@@ -1252,6 +1265,47 @@ export function WhitePaper() {
                   CPP-D apply for.
                 </div>
               </Example>
+
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <p className="mb-2 leading-relaxed">
+                  All four drop-out rules are codified in the{" "}
+                  <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                    Canada Pension Plan Act (RSC 1985, c. C-8)
+                  </SourceLink>{" "}
+                  and administered by Service Canada / Employment and Social Development Canada:
+                </p>
+                <ul className="ml-5 list-disc space-y-1 leading-relaxed">
+                  <li>
+                    <strong>General drop-out (17%)</strong> — s. 48(4)(a)(i). The statutory rate
+                    phased up from 15% (before 2012) to 16% (2012–2013) to 17% (after December
+                    2013).
+                  </li>
+                  <li>
+                    <strong>Child Rearing Drop-Out (CRDO)</strong> — s. 48(2)(a), with the
+                    contributory-period exclusion in s. 49(d). Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/child-rearing.html">
+                      canada.ca — Child-rearing provisions
+                    </SourceLink>
+                    .
+                  </li>
+                  <li>
+                    <strong>Disability drop-out</strong> — s. 49(c): months excluded from the
+                    contributory period by reason of disability.
+                  </li>
+                  <li>
+                    <strong>Post-65 / late take-up drop-out</strong> — s. 48(3): deductions where
+                    the contributory period ends after age 65.
+                  </li>
+                  <li>
+                    <strong>Contributory period</strong> (the window the drop-outs apply to) — s.
+                    49: January 1, 1966 or age 18, ending the month before take-up (no later than
+                    age 70).
+                  </li>
+                </ul>
+              </div>
             </Section>
 
             <Section>
