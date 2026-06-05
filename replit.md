@@ -35,6 +35,7 @@ A planner-grade Canada Pension Plan calculator for financial advisors.
 - **Auth**: Clerk (cookie-based; api-server proxies to Clerk middleware)
 - **Engine**: Pure-client TypeScript CPP engine in `src/cpp/` — base + Tier 1 + Tier 2 enhancement, CRDO, disability dropout, general 17% dropout, AMPE/AYMPE, breakeven projection, PRB, and full survivor-side benefits (survivor's pension with combined-benefit cap, $2,500 death benefit, children's benefit). Constants tables for YMPE 1966–2026, YAMPE 2024–2026, survivor flat rate and children's benefit 2019–2026.
 - **Persistence**: scenarios stored as JSONB in PostgreSQL (`scenariosTable`, see `lib/db/src/schema/scenarios.ts`); CRUD + duplicate + share via `/api/scenarios` exposed in OpenAPI spec. Share state lives on the row as a unique `share_token` column; planners can issue or revoke a public share link from the editor toolbar.
+- **Annual update**: every January the CPP figures change (benefits indexed to CPI; YMPE/YAMPE ceilings rise with wage growth). Follow `artifacts/cpp-calculator/RUNBOOK.md` to update the constants tables, white paper, and locked tests.
 - **API hooks**: `useListScenarios`, `useGetScenario`, `useCreateScenario`, `useUpdateScenario`, `useDeleteScenario`, `useDuplicateScenario` from `@workspace/api-client-react`.
 
 ### API Server — `artifacts/api-server`

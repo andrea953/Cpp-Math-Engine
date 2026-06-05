@@ -17,7 +17,18 @@ position per-page running headers/footers for Safari/Firefox (which ignore
 `@page` margin boxes). The snapshot is a guard so content growth is reviewed
 against the estimator geometry.
 
-**How to apply:** after intentional white-paper content edits, update with
-`pnpm --filter @workspace/cpp-calculator exec vitest run -u src/cpp/__tests__/whitePaperPrintEstimator.test.ts`.
-The drift should match exactly the elements you added/removed; if it doesn't,
-the estimator or geometry is off, not just the snapshot.
+**How to apply:** after intentional white-paper content edits, do NOT just run
+`-u`. The drift can be a real regression. Order:
+1. Run the real-browser truth check first:
+   `pnpm --filter @workspace/cpp-calculator test:e2e` (boots Chromium, compares
+   `estimateWhitePaperPageCount` against an actual printed PDF; needs system
+   `chromium`). This e2e test lives at
+   `src/components/__tests__/whitePaperPrint.e2e.test.ts` and is EXCLUDED from the
+   default `pnpm test` / `vitest run` (separate `vitest.e2e.config.ts`).
+2. If e2e passes, refresh the snapshot:
+   `pnpm --filter @workspace/cpp-calculator exec vitest run -u src/cpp/__tests__/whitePaperPrintEstimator.test.ts`.
+3. If e2e fails (page-count delta ≥ 2), tune `estimateWhitePaperPageCount` in
+   `src/components/whitePaperPrintEstimator.ts` (or `@page` geometry in
+   `src/index.css`) until e2e passes, THEN update the snapshot.
+
+See `artifacts/cpp-calculator/RUNBOOK.md` (annual Jan update) and `TESTING.md`.

@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "vm8xlf-4sd8j56mUwXzgq"
+uri = "file://artifacts/cpp-calculator/RUNBOOK.md"
+type = "text"
+title = "Annual CPP Update Runbook (January)"
