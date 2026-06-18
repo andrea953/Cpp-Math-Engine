@@ -1136,7 +1136,21 @@ function TakeUpForm({ inputs, onChange }: InputsPanelProps) {
           </div>
           <Switch
             checked={prb.continuesWorkingAfterStart}
-            onCheckedChange={(v) => setPrb({ continuesWorkingAfterStart: v })}
+            onCheckedChange={(v) =>
+              setPrb(
+                v
+                  ? {
+                      continuesWorkingAfterStart: true,
+                      // Persist the values shown in the fields so the engine
+                      // actually computes a PRB (it gates on a non-zero earnings
+                      // amount). Without this, toggling on leaves these undefined
+                      // and the calculation is unchanged.
+                      annualEarningsAfterStart: prb.annualEarningsAfterStart ?? 50000,
+                      stopAge: prb.stopAge ?? 70,
+                    }
+                  : { continuesWorkingAfterStart: false },
+              )
+            }
           />
         </div>
 
