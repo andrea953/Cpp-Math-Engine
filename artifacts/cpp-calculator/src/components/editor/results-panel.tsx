@@ -31,9 +31,11 @@ import {
   YMPE_HISTORY,
   YAMPE_HISTORY,
   exportToCsv,
+  projectedMonthlyInclPrbAtStop,
   type ScenarioInputs,
   type StartAgeResult,
   type SurvivorResult,
+  type PostRetirementBenefit,
 } from "@/cpp";
 import { Briefcase, HeartHandshake, Users, Wallet, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -252,7 +254,12 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {sortedAges.map((r) => (
-          <StartAgeCard key={r.startAge} result={r} isOptimal={optimal?.startAge === r.startAge} />
+          <StartAgeCard
+            key={r.startAge}
+            result={r}
+            isOptimal={optimal?.startAge === r.startAge}
+            prb={inputs.postRetirementBenefit}
+          />
         ))}
       </div>
 
@@ -578,8 +585,16 @@ function SurvivorRow({
 // Cards
 // ---------------------------------------------------------------------------
 
-function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal: boolean }) {
-  const { deflate } = useDisplay();
+function StartAgeCard({
+  result,
+  isOptimal,
+  prb,
+}: {
+  result: StartAgeResult;
+  isOptimal: boolean;
+  prb?: PostRetirementBenefit;
+}) {
+  const { deflate, indexingRate } = useDisplay();
   // All headline $ amounts are start-year nominal from the engine. Deflating
   // by the same start-year divisor preserves all ratios (% of max, tier
   // shares), so only the displayed currency values change.
@@ -610,6 +625,21 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
   const adj = result.adjustmentFactor;
   const adjLabel = adj === 1 ? "0%" : adj > 1 ? `+${((adj - 1) * 100).toFixed(0)}%` : `${((adj - 1) * 100).toFixed(0)}%`;
 
+  // Post-Retirement Benefit: when the client keeps working after starting CPP,
+  // the engine accrues extra benefit year by year until the stop age. The PRB
+  // never changes the headline monthly AT START (it builds up afterward), so we
+  // surface the fully-accrued monthly here to make the toggle's effect visible.
+  // The helper handles the start-year-dollar conversion and edge cases (engine-
+  // consistent stop-age default, fractional stop ages, projection clamping);
+  // we deflate its result the same way the headline is deflated so the
+  // today's-$/future-$ toggle stays consistent.
+  const prbProjection = projectedMonthlyInclPrbAtStop(result, prb, indexingRate);
+  const prbInclMonthly = prbProjection
+    ? deflate(prbProjection.startYearMonthly, result.startYear)
+    : 0;
+  const prbDeltaMonthly = prbProjection ? prbInclMonthly - totalMonthly : 0;
+  const prbStopAge = prbProjection?.atAge ?? 0;
+
   return (
     <Card className={isOptimal ? "border-primary shadow-md ring-1 ring-primary/30" : ""}>
       <CardHeader className="pb-2">
@@ -636,6 +666,23 @@ function StartAgeCard({ result, isOptimal }: { result: StartAgeResult; isOptimal
             per month · {formatMoney(totalAnnual)} per year
           </div>
         </div>
+
+        {prbProjection && prbDeltaMonthly > 0 && (
+          <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 px-2.5 py-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Briefcase className="h-3 w-3 shrink-0" />
+                Incl. PRB at age {prbStopAge}
+              </span>
+              <span className="font-mono text-sm font-semibold tabular-nums">
+                {formatMoney(prbInclMonthly, true)}/mo
+              </span>
+            </div>
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
+              +{formatMoney(prbDeltaMonthly, true)}/mo from working to age {prbStopAge} after starting
+            </div>
+          </div>
+        )}
 
         {/* Percent of the maximum CPP retirement pension for someone taking
             up at this same age in the same start year. The max is projected

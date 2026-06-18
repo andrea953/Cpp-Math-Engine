@@ -498,6 +498,42 @@ function projectCumulative(
   return results;
 }
 
+/**
+ * Projected monthly benefit *including* fully-accrued Post-Retirement Benefit.
+ *
+ * The PRB never changes the headline monthly AT START — it builds up year by
+ * year while the contributor keeps working, and plateaus once they stop. This
+ * helper reads the engine's `cumulativeByAge` projection and returns the
+ * monthly benefit (in START-YEAR dollars, indexing removed) once the PRB has
+ * fully accrued, so the UI can surface the toggle's real effect.
+ *
+ * Returns `null` when no PRB applies (not working past start, zero earnings, or
+ * the stop age is at/before the start age). Defaults and the "fully accrued"
+ * age are kept consistent with `projectCumulative`:
+ *  - stop age defaults to 65 (matching the accrual gate's `?? 65`);
+ *  - PRB is fully reflected at the first integer age >= stopAge (accrual at age
+ *    `a` requires `stopAge > a`), clamped to the projection horizon.
+ */
+export function projectedMonthlyInclPrbAtStop(
+  result: Pick<StartAgeResult, "startAge" | "cumulativeByAge">,
+  prb: PostRetirementBenefit | undefined,
+  indexingRate: number,
+): { startYearMonthly: number; atAge: number } | null {
+  if (!prb?.continuesWorkingAfterStart) return null;
+  if ((prb.annualEarningsAfterStart ?? 0) <= 0) return null;
+  const stopAge = prb.stopAge ?? 65;
+  if (stopAge <= result.startAge) return null;
+  const ages = result.cumulativeByAge;
+  if (ages.length === 0) return null;
+  const maxAge = ages[ages.length - 1].age;
+  const targetAge = Math.min(maxAge, Math.ceil(stopAge));
+  const entry = ages.find((c) => c.age === targetAge) ?? ages[ages.length - 1];
+  const yearsFromStart = entry.age - result.startAge;
+  const startYearMonthly =
+    entry.annualNominal / 12 / Math.pow(1 + indexingRate, yearsFromStart);
+  return { startYearMonthly, atAge: entry.age };
+}
+
 // ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
