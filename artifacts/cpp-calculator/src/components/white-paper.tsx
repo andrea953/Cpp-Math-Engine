@@ -49,6 +49,7 @@ const TOC: TocItem[] = [
   { id: "wp-prb", label: "Post-Retirement Benefit (PRB)", part: 2 },
   { id: "wp-survivor", label: "Survivor, children & death benefit", part: 2 },
   { id: "wp-soc", label: "SOC import", part: 2 },
+  { id: "wp-references", label: "References & sources", part: 2 },
 ];
 
 function formatGeneratedDate(d: Date): string {
@@ -577,6 +578,23 @@ export function WhitePaper() {
                 worth statement can't be defended line by line — and that is exactly the figure
                 clients ask the most questions about.
               </p>
+              <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
+                  Sources
+                </p>
+                <p className="leading-relaxed">
+                  The public tools referenced here are Service Canada&apos;s{" "}
+                  <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/retirement-income-calculator.html">
+                    Canadian Retirement Income Calculator
+                  </SourceLink>{" "}
+                  and the canada.ca{" "}
+                  <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                    CPP &ldquo;How much you could receive&rdquo; estimate
+                  </SourceLink>
+                  . The technical claims behind every point above are cited section-by-section in
+                  Part 2 and gathered in the References below.
+                </p>
+              </div>
             </Section>
 
             <Section>
@@ -1958,6 +1976,71 @@ export function WhitePaper() {
                   engine&apos;s earnings history; none of the benefit math lives here.
                 </p>
               </div>
+            </Section>
+
+            <Section>
+              <SectionHeading
+                id="wp-references"
+                eyebrow="Primary sources"
+                title="References & sources"
+                icon={<FileText className="h-5 w-5" />}
+              />
+              <p>
+                Every figure, rate, and rule in this white paper is drawn from primary Government of
+                Canada sources. The exact statute section for each rule is cited in the Sources block
+                under the relevant Part 2 section; the documents below are the underlying references,
+                gathered in one place.
+              </p>
+              <ul className="ml-5 list-disc space-y-2">
+                <li>
+                  <strong>Legislation.</strong>{" "}
+                  <SourceLink href="https://laws-lois.justice.gc.ca/eng/acts/c-8/FullText.html">
+                    Canada Pension Plan Act (RSC 1985, c. C-8)
+                  </SourceLink>{" "}
+                  — the governing statute for the contributory period, AMPE indexing, the base 25%
+                  replacement, the first and second additional (Tier 1 / Tier 2) components, enhanced
+                  accrual, the early/late take-up adjustments, all drop-out and drop-in provisions,
+                  the Post-Retirement Benefit, and survivor-side benefits.
+                </li>
+                <li>
+                  <strong>Benefit amounts &amp; adjustments.</strong>{" "}
+                  <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                    canada.ca — CPP: How much you could receive
+                  </SourceLink>{" "}
+                  (base design, AMPE, the −0.6%/month early and +0.7%/month late adjustment factors,
+                  and the percent-of-maximum benchmark).
+                </li>
+                <li>
+                  <strong>Contribution ceilings.</strong>{" "}
+                  <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-contribution-rates-maximums-exemptions.html">
+                    CRA — CPP contribution rates, maximums and exemptions
+                  </SourceLink>{" "}
+                  (YMPE, YAMPE, and the Year&apos;s Basic Exemption used in the constants tables).
+                </li>
+                <li>
+                  <strong>The enhancement.</strong>{" "}
+                  <SourceLink href="https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/payroll/payroll-deductions-contributions/canada-pension-plan-cpp/cpp-enhancement.html">
+                    CRA — Canada Pension Plan enhancement
+                  </SourceLink>{" "}
+                  (the 2019 first additional and 2024 second additional components, replacement
+                  rates, and the 40-year accrual basis).
+                </li>
+                <li>
+                  <strong>Child-rearing provisions.</strong>{" "}
+                  <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/child-rearing.html">
+                    canada.ca — Child-rearing provisions
+                  </SourceLink>{" "}
+                  (the base child-rearing drop-out and the enhanced child-rearing drop-in).
+                </li>
+                <li>
+                  <strong>Statement of Contributions.</strong>{" "}
+                  <SourceLink href="https://www.canada.ca/en/employment-social-development/services/my-account.html">
+                    My Service Canada Account
+                  </SourceLink>{" "}
+                  — the official source of the contributor&apos;s pensionable-earnings history used
+                  by the SOC import.
+                </li>
+              </ul>
             </Section>
           </article>
         </div>

@@ -170,13 +170,13 @@ describe("Safari / Firefox print page-count estimator drift guard", () => {
         "examples": 17,
         "formulas": 12,
         "inlineMaths": 22,
-        "listItems": 77,
+        "listItems": 83,
         "pageContentPxExpr": "9.5 * 96",
         "pageMargin": "0.7in 0.6in 0.8in 0.6in",
-        "paragraphs": 58,
+        "paragraphs": 61,
         "partHeadings": 2,
         "printWidthPxExpr": "7.3 * 96",
-        "sectionHeadings": 18,
+        "sectionHeadings": 19,
         "visibleTextLengthBucket": 4250,
       }
     `);
