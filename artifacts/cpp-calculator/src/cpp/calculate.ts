@@ -19,6 +19,8 @@
 
 import {
   CPP_START_YEAR,
+  DISABILITY_DROP_IN_PRIOR_YEARS,
+  DISABILITY_DROP_IN_RATE,
   EARLY_ADJUSTMENT_PER_MONTH,
   ENHANCEMENT_FULL_YEARS,
   GENERAL_DROPOUT_RATE,
@@ -403,24 +405,46 @@ function calculateEnhancement(
   const aympeStart = getAympe(startYear, inputs.assumptions.ympeGrowthRate);
   const ayampeStart = getAyampe(startYear, inputs.assumptions.yampeGrowthRate);
 
-  // ---- Child-rearing DROP-IN (Enhanced CPP only) ----
+  // ---- DROP-IN (Enhanced CPP only) ----
   // The Enhanced CPP (1st + 2nd Additional) has no drop-out. Instead, CPP Act
   // s. 53.3(1) (1st Additional) and s. 53.4(1) (2nd Additional) provide a
-  // "drop-in": for the years a parent cared for a child under 7, an *imputed*
-  // income is computed as the average pensionable earnings in the 5 years
-  // BEFORE the child's birth, and the higher of (real, imputed) income is used.
-  // If there were no earnings in the 5 prior years there is no imputed income.
+  // "drop-in": low/no-earning protected periods are credited with an *imputed*
+  // (proxy) income, and the higher of (real, imputed) income is used for each
+  // year. Two protected periods get a drop-in:
   //
-  // We take each CRDO window's start year as the child's birth year and apply
-  // the drop-in across that window (the same window used for the base drop-out).
+  //   - Child-rearing: imputed income = the average pensionable earnings in the
+  //     5 years BEFORE the child's birth (the CRDO window's start year is taken
+  //     as the birth year), applied across that window.
+  //   - Disability: imputed income = 70% of the average pensionable earnings in
+  //     the 6 years BEFORE disability onset (the disability window's start year),
+  //     applied across that window. (canada.ca CPP amount — "Periods of
+  //     disability"; CPP Act s. 53.3/53.4 additional plan.)
+  //
+  // If a protected period has no earnings in its prior window there is no
+  // imputed income and the drop-in has no effect. Where windows overlap we keep
+  // the largest imputed value for the year (Math.max).
+  //
+  // Granularity: like the rest of the enhanced component (which is computed from
+  // annual pensionable earnings), the drop-in is applied per CALENDAR YEAR — any
+  // year a window touches gets the imputed value. Period start/end MONTHS are
+  // not prorated here; the base component handles month-level disability/CRDO
+  // exclusion in buildMonthlyPoints above.
   const dropInByYear = new Map<number, number>();
   for (const period of inputs.dropoutPeriods ?? []) {
-    if (period.kind !== "crdo") continue;
-    let prior5Sum = 0;
-    for (let y = period.startYear - 5; y <= period.startYear - 1; y++) {
-      prior5Sum += earningsByYear.get(y) ?? 0;
+    let imputed = 0;
+    if (period.kind === "crdo") {
+      let prior5Sum = 0;
+      for (let y = period.startYear - 5; y <= period.startYear - 1; y++) {
+        prior5Sum += earningsByYear.get(y) ?? 0;
+      }
+      imputed = prior5Sum / 5;
+    } else if (period.kind === "disability") {
+      let priorSum = 0;
+      for (let y = period.startYear - DISABILITY_DROP_IN_PRIOR_YEARS; y <= period.startYear - 1; y++) {
+        priorSum += earningsByYear.get(y) ?? 0;
+      }
+      imputed = (priorSum / DISABILITY_DROP_IN_PRIOR_YEARS) * DISABILITY_DROP_IN_RATE;
     }
-    const imputed = prior5Sum / 5;
     if (imputed <= 0) continue;
     for (let y = period.startYear; y <= period.endYear; y++) {
       dropInByYear.set(y, Math.max(dropInByYear.get(y) ?? 0, imputed));

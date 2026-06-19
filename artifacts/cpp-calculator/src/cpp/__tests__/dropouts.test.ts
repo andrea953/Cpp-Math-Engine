@@ -302,6 +302,132 @@ describe("Child-rearing drop-in (Enhanced CPP)", () => {
   });
 });
 
+describe("Disability drop-in (Enhanced CPP)", () => {
+  // canada.ca CPP amount, "Periods of disability": the enhanced component credits
+  // 70% of the average earnings in the 6 years before disability onset. Tier 1
+  // window for the 1961-born / start-2026 harness is 2019..2025.
+  it("imputes 70% of the 6 prior years' average for disability years (Tier 1)", () => {
+    // Disability gap 2020-2022; the 6 prior years (2014-2019) are at YMPE-max.
+    const gapYears = [2020, 2021, 2022];
+    const withoutClaim = calculateCpp(zeroOut({}, gapYears)).byStartAge[0];
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        gapYears,
+      ),
+    ).byStartAge[0];
+
+    // All three zero-earning disability years get imputed income dropped in.
+    expect(withClaim.enhancement.tier1DropInYears).toBe(3);
+    expect(withClaim.tier1Monthly).toBeGreaterThan(withoutClaim.tier1Monthly);
+  });
+
+  it("produces no imputed income when the 6 years before onset had no earnings", () => {
+    const deadYears = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022];
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        deadYears,
+      ),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.tier1DropInYears).toBe(0);
+  });
+
+  it("imputes above-YMPE income for Tier 2 disability years", () => {
+    // Prior earnings are high enough that 70% of the average still clears YMPE in
+    // both 2024 and 2025, so the imputed income lands in the Tier 2 band.
+    const overrides = {
+      2018: 150000,
+      2019: 150000,
+      2020: 150000,
+      2021: 150000,
+      2022: 150000,
+      2023: 150000, // 6 prior years (2018-2023); 70% avg = 105,000 > YMPE
+      2024: 0,
+      2025: 0, // disability gap inside the Tier 2 era
+    };
+    const withoutClaim = calculateCpp(setEarnings({}, overrides)).byStartAge[0];
+    const withClaim = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2024, startMonth: 1, endYear: 2025, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+
+    expect(withClaim.enhancement.tier2DropInYears).toBe(2);
+    expect(withoutClaim.tier2Monthly).toBe(0);
+    expect(withClaim.tier2Monthly).toBeGreaterThan(0);
+  });
+
+  it("credits less than the child-rearing drop-in for the same window (70% vs 100%)", () => {
+    // Flat prior earnings so the 5-year (CRDO) and 6-year (disability) averages
+    // are identical; the only difference is the 70% disability factor. The gap
+    // years (2020-2022) are zero so the drop-in is the sole contribution there.
+    const flat = 40000;
+    const overrides: Record<number, number> = {};
+    for (let y = 2013; y <= 2025; y++) overrides[y] = flat;
+    for (const y of [2020, 2021, 2022]) overrides[y] = 0;
+
+    const crdo = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+    const disability = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+
+    expect(disability.enhancement.tier1DropInYears).toBe(3);
+    expect(crdo.enhancement.tier1DropInYears).toBe(3);
+    // Same window + flat prior earnings -> disability credits 70% of what CRDO
+    // does, so its Tier 1 enhancement is strictly lower (but still positive).
+    expect(disability.tier1Monthly).toBeGreaterThan(0);
+    expect(disability.tier1Monthly).toBeLessThan(crdo.tier1Monthly);
+  });
+
+  it("applies the drop-in at annual granularity (partial-year window credits the whole year)", () => {
+    // The enhanced component is computed from annual pensionable earnings, so a
+    // partial-year disability window (Jul-Dec 2020 + Jan-Jun 2021) imputes income
+    // for both calendar years it touches — start/end months are not prorated.
+    const gapYears = [2020, 2021];
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2020, startMonth: 7, endYear: 2021, endMonth: 6 },
+          ],
+        },
+        gapYears,
+      ),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.tier1DropInYears).toBe(2);
+  });
+});
+
 describe("General 17% drop-out", () => {
   it("drops floor(17% × contributory period) months from the lowest indexed earnings", () => {
     const result = calculateCpp(makeInputs()).byStartAge[0];

@@ -51,6 +51,19 @@ export const TIER2_REPLACEMENT_RATE = 0.3333333; // 33 1/3 %
 export const ENHANCEMENT_FULL_YEARS = 40;
 
 /**
+ * Enhanced-CPP disability drop-in rate. The first and second additional
+ * components have no drop-out; instead, for months a contributor received a CPP
+ * disability pension, a proxy income is credited worth 70% of the contributor's
+ * average pensionable earnings in the 6 years before disability onset.
+ * CPP Act s. 53.3/53.4 (additional plan); canada.ca CPP amount — "Periods of
+ * disability": https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html
+ */
+export const DISABILITY_DROP_IN_RATE = 0.7;
+
+/** Number of pre-disability years averaged for the enhanced disability drop-in (the "6 years before you became disabled"). */
+export const DISABILITY_DROP_IN_PRIOR_YEARS = 6;
+
+/**
  * Adjustment factors for early/late take-up of the base + Tier 1 portion.
  * Authorized by CPP Act s. 46(3)–(6); the specific monthly factors are
  * prescribed by regulation (canada.ca — "When to start your retirement pension").

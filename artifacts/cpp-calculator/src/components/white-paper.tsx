@@ -1320,15 +1320,31 @@ export function WhitePaper() {
               <p>
                 The four rules above govern the <strong>base</strong> CPP only. The{" "}
                 <strong>enhanced</strong> CPP (the first and second additional components) has no
-                drop-out. Instead it uses a child-rearing <strong>drop-in</strong>: for the years a
-                parent cared for a child under 7, an <em>imputed</em> income is calculated as the
-                average of the parent's pensionable earnings in the five years immediately before the
-                child's birth, and the engine uses the higher of the real or imputed income for each
-                of those years. If the parent had no earnings in the five years before the birth,
-                there is no imputed income and the drop-in has no effect. The engine derives the
-                birth year from the start of each child-rearing window, so a single CRDO entry drives
-                both the base drop-out and the enhanced drop-in.
+                drop-out. Instead it uses <strong>drop-ins</strong> that credit an <em>imputed</em>{" "}
+                income for protected periods, using the higher of the real or imputed income for each
+                affected year:
               </p>
+              <ul className="ml-5 list-disc space-y-2">
+                <li>
+                  <strong>Child-rearing drop-in.</strong> For the years a parent cared for a child
+                  under 7, the imputed income is the average of the parent's pensionable earnings in
+                  the five years immediately before the child's birth. The engine derives the birth
+                  year from the start of each child-rearing window, so a single CRDO entry drives
+                  both the base drop-out and the enhanced drop-in. If the parent had no earnings in
+                  the five years before the birth, there is no imputed income and the drop-in has no
+                  effect.
+                </li>
+                <li>
+                  <strong>Disability drop-in.</strong> For the years a contributor received a CPP
+                  disability pension, the imputed income is 70% of the average pensionable earnings
+                  in the six years before disability onset. This protects the enhanced component from
+                  the low-income disability years — the base component simply excludes those months
+                  instead (see the disability drop-out above). Like the rest of the enhanced
+                  component, both drop-ins operate at annual granularity (the engine works from
+                  yearly pensionable earnings), so they apply across each calendar year the protected
+                  window touches.
+                </li>
+              </ul>
               <Example>
                 <ExampleLine>
                   contributory months = {ex.base.contribMonths.toLocaleString()}; dropped = floor(
@@ -1504,8 +1520,8 @@ export function WhitePaper() {
                     .
                   </li>
                   <li>
-                    <strong>Disability drop-out</strong> — s. 49(c): months excluded from the
-                    contributory period by reason of disability.
+                    <strong>Disability drop-out (base component)</strong> — s. 49(c): months
+                    excluded from the contributory period by reason of disability.
                   </li>
                   <li>
                     <strong>Enhanced CPP child-rearing drop-in</strong> — s. 53.3(1) (first
@@ -1514,6 +1530,17 @@ export function WhitePaper() {
                     actual earnings (for months after January 1, 2019). Plain-language reference:{" "}
                     <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/child-rearing.html">
                       canada.ca — Child-rearing provisions ("Child rearing drop-in")
+                    </SourceLink>
+                    .
+                  </li>
+                  <li>
+                    <strong>Enhanced CPP disability drop-in</strong> — s. 53.3/53.4 (additional
+                    plan): for months a contributor received a CPP disability pension, the enhanced
+                    component credits an imputed income worth 70% of average pensionable earnings in
+                    the six years before disability onset, used when higher than actual earnings.
+                    Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/amount.html">
+                      canada.ca — CPP amount ("Periods of disability")
                     </SourceLink>
                     .
                   </li>

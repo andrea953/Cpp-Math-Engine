@@ -176,9 +176,9 @@ export interface EnhancementCalcDiagnostics {
   tier1IndexedEarningsSum: number;
   /** Sum of indexed Tier 2 contributory earnings (between YMPE and YAMPE) */
   tier2IndexedEarningsSum: number;
-  /** Years where the child-rearing drop-in (imputed income) replaced real income in Tier 1 */
+  /** Years where a drop-in (child-rearing or disability imputed income) replaced real income in Tier 1 */
   tier1DropInYears: number;
-  /** Years where the child-rearing drop-in (imputed income) replaced real income in Tier 2 */
+  /** Years where a drop-in (child-rearing or disability imputed income) replaced real income in Tier 2 */
   tier2DropInYears: number;
 }
 
