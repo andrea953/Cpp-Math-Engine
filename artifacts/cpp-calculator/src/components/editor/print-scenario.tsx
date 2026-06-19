@@ -16,6 +16,8 @@ import {
   calculateSurvivor,
   formatAge,
   formatMoney,
+  projectedMonthlyInclPrbAtStop,
+  type PostRetirementBenefit,
   type ScenarioInputs,
   type StartAgeResult,
   type SurvivorResult,
@@ -127,6 +129,12 @@ export function PrintScenario({
           />
 
           <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} />
+
+          <PrbSection
+            sortedAges={sortedAges}
+            prb={inputs.postRetirementBenefit}
+            indexingRate={inputs.assumptions.indexingRate}
+          />
 
           <GrowthOverTimeSection sortedAges={sortedAges} optimal={optimal} />
 
@@ -315,6 +323,84 @@ function MonthlyByAgeSection({
           option is highlighted.
         </p>
       </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Post-Retirement Benefit (working after you start)
+// ---------------------------------------------------------------------------
+
+function PrbSection({
+  sortedAges,
+  prb,
+  indexingRate,
+}: {
+  sortedAges: StartAgeResult[];
+  prb: PostRetirementBenefit | undefined;
+  indexingRate: number;
+}) {
+  // Only the start ages where the client keeps working (and contributing) after
+  // their pension begins accrue a PRB. The helper returns null for ages where
+  // work stops at/before the start age, so those rows are simply omitted. Figures
+  // are in start-year dollars — the same basis as totalMonthly elsewhere in the
+  // handout — so they can be compared directly.
+  const rows = sortedAges
+    .map((r) => {
+      const proj = projectedMonthlyInclPrbAtStop(r, prb, indexingRate);
+      if (!proj) return null;
+      const delta = proj.startYearMonthly - r.totalMonthly;
+      if (delta <= 0) return null;
+      return {
+        startAge: r.startAge,
+        atAge: proj.atAge,
+        start: r.totalMonthly,
+        incl: proj.startYearMonthly,
+        delta,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="print-scenario-section">
+      <h2>If you keep working after you start</h2>
+      <p className="print-scenario-note">
+        If you keep working — and contributing to CPP — after your pension begins,
+        each year of work adds a Post-Retirement Benefit (PRB) on top of your
+        pension. It does not change your starting amount; it builds up year by year
+        while you work and then continues for the rest of your life.
+      </p>
+      <table className="print-scenario-table print-scenario-table-list">
+        <thead>
+          <tr>
+            <th>If you start at…</th>
+            <th className="num">At start</th>
+            <th className="num">Projected with PRB</th>
+            <th className="num">Extra each month</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.startAge}>
+              <td>
+                Age {formatAge(row.startAge)} (working to age {row.atAge})
+              </td>
+              <td className="num">{formatMoney(row.start, true)}</td>
+              <td className="num">
+                <strong>{formatMoney(row.incl, true)}</strong>
+              </td>
+              <td className="num">+{formatMoney(row.delta, true)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="print-scenario-note">
+        The "projected with PRB" amount assumes you keep working and contributing
+        until the age shown, at the post-start earnings your planner entered. If you
+        stop sooner, your PRB will be smaller; if you work longer, it will be larger.
+      </p>
     </section>
   );
 }
