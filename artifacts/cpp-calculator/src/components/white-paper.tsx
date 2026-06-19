@@ -1493,7 +1493,11 @@ export function WhitePaper() {
                     <strong>Enhanced CPP child-rearing drop-in</strong> — s. 53.3(1) (first
                     additional component) and s. 53.4(1) (second additional component): imputed
                     earnings based on the five years before the child's birth, used when higher than
-                    actual earnings.
+                    actual earnings (for months after January 1, 2019). Plain-language reference:{" "}
+                    <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/child-rearing.html">
+                      canada.ca — Child-rearing provisions ("Child rearing drop-in")
+                    </SourceLink>
+                    .
                   </li>
                   <li>
                     <strong>Post-65 / late take-up drop-out</strong> — s. 48(3): deductions where
