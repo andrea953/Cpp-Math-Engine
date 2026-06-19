@@ -1263,20 +1263,24 @@ export function WhitePaper() {
               />
               <p>
                 Drop-outs remove low- or zero-earning months from the contributory period before AMPE
-                is averaged. The order matters: CRDO and disability windows are removed first, then
-                the general drop-out is applied to whatever is left.
+                is averaged. The order matters: disability and beneficial child-rearing months are
+                removed first, then the general drop-out is applied to whatever is left.
               </p>
               <ul className="ml-5 list-disc space-y-2">
                 <li>
                   <strong>Child Rearing Drop-Out (CRDO).</strong> Months while a parent was the
-                  primary caregiver of a child under age 7 are excluded entirely. The user enters
-                  the start and end month of each CRDO window; the engine drops every month in that
-                  window.
+                  primary caregiver of a child under age 7 can be excluded from the contributory
+                  period — but only when it helps. The user enters the start and end month of each
+                  CRDO window; the engine drops a month in that window only if its indexed earnings
+                  are below the running average — i.e. only when dropping it raises AMPE. Months
+                  where the parent still earned at or above their average are kept, so a CRDO claim
+                  never lowers the benefit.
                 </li>
                 <li>
                   <strong>Disability drop-out.</strong> Months during a CPP disability period are
-                  excluded the same way as CRDO. Months that overlap both a CRDO and a disability
-                  period are counted once (CRDO takes precedence in the diagnostics).
+                  excluded from the contributory period unconditionally. Months that overlap both a
+                  CRDO and a disability period are counted once (CRDO takes precedence in the
+                  diagnostics).
                 </li>
                 <li>
                   <strong>Post-65 / late take-up drop-out (a.k.a. "age 65 drop-out").</strong> When
@@ -1295,6 +1299,18 @@ export function WhitePaper() {
                   in practice the worst earning years for the contributor.
                 </li>
               </ul>
+              <p>
+                The four rules above govern the <strong>base</strong> CPP only. The{" "}
+                <strong>enhanced</strong> CPP (the first and second additional components) has no
+                drop-out. Instead it uses a child-rearing <strong>drop-in</strong>: for the years a
+                parent cared for a child under 7, an <em>imputed</em> income is calculated as the
+                average of the parent's pensionable earnings in the five years immediately before the
+                child's birth, and the engine uses the higher of the real or imputed income for each
+                of those years. If the parent had no earnings in the five years before the birth,
+                there is no imputed income and the drop-in has no effect. The engine derives the
+                birth year from the start of each child-rearing window, so a single CRDO entry drives
+                both the base drop-out and the enhanced drop-in.
+              </p>
               <Example>
                 <ExampleLine>
                   contributory months = {ex.base.contribMonths.toLocaleString()}; dropped = floor(
@@ -1472,6 +1488,12 @@ export function WhitePaper() {
                   <li>
                     <strong>Disability drop-out</strong> — s. 49(c): months excluded from the
                     contributory period by reason of disability.
+                  </li>
+                  <li>
+                    <strong>Enhanced CPP child-rearing drop-in</strong> — s. 53.3(1) (first
+                    additional component) and s. 53.4(1) (second additional component): imputed
+                    earnings based on the five years before the child's birth, used when higher than
+                    actual earnings.
                   </li>
                   <li>
                     <strong>Post-65 / late take-up drop-out</strong> — s. 48(3): deductions where

@@ -251,14 +251,12 @@ function calculateBase(
 
   const points = buildMonthlyPoints(inputs, effectiveEarnings, contribStart.year, contribStart.month, endY, endM);
 
-  // Apply CRDO + disability drop-outs first.
-  // CPP Act s. 48(2)(a) + s. 49(d): Child Rearing Drop-Out (months as a family
-  // allowance recipient with below-average earnings).
-  // CPP Act s. 49(c): disability drop-out (months excluded from the
-  // contributory period by reason of disability).
-  const crdoMonthsDropped = points.filter((p) => p.inCrdo).length;
+  // Disability drop-out first: months excluded from the contributory period by
+  // reason of disability (CPP Act s. 49(c)) are removed unconditionally. Months
+  // that are ALSO flagged CRDO are left for the CRDO step below, which takes
+  // precedence in the diagnostics.
   const disabilityMonthsDropped = points.filter((p) => p.inDisability && !p.inCrdo).length;
-  const remainingAfterSpecialDropouts = points.filter((p) => !p.inCrdo && !p.inDisability);
+  const afterDisability = points.filter((p) => !(p.inDisability && !p.inCrdo));
 
   // Index each remaining month's earnings to start-year dollars using the AYMPE
   // ratio. CPP Act s. 53: each year's pensionable earnings are restated in
@@ -267,13 +265,46 @@ function calculateBase(
   // (AYMPE; see getAympe / s. 42(1) in constants.ts).
   const aympeStart = getAympe(startYear, inputs.assumptions.ympeGrowthRate);
 
-  const indexedPoints = remainingAfterSpecialDropouts.map((p) => {
+  const indexedAll = afterDisability.map((p) => {
     const ympeYear = getYmpe(p.year, inputs.assumptions.ympeGrowthRate);
     // Monthly cap = YMPE/12; cap earnings before indexing
     const cappedMonthly = Math.min(p.monthlyEarnings, ympeYear / 12);
     const indexed = (cappedMonthly * aympeStart) / ympeYear;
     return { ...p, indexedMonthly: indexed };
   });
+
+  // Child Rearing Drop-Out (CRDO) — beneficial-only.
+  // CPP Act s. 48(2)(a) + s. 49(d): months while a family-allowance / child-
+  // benefit recipient cared for a child under 7 may be excluded from the
+  // contributory period — but ONLY where the month's earnings are below the
+  // contributor's average, i.e. only when dropping the month raises the
+  // benefit. Child-rearing months whose indexed earnings are at or above the
+  // running mean are KEPT (they already lift AMPE). Same greedy rule as the
+  // post-65 drop-out below: sort eligible months ascending and drop while the
+  // lowest is strictly below the running mean.
+  let crdoMonthsDropped = 0;
+  let indexedPoints = indexedAll;
+  if (indexedAll.some((p) => p.inCrdo)) {
+    const crdoSorted = indexedAll
+      .map((p, idx) => ({ idx, val: p.indexedMonthly, crdo: p.inCrdo }))
+      .filter((x) => x.crdo)
+      .sort((a, b) => a.val - b.val);
+
+    let runningSum = indexedAll.reduce((acc, p) => acc + p.indexedMonthly, 0);
+    let runningCount = indexedAll.length;
+    const droppedIdx = new Set<number>();
+    for (const m of crdoSorted) {
+      const mean = runningSum / runningCount;
+      if (m.val >= mean) break;
+      droppedIdx.add(m.idx);
+      runningSum -= m.val;
+      runningCount -= 1;
+    }
+    crdoMonthsDropped = droppedIdx.size;
+    if (crdoMonthsDropped > 0) {
+      indexedPoints = indexedAll.filter((_, idx) => !droppedIdx.has(idx));
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Post-65 / late take-up drop-out ("age 65 drop-out")
@@ -372,11 +403,38 @@ function calculateEnhancement(
   const aympeStart = getAympe(startYear, inputs.assumptions.ympeGrowthRate);
   const ayampeStart = getAyampe(startYear, inputs.assumptions.yampeGrowthRate);
 
+  // ---- Child-rearing DROP-IN (Enhanced CPP only) ----
+  // The Enhanced CPP (1st + 2nd Additional) has no drop-out. Instead, CPP Act
+  // s. 53.3(1) (1st Additional) and s. 53.4(1) (2nd Additional) provide a
+  // "drop-in": for the years a parent cared for a child under 7, an *imputed*
+  // income is computed as the average pensionable earnings in the 5 years
+  // BEFORE the child's birth, and the higher of (real, imputed) income is used.
+  // If there were no earnings in the 5 prior years there is no imputed income.
+  //
+  // We take each CRDO window's start year as the child's birth year and apply
+  // the drop-in across that window (the same window used for the base drop-out).
+  const dropInByYear = new Map<number, number>();
+  for (const period of inputs.dropoutPeriods ?? []) {
+    if (period.kind !== "crdo") continue;
+    let prior5Sum = 0;
+    for (let y = period.startYear - 5; y <= period.startYear - 1; y++) {
+      prior5Sum += earningsByYear.get(y) ?? 0;
+    }
+    const imputed = prior5Sum / 5;
+    if (imputed <= 0) continue;
+    for (let y = period.startYear; y <= period.endYear; y++) {
+      dropInByYear.set(y, Math.max(dropInByYear.get(y) ?? 0, imputed));
+    }
+  }
+
   // ---- Tier 1: replacement on YMPE-band earnings (Year ≥ 2019) ----
   let tier1Sum = 0;
   let tier1Years = 0;
+  let tier1DropInYears = 0;
   for (let y = TIER1_START_YEAR; y < startYear; y++) {
-    const earnings = earningsByYear.get(y) ?? 0;
+    const real = earningsByYear.get(y) ?? 0;
+    const imputed = dropInByYear.get(y) ?? 0;
+    const earnings = Math.max(real, imputed);
     if (earnings <= 0) continue;
     const ympeY = getYmpe(y, inputs.assumptions.ympeGrowthRate);
     const tier1Earnings = Math.min(earnings, ympeY) - YBE;
@@ -385,6 +443,7 @@ function calculateEnhancement(
     const indexed = (tier1Earnings * aympeStart) / ympeY;
     tier1Sum += indexed * phase;
     tier1Years += 1;
+    if (imputed > real) tier1DropInYears += 1;
   }
   // 40-year (480-month) accrual basis (CPP Act s. 48.1, s. 51 phase-in)
   const tier1Accrual = Math.min(1, tier1Years / ENHANCEMENT_FULL_YEARS);
@@ -397,10 +456,14 @@ function calculateEnhancement(
   const tier1Monthly = (tier1AnnualAt65 * adjustmentFactor) / 12;
 
   // ---- Tier 2: replacement on (YMPE → YAMPE) band earnings (Year ≥ 2024) ----
+  // Same child-rearing drop-in as Tier 1 (CPP Act s. 53.4(1)).
   let tier2Sum = 0;
   let tier2Years = 0;
+  let tier2DropInYears = 0;
   for (let y = TIER2_START_YEAR; y < startYear; y++) {
-    const earnings = earningsByYear.get(y) ?? 0;
+    const real = earningsByYear.get(y) ?? 0;
+    const imputed = dropInByYear.get(y) ?? 0;
+    const earnings = Math.max(real, imputed);
     if (earnings <= 0) continue;
     const ympeY = getYmpe(y, inputs.assumptions.ympeGrowthRate);
     const yampeY = getYampe(y, inputs.assumptions.yampeGrowthRate);
@@ -409,6 +472,7 @@ function calculateEnhancement(
     const indexed = (tier2Earnings * ayampeStart) / yampeY;
     tier2Sum += indexed;
     tier2Years += 1;
+    if (imputed > real) tier2DropInYears += 1;
   }
   // 40-year (480-month) accrual basis (CPP Act s. 48.2)
   const tier2Accrual = Math.min(1, tier2Years / ENHANCEMENT_FULL_YEARS);
@@ -430,6 +494,8 @@ function calculateEnhancement(
       tier2AccrualFactor: tier2Accrual,
       tier1IndexedEarningsSum: tier1Sum,
       tier2IndexedEarningsSum: tier2Sum,
+      tier1DropInYears,
+      tier2DropInYears,
     },
   };
 }

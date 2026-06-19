@@ -1,2 +1,3 @@
 - [Recharts in print](recharts-print-animation.md) — charts need isAnimationActive={false} or they render empty/partial in print/PDF snapshots.
 - [White-paper print estimator snapshot](white-paper-print-estimator.md) — editing white-paper.tsx content drifts an inline estimator snapshot; update with vitest -u.
+- [CPP child-rearing](cpp-child-rearing.md) — one CRDO entry drives base beneficial drop-out AND enhanced drop-in (s.53.3(1)/53.4(1)); Tier 2 needs above-YMPE earnings to test.

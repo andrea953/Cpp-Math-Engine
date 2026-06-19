@@ -140,7 +140,7 @@ export interface StartAgeResult {
 export interface BaseCalcDiagnostics {
   /** Months in contributory period (after CRDO/disability dropouts but before general 17% dropout) */
   contributoryPeriodMonths: number;
-  /** Months dropped under CRDO */
+  /** Months dropped under CRDO (beneficial-only: only below-average months in the window) */
   crdoMonthsDropped: number;
   /** Months dropped under disability dropout */
   disabilityMonthsDropped: number;
@@ -176,6 +176,10 @@ export interface EnhancementCalcDiagnostics {
   tier1IndexedEarningsSum: number;
   /** Sum of indexed Tier 2 contributory earnings (between YMPE and YAMPE) */
   tier2IndexedEarningsSum: number;
+  /** Years where the child-rearing drop-in (imputed income) replaced real income in Tier 1 */
+  tier1DropInYears: number;
+  /** Years where the child-rearing drop-in (imputed income) replaced real income in Tier 2 */
+  tier2DropInYears: number;
 }
 
 export interface CalculationResult {

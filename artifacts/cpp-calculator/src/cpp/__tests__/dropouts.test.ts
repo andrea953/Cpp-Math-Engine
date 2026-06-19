@@ -40,19 +40,56 @@ function makeInputs(over: Partial<ScenarioInputs> = {}): ScenarioInputs {
   };
 }
 
-describe("CRDO (Child Rearing Drop-Out)", () => {
-  it("drops exactly the months in the CRDO period", () => {
-    const baseline = calculateCpp(makeInputs()).byStartAge[0];
+/** makeInputs with the listed calendar years forced to zero pensionable earnings. */
+function zeroOut(over: Partial<ScenarioInputs>, years: number[]): ScenarioInputs {
+  const inputs = makeInputs(over);
+  const zero = new Set(years);
+  return {
+    ...inputs,
+    earningsHistory: inputs.earningsHistory.map((r) =>
+      zero.has(r.year) ? { ...r, pensionableEarnings: 0 } : r,
+    ),
+  };
+}
+
+/** makeInputs with the given {year: pensionableEarnings} overrides applied. */
+function setEarnings(
+  over: Partial<ScenarioInputs>,
+  yearValues: Record<number, number>,
+): ScenarioInputs {
+  const inputs = makeInputs(over);
+  const map = new Map(Object.entries(yearValues).map(([y, v]) => [Number(y), v]));
+  return {
+    ...inputs,
+    earningsHistory: inputs.earningsHistory.map((r) =>
+      map.has(r.year) ? { ...r, pensionableEarnings: map.get(r.year)! } : r,
+    ),
+  };
+}
+
+describe("CRDO (Child Rearing Drop-Out) — beneficial-only", () => {
+  it("drops below-average (zero-earning) child-rearing months", () => {
+    // A parent with a long zero-earning stretch (1990-2009) — longer than the
+    // general 17% drop-out can absorb — so remaining zero months still drag down
+    // the average. Marking Jan 1990 - Dec 1992 (36 months) as CRDO removes those
+    // zero months *before* the general drop-out, lifting the benefit further.
+    const gapYears = Array.from({ length: 20 }, (_, i) => 1990 + i); // 1990..2009
+    const baseline = calculateCpp(zeroOut({}, gapYears)).byStartAge[0];
     const withCrdo = calculateCpp(
-      makeInputs({
-        dropoutPeriods: [
-          // 36 months = 3 calendar years (Jan 1990 - Dec 1992)
-          { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1992, endMonth: 12 },
-        ],
-      }),
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1992, endMonth: 12 },
+          ],
+        },
+        gapYears,
+      ),
     ).byStartAge[0];
 
     expect(withCrdo.base.crdoMonthsDropped).toBe(36);
+    // The CRDO claim raises the base benefit (removing the zero months).
+    expect(withCrdo.baseMonthly).toBeGreaterThan(baseline.baseMonthly);
+
     // contributoryPeriodMonths is the TOTAL window size (age 18 → start month).
     // CRDO removes months from the AMPE calculation but does not shrink that
     // window — it surfaces in `generalDropoutMonths` and `monthsRetained` instead.
@@ -68,28 +105,39 @@ describe("CRDO (Child Rearing Drop-Out)", () => {
       withCrdo.base.disabilityMonthsDropped;
     expect(withCrdo.base.generalDropoutMonths).toBe(Math.floor(afterSpecial * 0.17));
     expect(withCrdo.base.monthsRetained).toBe(afterSpecial - withCrdo.base.generalDropoutMonths);
+  });
 
-    // And the same identity holds for the baseline (no CRDO).
-    const baseAfterSpecial =
-      baseline.base.contributoryPeriodMonths -
-      baseline.base.crdoMonthsDropped -
-      baseline.base.disabilityMonthsDropped;
-    expect(baseline.base.monthsRetained).toBe(
-      baseAfterSpecial - baseline.base.generalDropoutMonths,
-    );
+  it("keeps above-average child-rearing months (a CRDO claim never lowers the benefit)", () => {
+    // Same window, but the parent actually earned YMPE-max throughout it. Those
+    // months are at the ceiling, so dropping them would LOWER the average — the
+    // engine keeps them and drops nothing.
+    const baseline = calculateCpp(makeInputs()).byStartAge[0];
+    const withCrdo = calculateCpp(
+      makeInputs({
+        dropoutPeriods: [
+          { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1992, endMonth: 12 },
+        ],
+      }),
+    ).byStartAge[0];
+
+    expect(withCrdo.base.crdoMonthsDropped).toBe(0);
+    expect(withCrdo.baseMonthly).toBeCloseTo(baseline.baseMonthly, 6);
   });
 });
 
 describe("Disability drop-out", () => {
   it("does not double-count months that overlap with CRDO", () => {
     const result = calculateCpp(
-      makeInputs({
-        dropoutPeriods: [
-          // Same 24 months marked as both CRDO and disability
-          { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 12 },
-          { kind: "disability", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 12 },
-        ],
-      }),
+      zeroOut(
+        {
+          dropoutPeriods: [
+            // Same 24 zero-earning months marked as both CRDO and disability
+            { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 12 },
+            { kind: "disability", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 12 },
+          ],
+        },
+        [1990, 1991],
+      ),
     ).byStartAge[0];
 
     // CRDO claims the months; disabilityMonthsDropped should only count
@@ -100,15 +148,157 @@ describe("Disability drop-out", () => {
 
   it("counts disability months that don't overlap CRDO", () => {
     const result = calculateCpp(
-      makeInputs({
-        dropoutPeriods: [
-          { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1990, endMonth: 12 },
-          { kind: "disability", startYear: 1995, startMonth: 1, endYear: 1995, endMonth: 6 },
-        ],
-      }),
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1990, endMonth: 12 },
+            { kind: "disability", startYear: 1995, startMonth: 1, endYear: 1995, endMonth: 6 },
+          ],
+        },
+        [1990],
+      ),
     ).byStartAge[0];
     expect(result.base.crdoMonthsDropped).toBe(12);
     expect(result.base.disabilityMonthsDropped).toBe(6);
+  });
+});
+
+describe("Child-rearing drop-in (Enhanced CPP)", () => {
+  // The enhancement loops run for years >= 2019 (Tier 1) up to the start year.
+  // For a 1961-born retiring at 65 (start 2026) the Tier 1 window is 2019..2025.
+  it("imputes income for child-rearing years from the 5 prior years' average", () => {
+    // Zero earnings 2020-2022 (child-rearing gap inside the enhancement era);
+    // the 5 prior years (2015-2019) are at YMPE-max, so imputed income is high.
+    const gapYears = [2020, 2021, 2022];
+    const withoutClaim = calculateCpp(zeroOut({}, gapYears)).byStartAge[0];
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        gapYears,
+      ),
+    ).byStartAge[0];
+
+    // All three zero-earning years get imputed income dropped in.
+    expect(withClaim.enhancement.tier1DropInYears).toBe(3);
+    // The drop-in raises the Tier 1 enhancement benefit.
+    expect(withClaim.tier1Monthly).toBeGreaterThan(withoutClaim.tier1Monthly);
+  });
+
+  it("produces no imputed income when there were no earnings in the 5 years before birth", () => {
+    // Zero the gap AND the 5 prior years (2015-2022). With no prior earnings
+    // there is no imputed income, so the drop-in does not fire (Figure 2 of the
+    // source paper).
+    const deadYears = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022];
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        deadYears,
+      ),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.tier1DropInYears).toBe(0);
+  });
+
+  // Tier 2 only accrues on earnings in the YMPE -> YAMPE band (years >= 2024).
+  // The 1961-born / start-2026 harness has a Tier 2 window of 2024..2025, so we
+  // set above-YMPE earnings (here 100,000) in the 5 prior years to exercise it.
+  it("imputes above-YMPE income for Tier 2 child-rearing years", () => {
+    const overrides = {
+      2019: 100000,
+      2020: 100000,
+      2021: 100000,
+      2022: 100000,
+      2023: 100000, // 5 prior years, above YMPE -> imputed income lands in Tier 2 band
+      2024: 0,
+      2025: 0, // child-rearing gap inside the Tier 2 era
+    };
+    const withoutClaim = calculateCpp(setEarnings({}, overrides)).byStartAge[0];
+    const withClaim = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2024, startMonth: 1, endYear: 2025, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+
+    // Both 2024 and 2025 get imputed income above YMPE.
+    expect(withClaim.enhancement.tier2DropInYears).toBe(2);
+    // Without the claim there is no Tier 2 accrual at all (gap years are zero).
+    expect(withoutClaim.tier2Monthly).toBe(0);
+    expect(withClaim.tier2Monthly).toBeGreaterThan(0);
+  });
+
+  it("produces no Tier 2 imputed income when the 5 prior years had no earnings", () => {
+    const overrides = {
+      2019: 0,
+      2020: 0,
+      2021: 0,
+      2022: 0,
+      2023: 0,
+      2024: 0,
+      2025: 0,
+    };
+    const withClaim = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2024, startMonth: 1, endYear: 2025, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.tier2DropInYears).toBe(0);
+    expect(withClaim.tier2Monthly).toBe(0);
+  });
+
+  it("uses the higher imputed income across overlapping child-rearing windows", () => {
+    const overrides = {
+      2019: 100000,
+      2020: 100000,
+      2021: 100000,
+      2022: 100000,
+      2023: 100000,
+      2024: 0,
+      2025: 0,
+    };
+    // Window A (birth 2024) imputes the high 2019-2023 average across 2024-2025.
+    const single = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2024, startMonth: 1, endYear: 2025, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+    // Adding a second window (birth 2025) that overlaps 2025 with a LOWER imputed
+    // average must not reduce the benefit — the engine keeps the higher value.
+    const overlapping = calculateCpp(
+      setEarnings(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2024, startMonth: 1, endYear: 2025, endMonth: 12 },
+            { kind: "crdo", startYear: 2025, startMonth: 1, endYear: 2025, endMonth: 12 },
+          ],
+        },
+        overrides,
+      ),
+    ).byStartAge[0];
+
+    expect(overlapping.enhancement.tier2DropInYears).toBe(2);
+    expect(overlapping.tier2Monthly).toBeCloseTo(single.tier2Monthly, 6);
   });
 });
 
