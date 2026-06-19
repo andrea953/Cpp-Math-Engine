@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResultsPanel } from "@/components/editor/results-panel";
 import { PrintScenario } from "@/components/editor/print-scenario";
+import { ApplicationChecklist } from "@/components/client/application-checklist";
 import type { ScenarioInputs } from "@/cpp";
 import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
 
@@ -117,6 +118,7 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
                 )}
               </div>
               <ResultsPanel inputs={debounced} scenarioTitle={data.title} />
+              <ApplicationChecklist inputs={debounced} />
               <p className="mt-8 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
                 Estimates only. Modern Cents CPP Calculator calculations are based on publicly
                 available CPP rules and the inputs entered by your planner. Final

@@ -20,6 +20,7 @@ import {
   type StartAgeResult,
   type SurvivorResult,
 } from "@/cpp";
+import { PrintApplicationChecklist } from "@/components/client/application-checklist";
 
 interface PrintScenarioProps {
   inputs: ScenarioInputs;
@@ -130,6 +131,8 @@ export function PrintScenario({
           <GrowthOverTimeSection sortedAges={sortedAges} optimal={optimal} />
 
           {survivor ? <FamilySection survivor={survivor} /> : null}
+
+          <PrintApplicationChecklist inputs={inputs} />
 
           {result.warnings.length > 0 ? (
             <section className="print-scenario-section print-scenario-warnings">

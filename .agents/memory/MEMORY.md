@@ -1,4 +1,5 @@
 - [Recharts in print](recharts-print-animation.md) — charts need isAnimationActive={false} or they render empty/partial in print/PDF snapshots.
 - [White-paper print estimator snapshot](white-paper-print-estimator.md) — editing white-paper.tsx content drifts an inline estimator snapshot; update with vitest -u.
 - [Enhanced drop-in granularity](enhanced-dropin-granularity.md) — CRDO/disability enhanced drop-ins are year-granular by design (annual earnings only); don't make one month-aware in isolation.
+- [cpp-calculator vitest aliases](cpp-calculator-vitest-aliases.md) — tests can't value-import @/ component modules; extract pure logic to a React-free *-content.ts and test that.
 - [CPP child-rearing](cpp-child-rearing.md) — one CRDO entry drives base beneficial drop-out AND enhanced drop-in (s.53.3(1)/53.4(1)); Tier 2 needs above-YMPE earnings to test.
