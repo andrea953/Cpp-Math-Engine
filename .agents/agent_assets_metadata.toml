@@ -6,3 +6,21 @@ id = "vm8xlf-4sd8j56mUwXzgq"
 uri = "file://artifacts/cpp-calculator/RUNBOOK.md"
 type = "text"
 title = "Annual CPP Update Runbook (January)"
+
+[[outputs]]
+id = "euhiHj3nP6rsbFtr0I21g"
+uri = "file://dist/cpp-calculator-project.tar.gz"
+type = "unspecified"
+title = "CPP Calculator — full project source"
+
+[[outputs]]
+id = "zePGVXlLeFG4X9t8FRsyi"
+uri = "file://.local/exports/cpp-calculator-project.tar.gz"
+type = "unspecified"
+title = "Full project code (.tar.gz)"
+
+[[outputs]]
+id = "jJUegnmBApScsCL6wBPaQ"
+uri = "file://.local/exports/database_backup.sql.gz"
+type = "unspecified"
+title = "Database backup (gzipped SQL)"
