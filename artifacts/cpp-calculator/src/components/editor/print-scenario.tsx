@@ -85,6 +85,18 @@ export function PrintScenario({
 
   const trimmedNotes = notes?.trim() ?? "";
 
+  // Today's-dollar conversion — mirrors the on-screen "today's dollars" toggle
+  // in results-panel.tsx: deflate start-year figures at the assumed indexing
+  // (CPI) rate over the years between now and when payments begin.
+  const todayYear = new Date().getFullYear();
+  const indexingRate = inputs.assumptions.indexingRate;
+  const toToday = useMemo(
+    () =>
+      (value: number, year: number) =>
+        value / Math.pow(1 + indexingRate, Math.max(0, year - todayYear - 1)),
+    [indexingRate, todayYear],
+  );
+
   const survivor: SurvivorResult | null = useMemo(() => {
     if (!inputs.survivor?.enabled) return null;
     try {
@@ -126,14 +138,16 @@ export function PrintScenario({
             optimal={optimal}
             earliest={earliest}
             latest={latest}
+            toToday={toToday}
           />
 
-          <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} />
+          <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} toToday={toToday} />
 
           <PrbSection
             sortedAges={sortedAges}
             prb={inputs.postRetirementBenefit}
             indexingRate={inputs.assumptions.indexingRate}
+            toToday={toToday}
           />
 
           <GrowthOverTimeSection sortedAges={sortedAges} optimal={optimal} />
@@ -172,10 +186,12 @@ function HeadlineSummary({
   optimal,
   earliest,
   latest,
+  toToday,
 }: {
   optimal: StartAgeResult | null;
   earliest: StartAgeResult | null;
   latest: StartAgeResult | null;
+  toToday: (value: number, year: number) => number;
 }) {
   if (!optimal || !earliest || !latest) return null;
 
@@ -194,14 +210,20 @@ function HeadlineSummary({
             <strong>age {formatAge(optimal.startAge)}</strong> gives you the
             most money over your lifetime — about{" "}
             <strong>{formatMoney(optimal.totalMonthly, true)} a month</strong> (
-            {formatMoney(optimal.totalAnnual)} a year) once payments begin.
+            {formatMoney(optimal.totalAnnual)} a year) once payments begin,
+            worth about{" "}
+            {formatMoney(toToday(optimal.totalMonthly, optimal.startYear), true)}{" "}
+            a month in today's dollars.
           </p>
         ) : (
           <p>
             Starting your CPP at{" "}
             <strong>age {formatAge(optimal.startAge)}</strong> would pay about{" "}
             <strong>{formatMoney(optimal.totalMonthly, true)} a month</strong> (
-            {formatMoney(optimal.totalAnnual)} a year) once payments begin.
+            {formatMoney(optimal.totalAnnual)} a year) once payments begin,
+            worth about{" "}
+            {formatMoney(toToday(optimal.totalMonthly, optimal.startYear), true)}{" "}
+            a month in today's dollars.
           </p>
         )}
       </div>
@@ -212,16 +234,26 @@ function HeadlineSummary({
             <th>Best option reviewed</th>
             <td>
               Start at age <strong>{formatAge(optimal.startAge)}</strong> ·{" "}
-              {formatMoney(optimal.totalMonthly, true)}/month
+              {formatMoney(optimal.totalMonthly, true)}/month (
+              {formatMoney(toToday(optimal.totalMonthly, optimal.startYear), true)} in
+              today's dollars)
             </td>
           </tr>
           <tr>
             <th>Earliest you could start (age {formatAge(earliest.startAge)})</th>
-            <td>{formatMoney(earliest.totalMonthly, true)}/month</td>
+            <td>
+              {formatMoney(earliest.totalMonthly, true)}/month (
+              {formatMoney(toToday(earliest.totalMonthly, earliest.startYear), true)} in
+              today's dollars)
+            </td>
           </tr>
           <tr>
             <th>Latest you could wait (age {formatAge(latest.startAge)})</th>
-            <td>{formatMoney(latest.totalMonthly, true)}/month</td>
+            <td>
+              {formatMoney(latest.totalMonthly, true)}/month (
+              {formatMoney(toToday(latest.totalMonthly, latest.startYear), true)} in
+              today's dollars)
+            </td>
           </tr>
           {projAge !== null ? (
             <tr>
@@ -237,9 +269,10 @@ function HeadlineSummary({
         needs — your planner can help you weigh these.
       </p>
       <p className="print-scenario-note">
-        Dollar amounts are shown for the year each payment would begin (they
-        include expected cost-of-living increases up to that point), so figures
-        for later start ages reflect future, not today's, dollars.
+        Two figures are shown for each amount: the dollars of the year payments
+        would begin (including expected cost-of-living increases up to that
+        point), and the equivalent in today's dollars so options with different
+        start years can be compared on the same footing.
       </p>
     </section>
   );
@@ -252,9 +285,11 @@ function HeadlineSummary({
 function MonthlyByAgeSection({
   sortedAges,
   optimal,
+  toToday,
 }: {
   sortedAges: StartAgeResult[];
   optimal: StartAgeResult | null;
+  toToday: (value: number, year: number) => number;
 }) {
   const data = sortedAges.map((r) => ({
     age: `Age ${formatAge(r.startAge)}`,
@@ -271,6 +306,7 @@ function MonthlyByAgeSection({
             <th>If you start at…</th>
             <th>Year payments begin</th>
             <th className="num">Each month</th>
+            <th className="num">In today's dollars</th>
             <th className="num">Each year</th>
           </tr>
         </thead>
@@ -289,6 +325,13 @@ function MonthlyByAgeSection({
                     <strong>{formatMoney(r.totalMonthly, true)}</strong>
                   ) : (
                     formatMoney(r.totalMonthly, true)
+                  )}
+                </td>
+                <td className="num">
+                  {isBest ? (
+                    <strong>{formatMoney(toToday(r.totalMonthly, r.startYear), true)}</strong>
+                  ) : (
+                    formatMoney(toToday(r.totalMonthly, r.startYear), true)
                   )}
                 </td>
                 <td className="num">{formatMoney(r.totalAnnual)}</td>
@@ -335,10 +378,12 @@ function PrbSection({
   sortedAges,
   prb,
   indexingRate,
+  toToday,
 }: {
   sortedAges: StartAgeResult[];
   prb: PostRetirementBenefit | undefined;
   indexingRate: number;
+  toToday: (value: number, year: number) => number;
 }) {
   // Only the start ages where the client keeps working (and contributing) after
   // their pension begins accrue a PRB. The helper returns null for ages where
@@ -353,6 +398,7 @@ function PrbSection({
       if (delta <= 0) return null;
       return {
         startAge: r.startAge,
+        startYear: r.startYear,
         atAge: proj.atAge,
         start: r.totalMonthly,
         incl: proj.startYearMonthly,
@@ -389,7 +435,9 @@ function PrbSection({
               </td>
               <td className="num">{formatMoney(row.start, true)}</td>
               <td className="num">
-                <strong>{formatMoney(row.incl, true)}</strong>
+                <strong>{formatMoney(row.incl, true)}</strong> (
+                {formatMoney(toToday(row.incl, row.startYear), true)} in today's
+                dollars)
               </td>
               <td className="num">+{formatMoney(row.delta, true)}</td>
             </tr>
