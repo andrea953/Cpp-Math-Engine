@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ResultsPanel } from "@/components/editor/results-panel";
 import { PrintScenario } from "@/components/editor/print-scenario";
+import { printWithTitle } from "@/lib/print";
 import { ApplicationChecklist } from "@/components/client/application-checklist";
 import type { ScenarioInputs } from "@/cpp";
 import logoUrl from "@assets/WhatsApp_Image_2021-03-10_at_11.22.35_AM_1777058431212.jpeg";
@@ -56,7 +57,7 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.print()}
+                onClick={() => printWithTitle(data.title)}
                 title="Print client-ready scenario"
                 data-testid="button-print-scenario"
               >

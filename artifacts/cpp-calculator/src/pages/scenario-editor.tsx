@@ -19,6 +19,7 @@ import { InputsPanel } from "@/components/editor/inputs-panel";
 import { ResultsPanel } from "@/components/editor/results-panel";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { PrintScenario } from "@/components/editor/print-scenario";
+import { printWithTitle } from "@/lib/print";
 
 interface ScenarioEditorProps {
   params: { id?: string };
@@ -212,7 +213,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
+            onClick={() => printWithTitle(title)}
             title="Print client-ready scenario"
             data-testid="button-print-scenario"
           >
