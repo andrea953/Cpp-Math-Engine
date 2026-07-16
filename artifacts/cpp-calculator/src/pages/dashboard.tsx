@@ -62,6 +62,10 @@ export default function Dashboard() {
     setSelectedIds(next);
   };
 
+  const sortedScenarios = [...scenarios].sort((a, b) =>
+    a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+  );
+
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -91,9 +95,9 @@ export default function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
           {[1,2,3].map(i => (
-            <Card key={i} className="animate-pulse h-32" />
+            <Card key={i} className="animate-pulse h-14" />
           ))}
         </div>
       ) : scenarios.length === 0 ? (
@@ -110,58 +114,57 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {scenarios.map(scenario => (
+        <Card className="divide-y overflow-hidden py-0">
+          {sortedScenarios.map(scenario => (
             <Link key={scenario.id} href={`/scenarios/${scenario.id}`}>
-              <Card className="hover:border-primary/50 transition-colors cursor-pointer group relative">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-3">
-                      <div onClick={e => e.stopPropagation()} className="mt-1">
-                        <Checkbox 
-                          checked={selectedIds.has(scenario.id)} 
-                          onCheckedChange={(checked) => toggleSelect(scenario.id, checked as boolean)}
-                        />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg line-clamp-1">{scenario.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-1 mt-1">
-                          <Calendar className="h-3 w-3" />
-                          Updated {format(new Date(scenario.updatedAt), "MMM d, yyyy")}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div onClick={e => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleDuplicate(scenario.id, e)}>
-                            <Copy className="mr-2 h-4 w-4" /> Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleDelete(scenario.id, e)} className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+              <div
+                className="flex items-center gap-3 px-3 py-3 sm:px-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                data-testid={`row-scenario-${scenario.id}`}
+              >
+                <div onClick={e => e.stopPropagation()} className="shrink-0">
+                  <Checkbox
+                    checked={selectedIds.has(scenario.id)}
+                    onCheckedChange={(checked) => toggleSelect(scenario.id, checked as boolean)}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium truncate">{scenario.title}</div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground sm:hidden mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" /> Born {scenario.inputs.birthYear}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" /> {format(new Date(scenario.updatedAt), "MMM d, yyyy")}
+                    </span>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      Born {scenario.inputs.birthYear}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground w-28 shrink-0">
+                  <Users className="h-4 w-4" /> Born {scenario.inputs.birthYear}
+                </div>
+                <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground w-44 shrink-0">
+                  <Calendar className="h-4 w-4" /> Updated {format(new Date(scenario.updatedAt), "MMM d, yyyy")}
+                </div>
+                <div onClick={e => e.stopPropagation()} className="shrink-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => handleDuplicate(scenario.id, e)}>
+                        <Copy className="mr-2 h-4 w-4" /> Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => handleDelete(scenario.id, e)} className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </Link>
           ))}
-        </div>
+        </Card>
       )}
     </div>
   );
