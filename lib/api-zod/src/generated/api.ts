@@ -29,6 +29,12 @@ export const listScenariosResponseInputsSurvivorNumEligibleChildrenMin = 0;
 export const ListScenariosResponseItem = zod.object({
   id: zod.string(),
   title: zod.string(),
+  clientName: zod
+    .string()
+    .optional()
+    .describe(
+      "Client this scenario belongs to (used to group scenarios on the dashboard)",
+    ),
   notes: zod.string().optional(),
   inputs: zod.object({
     birthYear: zod.number(),
@@ -185,6 +191,12 @@ export const createScenarioBodyInputsSurvivorNumEligibleChildrenMin = 0;
 export const CreateScenarioBody = zod
   .object({
     title: zod.string(),
+    clientName: zod
+      .string()
+      .optional()
+      .describe(
+        "Client this scenario belongs to (used to group scenarios on the dashboard)",
+      ),
     notes: zod.string().optional(),
     inputs: zod.object({
       birthYear: zod.number(),
@@ -337,6 +349,12 @@ export const getScenarioResponseInputsSurvivorNumEligibleChildrenMin = 0;
 export const GetScenarioResponse = zod.object({
   id: zod.string(),
   title: zod.string(),
+  clientName: zod
+    .string()
+    .optional()
+    .describe(
+      "Client this scenario belongs to (used to group scenarios on the dashboard)",
+    ),
   notes: zod.string().optional(),
   inputs: zod.object({
     birthYear: zod.number(),
@@ -493,6 +511,12 @@ export const updateScenarioBodyInputsSurvivorNumEligibleChildrenMin = 0;
 export const UpdateScenarioBody = zod
   .object({
     title: zod.string(),
+    clientName: zod
+      .string()
+      .optional()
+      .describe(
+        "Client this scenario belongs to (used to group scenarios on the dashboard)",
+      ),
     notes: zod.string().optional(),
     inputs: zod.object({
       birthYear: zod.number(),
@@ -638,6 +662,12 @@ export const updateScenarioResponseInputsSurvivorNumEligibleChildrenMin = 0;
 export const UpdateScenarioResponse = zod.object({
   id: zod.string(),
   title: zod.string(),
+  clientName: zod
+    .string()
+    .optional()
+    .describe(
+      "Client this scenario belongs to (used to group scenarios on the dashboard)",
+    ),
   notes: zod.string().optional(),
   inputs: zod.object({
     birthYear: zod.number(),

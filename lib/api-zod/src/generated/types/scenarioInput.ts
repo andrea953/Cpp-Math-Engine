@@ -12,6 +12,8 @@ import type { ScenarioInputs } from "./scenarioInputs";
  */
 export interface ScenarioInput {
   title: string;
+  /** Client this scenario belongs to (used to group scenarios on the dashboard) */
+  clientName?: string;
   notes?: string;
   inputs: ScenarioInputs;
 }

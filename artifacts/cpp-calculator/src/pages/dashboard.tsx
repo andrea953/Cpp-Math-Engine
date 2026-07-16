@@ -62,9 +62,29 @@ export default function Dashboard() {
     setSelectedIds(next);
   };
 
-  const sortedScenarios = [...scenarios].sort((a, b) =>
-    a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
-  );
+  // Group scenarios by client so one client (e.g. "Lindsay B") can hold
+  // several scenarios — different stop-work ages, start ages, etc.
+  const groups = (() => {
+    const map = new Map<string, typeof scenarios>();
+    for (const s of scenarios) {
+      const key = s.clientName?.trim() || "";
+      const list = map.get(key) ?? [];
+      list.push(s);
+      map.set(key, list);
+    }
+    const entries = [...map.entries()].map(([client, list]) => ({
+      client,
+      list: [...list].sort((a, b) =>
+        a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+      ),
+    }));
+    entries.sort((a, b) => {
+      if (!a.client) return 1; // ungrouped scenarios sink to the bottom
+      if (!b.client) return -1;
+      return a.client.localeCompare(b.client, undefined, { sensitivity: "base" });
+    });
+    return entries;
+  })();
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -114,8 +134,32 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="divide-y overflow-hidden py-0">
-          {sortedScenarios.map(scenario => (
+        <div className="space-y-4">
+          {groups.map(({ client, list }) => (
+            <div key={client || "__ungrouped__"} className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="font-semibold truncate" data-testid={`client-group-${client || "none"}`}>
+                    {client || "No client assigned"}
+                  </span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {list.length} {list.length === 1 ? "scenario" : "scenarios"}
+                  </span>
+                </div>
+                {client ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setLocation(`/scenarios/new?client=${encodeURIComponent(client)}`)}
+                  >
+                    <Plus className="mr-1 h-3 w-3" /> Add scenario
+                  </Button>
+                ) : null}
+              </div>
+              <Card className="divide-y overflow-hidden py-0">
+                {list.map(scenario => (
             <Link key={scenario.id} href={`/scenarios/${scenario.id}`}>
               <div
                 className="flex items-center gap-3 px-3 py-3 sm:px-4 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -163,8 +207,11 @@ export default function Dashboard() {
                 </div>
               </div>
             </Link>
+                ))}
+              </Card>
+            </div>
           ))}
-        </Card>
+        </div>
       )}
     </div>
   );

@@ -10,6 +10,8 @@ import type { ScenarioInputs } from "./scenarioInputs";
 export interface Scenario {
   id: string;
   title: string;
+  /** Client this scenario belongs to (used to group scenarios on the dashboard) */
+  clientName?: string;
   notes?: string;
   inputs: ScenarioInputs;
   /** If non-null, this scenario can be viewed publicly at /shared/{shareToken} */

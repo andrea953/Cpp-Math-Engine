@@ -37,6 +37,12 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   });
 
   const [title, setTitle] = useState("Untitled Scenario");
+  const [clientName, setClientName] = useState(() => {
+    // Allow the dashboard to prefill the client when adding another scenario
+    // for an existing client (e.g. /scenarios/new?client=Lindsay%20B).
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("client") ?? "";
+  });
   const [inputs, setInputs] = useState<ScenarioInputs>(() => buildDefaultInputs());
   const [dirty, setDirty] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -56,6 +62,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   useEffect(() => {
     if (scenario) {
       setTitle(scenario.title);
+      setClientName(scenario.clientName ?? "");
       setInputs(scenario.inputs as unknown as ScenarioInputs);
       setDirty(false);
     }
@@ -84,11 +91,15 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
     setTitle(next);
     setDirty(true);
   }
+  function setClientNameAndDirty(next: string) {
+    setClientName(next);
+    setDirty(true);
+  }
 
   function handleSave() {
     if (isNew) {
       createMutation.mutate(
-        { data: { title, inputs } },
+        { data: { title, clientName: clientName.trim() || undefined, inputs } },
         {
           onSuccess: (created) => {
             queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
@@ -100,7 +111,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
       );
     } else if (id) {
       updateMutation.mutate(
-        { id, data: { title, inputs } },
+        { id, data: { title, clientName: clientName.trim() || undefined, inputs } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
@@ -171,12 +182,21 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Input
-            value={title}
-            onChange={(e) => setTitleAndDirty(e.target.value)}
-            className="h-9 w-full min-w-0 sm:w-72 border-transparent text-base sm:text-lg font-semibold tracking-tight focus-visible:border-input"
-            placeholder="Scenario title"
-          />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+            <Input
+              value={clientName}
+              onChange={(e) => setClientNameAndDirty(e.target.value)}
+              className="h-9 w-full min-w-0 sm:w-44 border-transparent text-sm font-medium focus-visible:border-input"
+              placeholder="Client name"
+              data-testid="input-client-name"
+            />
+            <Input
+              value={title}
+              onChange={(e) => setTitleAndDirty(e.target.value)}
+              className="h-9 w-full min-w-0 sm:w-72 border-transparent text-base sm:text-lg font-semibold tracking-tight focus-visible:border-input"
+              placeholder="Scenario title"
+            />
+          </div>
           {dirty && <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">Unsaved changes</span>}
         </div>
         <div className="flex items-center justify-end gap-1.5 sm:gap-2">

@@ -18,6 +18,7 @@ function toScenarioResponse(row: ScenarioRow) {
   return {
     id: row.id,
     title: row.title,
+    clientName: row.clientName ?? undefined,
     notes: row.notes ?? undefined,
     inputs: row.inputs as Record<string, unknown>,
     shareToken: row.shareToken ?? null,
@@ -54,6 +55,7 @@ router.post("/scenarios", requireAuth, async (req, res): Promise<void> => {
     .values({
       userId,
       title: parsed.data.title,
+      clientName: parsed.data.clientName?.trim() || null,
       notes: parsed.data.notes ?? null,
       inputs: parsed.data.inputs,
     })
@@ -96,6 +98,7 @@ router.put("/scenarios/:id", requireAuth, async (req, res): Promise<void> => {
     .update(scenariosTable)
     .set({
       title: body.data.title,
+      clientName: body.data.clientName?.trim() || null,
       notes: body.data.notes ?? null,
       inputs: body.data.inputs,
       updatedAt: new Date(),
@@ -149,6 +152,7 @@ router.post("/scenarios/:id/duplicate", requireAuth, async (req, res): Promise<v
     .values({
       userId,
       title: `${src.title} (Copy)`,
+      clientName: src.clientName,
       notes: src.notes,
       inputs: src.inputs,
     })
