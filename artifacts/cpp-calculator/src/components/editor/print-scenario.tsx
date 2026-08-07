@@ -16,6 +16,7 @@ import {
   calculateSurvivor,
   formatAge,
   formatMoney,
+  formatPercent,
   projectedMonthlyInclPrbAtStop,
   type PostRetirementBenefit,
   type ScenarioInputs,
@@ -272,7 +273,9 @@ function HeadlineSummary({
         Two figures are shown for each amount: the dollars of the year payments
         would begin (including expected cost-of-living increases up to that
         point), and the equivalent in today's dollars so options with different
-        start years can be compared on the same footing.
+        start years can be compared on the same footing. "% of max at this age"
+        compares your estimate with the most someone starting CPP at that same
+        age could receive.
       </p>
     </section>
   );
@@ -307,6 +310,7 @@ function MonthlyByAgeSection({
             <th>Year payments begin</th>
             <th className="num">Each month</th>
             <th className="num">In today's dollars</th>
+            <th className="num">% of max at this age</th>
             <th className="num">Each year</th>
           </tr>
         </thead>
@@ -332,6 +336,13 @@ function MonthlyByAgeSection({
                     <strong>{formatMoney(toToday(r.totalMonthly, r.startYear), true)}</strong>
                   ) : (
                     formatMoney(toToday(r.totalMonthly, r.startYear), true)
+                  )}
+                </td>
+                <td className="num">
+                  {isBest ? (
+                    <strong>{formatPercent(r.percentOfMaximum)}</strong>
+                  ) : (
+                    formatPercent(r.percentOfMaximum)
                   )}
                 </td>
                 <td className="num">{formatMoney(r.totalAnnual)}</td>
