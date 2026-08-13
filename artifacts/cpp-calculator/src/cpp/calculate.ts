@@ -430,6 +430,10 @@ function calculateEnhancement(
   // not prorated here; the base component handles month-level disability/CRDO
   // exclusion in buildMonthlyPoints above.
   const dropInByYear = new Map<number, number>();
+  /** Which protected-period kind produced the (winning) imputed value for a year. */
+  const dropInKindByYear = new Map<number, import("./types").DropoutKind>();
+  /** Years where a drop-in actually replaced real income in Tier 1 or Tier 2 of THIS result. */
+  const appliedDropInYears = new Set<number>();
   for (const period of inputs.dropoutPeriods ?? []) {
     let imputed = 0;
     if (period.kind === "crdo") {
@@ -447,7 +451,10 @@ function calculateEnhancement(
     }
     if (imputed <= 0) continue;
     for (let y = period.startYear; y <= period.endYear; y++) {
-      dropInByYear.set(y, Math.max(dropInByYear.get(y) ?? 0, imputed));
+      if (imputed > (dropInByYear.get(y) ?? 0)) {
+        dropInByYear.set(y, imputed);
+        dropInKindByYear.set(y, period.kind);
+      }
     }
   }
 
@@ -467,7 +474,10 @@ function calculateEnhancement(
     const indexed = (tier1Earnings * aympeStart) / ympeY;
     tier1Sum += indexed * phase;
     tier1Years += 1;
-    if (imputed > real) tier1DropInYears += 1;
+    if (imputed > real) {
+      tier1DropInYears += 1;
+      appliedDropInYears.add(y);
+    }
   }
   // 40-year (480-month) accrual basis (CPP Act s. 48.1, s. 51 phase-in)
   const tier1Accrual = Math.min(1, tier1Years / ENHANCEMENT_FULL_YEARS);
@@ -496,7 +506,10 @@ function calculateEnhancement(
     const indexed = (tier2Earnings * ayampeStart) / yampeY;
     tier2Sum += indexed;
     tier2Years += 1;
-    if (imputed > real) tier2DropInYears += 1;
+    if (imputed > real) {
+      tier2DropInYears += 1;
+      appliedDropInYears.add(y);
+    }
   }
   // 40-year (480-month) accrual basis (CPP Act s. 48.2)
   const tier2Accrual = Math.min(1, tier2Years / ENHANCEMENT_FULL_YEARS);
@@ -522,6 +535,10 @@ function calculateEnhancement(
       tier2DropInYears,
       dropInAmountsByYear: [...dropInByYear.entries()]
         .map(([year, amount]) => ({ year, amount }))
+        .sort((a, b) => a.year - b.year),
+      appliedCaregivingDropIns: [...appliedDropInYears]
+        .filter((y) => dropInKindByYear.get(y) === "crdo")
+        .map((y) => ({ year: y, amount: dropInByYear.get(y) ?? 0 }))
         .sort((a, b) => a.year - b.year),
     },
   };

@@ -45,6 +45,7 @@ describe("ResultsPanel clientView translation contract", () => {
       "prbSubtext",
       "resultsPanelSections",
       "comparisonChartSeries",
+      "caregivingCreditNote",
     ]) {
       expect(panelSrc, `results-panel.tsx no longer imports ${name}`).toMatch(
         new RegExp(`import[\\s\\S]*?\\b${name}\\b[\\s\\S]*?from`),

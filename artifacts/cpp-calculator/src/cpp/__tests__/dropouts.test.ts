@@ -199,6 +199,65 @@ describe("Child-rearing drop-in (Enhanced CPP)", () => {
     expect(new Set(amounts).size).toBe(1);
     // No claim -> no drop-in diagnostics.
     expect(withoutClaim.enhancement.dropInAmountsByYear).toEqual([]);
+
+    // Applied-credit diagnostics: all three years were actually credited.
+    expect(withClaim.enhancement.appliedCaregivingDropIns.map((d) => d.year)).toEqual([
+      2020, 2021, 2022,
+    ]);
+    expect(withoutClaim.enhancement.appliedCaregivingDropIns).toEqual([]);
+  });
+
+  it("does not report an applied caregiving credit when real earnings already exceed the imputed amount", () => {
+    // Earnings stay at YMPE-max during the CRDO window, so imputed (avg of the
+    // 5 prior YMPE-max years, i.e. below the window's own YMPE) never beats
+    // real earnings: candidate amounts exist but no credit is applied.
+    const withClaim = calculateCpp(
+      makeInputs({
+        dropoutPeriods: [
+          { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+        ],
+      }),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.dropInAmountsByYear.length).toBeGreaterThan(0);
+    expect(withClaim.enhancement.tier1DropInYears).toBe(0);
+    expect(withClaim.enhancement.appliedCaregivingDropIns).toEqual([]);
+  });
+
+  it("excludes protected years at or after the selected start year from applied credits", () => {
+    // Start at 60 (start year 2021): only 2020 precedes the start year, so
+    // 2021-2022 candidates must not be reported as applied for that result.
+    const result = calculateCpp(
+      zeroOut(
+        {
+          startAges: [60, 65],
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        [2020, 2021, 2022],
+      ),
+    );
+    const at60 = result.byStartAge.find((r) => r.startAge === 60)!;
+    const at65 = result.byStartAge.find((r) => r.startAge === 65)!;
+    expect(at60.enhancement.appliedCaregivingDropIns.map((d) => d.year)).toEqual([2020]);
+    expect(at65.enhancement.appliedCaregivingDropIns.map((d) => d.year)).toEqual([
+      2020, 2021, 2022,
+    ]);
+  });
+
+  it("keeps disability drop-ins out of the applied caregiving credits", () => {
+    const withClaim = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "disability", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+          ],
+        },
+        [2020, 2021, 2022],
+      ),
+    ).byStartAge[0];
+    expect(withClaim.enhancement.tier1DropInYears).toBe(3);
+    expect(withClaim.enhancement.appliedCaregivingDropIns).toEqual([]);
   });
 
   it("produces no imputed income when there were no earnings in the 5 years before birth", () => {

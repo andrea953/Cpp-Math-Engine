@@ -187,6 +187,15 @@ export interface EnhancementCalcDiagnostics {
    * exceeding real earnings for that year. Sorted ascending by year.
    */
   dropInAmountsByYear: { year: number; amount: number }[];
+  /**
+   * Child-rearing (CRDO) drop-in credits that were actually APPLIED to this
+   * start-age result: the year lies before the start year, the imputed amount
+   * exceeded real pensionable earnings, and the year contributed to Tier 1 or
+   * Tier 2. Unlike `dropInAmountsByYear` (which lists every candidate imputed
+   * amount), this is safe to surface to clients as "your caregiving years were
+   * credited". Sorted ascending by year.
+   */
+  appliedCaregivingDropIns: { year: number; amount: number }[];
 }
 
 export interface CalculationResult {

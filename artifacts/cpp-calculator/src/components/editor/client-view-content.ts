@@ -11,6 +11,8 @@
  * vitest alias constraint on importing component modules).
  */
 
+import { formatMoney } from "../../cpp/format";
+
 export interface ResultsPanelSections {
   /** Contribution-cost card (rates, YBE/YMPE bands) — advisor-only. */
   showContributionCard: boolean;
@@ -108,6 +110,36 @@ export function prbHeadlineLabel(clientView: boolean, stopAge: number): string {
   return clientView
     ? `If you keep working to age ${stopAge}`
     : `Incl. PRB at age ${stopAge}`;
+}
+
+/**
+ * Friendly one-line explanation of the caregiving credit for the results
+ * screen. Takes the engine's APPLIED caregiving credits
+ * (`enhancement.appliedCaregivingDropIns`) for every displayed start-age
+ * result, and only mentions years credited in ALL of them, so the note never
+ * claims a credit that one of the shown options didn't actually receive.
+ * Returns null when no caregiving credit was applied everywhere.
+ *
+ * Plain-language contract (client-facing): no "drop-in", "imputed", "CRDO",
+ * "tier", or other actuary jargon.
+ */
+export function caregivingCreditNote(
+  appliedByResult: Array<Array<{ year: number; amount: number }>>,
+): string | null {
+  if (appliedByResult.length === 0) return null;
+  let credited = appliedByResult[0].filter((d) => d.amount > 0);
+  for (const list of appliedByResult.slice(1)) {
+    const years = new Set(list.filter((d) => d.amount > 0).map((d) => d.year));
+    credited = credited.filter((d) => years.has(d.year));
+  }
+  if (credited.length === 0) return null;
+  const avg = credited.reduce((sum, d) => sum + d.amount, 0) / credited.length;
+  // Round to the nearest $100 — this is a reassurance line, not a statement.
+  const approx = Math.round(avg / 100) * 100;
+  const n = credited.length;
+  return n === 1
+    ? `Your caregiving year still counted: we credited it toward your pension as if you kept earning about ${formatMoney(approx)} that year.`
+    : `Your ${n} caregiving years still counted: we credited them toward your pension as if you kept earning about ${formatMoney(approx)} a year.`;
 }
 
 export function prbSubtext(

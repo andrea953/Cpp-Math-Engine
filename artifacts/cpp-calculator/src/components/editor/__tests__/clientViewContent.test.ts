@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  caregivingCreditNote,
   comparisonChartData,
   comparisonChartSeries,
   prbHeadlineLabel,
@@ -53,6 +54,60 @@ describe("comparison chart series", () => {
       "Tier 1": 140,
       "Tier 2": 70,
     });
+  });
+});
+
+describe("caregiving credit note", () => {
+  it("explains multiple caregiving years with an approximate annual credit", () => {
+    const note = caregivingCreditNote([
+      [
+        { year: 2019, amount: 47_800 },
+        { year: 2020, amount: 48_100 },
+        { year: 2021, amount: 48_400 },
+      ],
+    ]);
+    expect(note).toBe(
+      "Your 3 caregiving years still counted: we credited them toward your pension as if you kept earning about $48,100 a year.",
+    );
+  });
+
+  it("uses singular wording for a single credited year", () => {
+    const note = caregivingCreditNote([[{ year: 2020, amount: 51_240 }]]);
+    expect(note).toContain("Your caregiving year still counted");
+    expect(note).toContain("$51,200");
+  });
+
+  it("returns null when no result received an applied credit", () => {
+    expect(caregivingCreditNote([])).toBeNull();
+    expect(caregivingCreditNote([[]])).toBeNull();
+    expect(caregivingCreditNote([[{ year: 2020, amount: 0 }]])).toBeNull();
+  });
+
+  it("only mentions years credited in every displayed start-age option", () => {
+    // Credited at ages 65/70 but not at 60 → no note (never over-claims).
+    expect(
+      caregivingCreditNote([
+        [],
+        [{ year: 2020, amount: 48_000 }],
+        [{ year: 2020, amount: 48_000 }],
+      ]),
+    ).toBeNull();
+    // Shared year mentioned; extra year in one option only is excluded.
+    const note = caregivingCreditNote([
+      [{ year: 2020, amount: 48_000 }],
+      [
+        { year: 2020, amount: 48_000 },
+        { year: 2021, amount: 48_000 },
+      ],
+    ]);
+    expect(note).toContain("Your caregiving year still counted");
+  });
+
+  it("avoids actuary jargon in the client-facing wording", () => {
+    const note = caregivingCreditNote([[{ year: 2020, amount: 48_000 }]])!;
+    for (const banned of [/drop.?in/i, /imputed/i, /CRDO/i, /tier/i, /accrual/i, /enhancement/i]) {
+      expect(note).not.toMatch(banned);
+    }
   });
 });
 

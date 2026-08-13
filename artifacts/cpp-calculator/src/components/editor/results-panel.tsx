@@ -44,6 +44,7 @@ import {
   translateWarning,
 } from "./print-plain-language";
 import {
+  caregivingCreditNote,
   comparisonChartData,
   comparisonChartSeries,
   prbHeadlineLabel,
@@ -145,6 +146,13 @@ export function ResultsPanel({ inputs, scenarioTitle, clientView = false }: Resu
   }, [displayMode, todayYear, inputs.assumptions.indexingRate]);
 
   const sortedAges = [...result.byStartAge].sort((a, b) => a.startAge - b.startAge);
+  const caregivingNote = useMemo(
+    () =>
+      caregivingCreditNote(
+        result.byStartAge.map((r) => r.enhancement.appliedCaregivingDropIns),
+      ),
+    [result],
+  );
   const optimal = useMemo(() => {
     if (sortedAges.length === 0) return null;
     let best = sortedAges[0];
@@ -276,6 +284,16 @@ export function ResultsPanel({ inputs, scenarioTitle, clientView = false }: Resu
           ) : null}
         </div>
       </div>
+
+      {caregivingNote ? (
+        <div
+          className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900"
+          data-testid="note-caregiving-credit"
+        >
+          <HeartHandshake className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{caregivingNote}</p>
+        </div>
+      ) : null}
 
       {sections.showContributionCard ? <ContributionCard inputs={inputs} /> : null}
 
