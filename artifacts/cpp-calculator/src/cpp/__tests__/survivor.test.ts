@@ -258,6 +258,8 @@ describe("Survivor — death and children's benefits", () => {
     expect(r.deathBenefitTopUp).toBe(DEATH_BENEFIT_TOPUP_AMOUNT);
     expect(r.deathBenefit).toBe(5000);
     expect(r.notes.join(" ")).toMatch(/top-up/i);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/top-up applies/i);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/assumes no CPP\/QPP disability/i);
   });
 
   it("no top-up at 60+ when receipt status is unknown (conservative, with a conditional note)", () => {
@@ -274,6 +276,7 @@ describe("Survivor — death and children's benefits", () => {
     expect(r.deathBenefitTopUp).toBe(0);
     expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
     expect(r.notes.join(" ")).toMatch(/top-up.*may apply/i);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/may apply/i);
   });
 
   it("top-up applies at 60+ when explicitly marked as never having received CPP/QPP benefits", () => {
@@ -290,6 +293,7 @@ describe("Survivor — death and children's benefits", () => {
     });
     expect(r.deathBenefitTopUp).toBe(DEATH_BENEFIT_TOPUP_AMOUNT);
     expect(r.deathBenefit).toBe(5000);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/top-up applies because you never received/i);
   });
 
   it("no top-up when the deceased received CPP/QPP benefits, even for deaths before 60", () => {
@@ -313,6 +317,7 @@ describe("Survivor — death and children's benefits", () => {
     );
     expect(r.deathBenefitTopUp).toBe(0);
     expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/does not apply because you already received/i);
   });
 
   it("no top-up for deaths before 2025", () => {
@@ -336,6 +341,7 @@ describe("Survivor — death and children's benefits", () => {
     );
     expect(r.deathBenefitTopUp).toBe(0);
     expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitTopUpExplanation).toMatch(/on or after January 1, 2025/);
   });
 
   it("no top-up when a spouse is eligible for a survivor's pension", () => {
@@ -359,6 +365,9 @@ describe("Survivor — death and children's benefits", () => {
     );
     expect(r.deathBenefitTopUp).toBe(0);
     expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitTopUpExplanation).toMatch(
+      /does not apply because your spouse qualifies/i,
+    );
   });
 
   it("children's benefit equals per-child × number of eligible children", () => {

@@ -98,6 +98,12 @@ export interface SurvivorResult {
   deathBenefitBasic: number;
   /** Top-up portion of the death benefit ($2,500 for eligible deaths on/after Jan 1, 2025; otherwise 0). */
   deathBenefitTopUp: number;
+  /**
+   * Client-friendly one-liner (second person, addressed to the contributor)
+   * explaining whether the 2025+ death-benefit top-up applies and why.
+   * Empty string when no survivor-side benefits are payable at all.
+   */
+  deathBenefitTopUpExplanation: string;
 
   /** Children's benefit per child (monthly) */
   childrensBenefitPerChild: number;
@@ -186,6 +192,7 @@ export function calculateSurvivor(
       deathBenefit: 0,
       deathBenefitBasic: 0,
       deathBenefitTopUp: 0,
+      deathBenefitTopUpExplanation: "",
       childrensBenefitPerChild: getChildrensBenefit(survivor.startYear, indexingRate),
       childrensBenefitMonthlyTotal: 0,
       underAgeReductionFactor: 0,
@@ -319,6 +326,28 @@ export function calculateSurvivor(
   }
   const deathBenefit = deathBenefitBasic + deathBenefitTopUp;
 
+  // Client-friendly one-liner (second person) explaining whether the 2025+
+  // top-up applies and why — used verbatim on the printed handout and as the
+  // caption on the live results card.
+  let deathBenefitTopUpExplanation: string;
+  if (survivor.startYear < DEATH_BENEFIT_TOPUP_START_YEAR) {
+    deathBenefitTopUpExplanation =
+      "The extra $2,500 top-up only applies to deaths on or after January 1, 2025, so this estimate shows the $2,500 basic amount.";
+  } else if (deathBenefitTopUp > 0) {
+    deathBenefitTopUpExplanation = neverReceivedKnown
+      ? "The extra $2,500 top-up applies because you never received CPP/QPP retirement or disability benefits and your spouse would not qualify for a monthly survivor's pension."
+      : "The extra $2,500 top-up applies because a death before age 60 means no CPP retirement pension was received and your spouse would not qualify for a monthly survivor's pension (assumes no CPP/QPP disability benefits were received).";
+  } else if (!survivorIneligibleForPension) {
+    deathBenefitTopUpExplanation =
+      "The extra $2,500 top-up does not apply because your spouse qualifies for a monthly survivor's pension.";
+  } else if (neverReceivedKnown) {
+    deathBenefitTopUpExplanation =
+      "The extra $2,500 top-up does not apply because you already received CPP/QPP retirement or disability benefits.";
+  } else {
+    deathBenefitTopUpExplanation =
+      "The extra $2,500 top-up may apply if you never received CPP/QPP retirement or disability benefits — this estimate shows the $2,500 basic amount until that is confirmed.";
+  }
+
   // ---------------------------------------------------------------------
   // Children's benefit
   // ---------------------------------------------------------------------
@@ -343,6 +372,7 @@ export function calculateSurvivor(
     deathBenefit,
     deathBenefitBasic,
     deathBenefitTopUp,
+    deathBenefitTopUpExplanation,
     childrensBenefitPerChild,
     childrensBenefitMonthlyTotal,
     underAgeReductionFactor,

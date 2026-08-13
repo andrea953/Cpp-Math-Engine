@@ -583,6 +583,11 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
           </tr>
         </tbody>
       </table>
+      {survivor.deathBenefitTopUpExplanation ? (
+        <p className="print-scenario-note">
+          {survivor.deathBenefitTopUpExplanation}
+        </p>
+      ) : null}
       {survivor.notes.length > 0 ? (
         <ul className="print-scenario-list">
           {survivor.notes.map((n, i) => (

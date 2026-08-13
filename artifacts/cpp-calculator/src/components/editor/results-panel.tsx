@@ -479,6 +479,15 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           />
         </div>
 
+        {survivor.deathBenefitTopUpExplanation ? (
+          <p
+            className="text-xs text-muted-foreground"
+            data-testid="text-death-benefit-topup-explanation"
+          >
+            {survivor.deathBenefitTopUpExplanation}
+          </p>
+        ) : null}
+
         <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-xs">
           <div className="font-semibold uppercase tracking-wide text-muted-foreground">Breakdown (monthly)</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 tabular-nums">
