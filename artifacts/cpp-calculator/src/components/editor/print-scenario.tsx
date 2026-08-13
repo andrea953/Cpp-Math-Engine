@@ -24,6 +24,7 @@ import {
   type SurvivorResult,
 } from "@/cpp";
 import { PrintApplicationChecklist } from "@/components/client/application-checklist";
+import { caregivingCreditNote } from "./client-view-content";
 import {
   translateDeathBenefitTopUp,
   translateSurvivorNote,
@@ -103,6 +104,14 @@ export function PrintScenario({
     [indexingRate, todayYear],
   );
 
+  const caregivingNote = useMemo(
+    () =>
+      caregivingCreditNote(
+        result.byStartAge.map((r) => r.enhancement.appliedCaregivingDropIns),
+      ),
+    [result],
+  );
+
   const survivor: SurvivorResult | null = useMemo(() => {
     if (!inputs.survivor?.enabled) return null;
     try {
@@ -148,6 +157,12 @@ export function PrintScenario({
             latest={latest}
             toToday={toToday}
           />
+
+          {caregivingNote ? (
+            <aside className="print-scenario-caregiving-note">
+              <p>{caregivingNote}</p>
+            </aside>
+          ) : null}
 
           <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} toToday={toToday} />
 

@@ -625,6 +625,24 @@
     -webkit-print-color-adjust: exact;
   }
 
+  .print-scenario .print-scenario-caregiving-note {
+    margin: 0.75rem 0 1rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--print-primary-soft) !important;
+    border-left: 3px solid var(--print-primary) !important;
+    background: var(--print-tint) !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-scenario .print-scenario-caregiving-note p {
+    margin: 0;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+
   .print-scenario .print-scenario-planner-note-label {
     font-family: 'Roboto', sans-serif;
     font-size: 8.5pt;

@@ -79,3 +79,24 @@ describe("ResultsPanel clientView translation contract", () => {
     expect(panelSrc).toMatch(/comparisonChartSeries\(clientView\)/);
   });
 });
+
+describe("printed client report caregiving-credit wiring", () => {
+  const printSrc = read("../print-scenario.tsx");
+
+  it("imports the shared caregivingCreditNote helper (so wording can't drift)", () => {
+    expect(printSrc).toMatch(
+      /import[\s\S]*?\bcaregivingCreditNote\b[\s\S]*?from\s+["']\.\/client-view-content["']/,
+    );
+  });
+
+  it("feeds it the engine's applied caregiving credits for every start age", () => {
+    expect(printSrc).toMatch(
+      /caregivingCreditNote\(\s*result\.byStartAge\.map\(\s*\(r\)\s*=>\s*r\.enhancement\.appliedCaregivingDropIns\s*\)/,
+    );
+  });
+
+  it("renders the note in the report body", () => {
+    expect(printSrc).toMatch(/caregivingNote\s*\?\s*\(/);
+    expect(printSrc).toMatch(/\{caregivingNote\}/);
+  });
+});
