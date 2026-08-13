@@ -20,6 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   CHILDREN_BENEFIT_HISTORY,
   DEATH_BENEFIT_AMOUNT,
+  DEATH_BENEFIT_TOPUP_AMOUNT,
   SURVIVOR_FLAT_RATE_HISTORY,
   SURVIVOR_RATE_65_PLUS,
   SURVIVOR_RATE_UNDER_65,
@@ -216,7 +217,7 @@ describe("Survivor — combined-benefit cap", () => {
 });
 
 describe("Survivor — death and children's benefits", () => {
-  it("death benefit is always $2,500", () => {
+  it("death benefit is the $2,500 basic amount when a survivor pension is payable", () => {
     const r = calculateSurvivor(maxContributorInputs(), {
       enabled: true,
       startYear: 2026,
@@ -227,6 +228,136 @@ describe("Survivor — death and children's benefits", () => {
       survivorOwnBaseTier1Monthly: 0,
       survivorOwnTier2Monthly: 0,
     });
+    expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitBasic).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitTopUp).toBe(0);
+  });
+
+  it("adds the $2,500 top-up (max $5,000) for 2025+ deaths before age 60 with no pension-eligible survivor", () => {
+    // Deceased born 1985 dies in 2026 at age 41 (never able to start CPP);
+    // survivor is 30 with no children and not disabled — not eligible for a
+    // survivor's pension.
+    const history = [];
+    for (let y = 2005; y <= 2025; y++) {
+      history.push({ year: y, pensionableEarnings: YMPE_HISTORY[y] ?? 0 });
+    }
+    const r = calculateSurvivor(
+      maxContributorInputs({ birthYear: 1985, earningsHistory: history }),
+      {
+        enabled: true,
+        startYear: 2026,
+        survivorAge: 30,
+        hasDependentChildren: false,
+        survivorDisabled: false,
+        numEligibleChildren: 0,
+        survivorOwnBaseTier1Monthly: 0,
+        survivorOwnTier2Monthly: 0,
+      },
+    );
+    expect(r.deathBenefitBasic).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.deathBenefitTopUp).toBe(DEATH_BENEFIT_TOPUP_AMOUNT);
+    expect(r.deathBenefit).toBe(5000);
+    expect(r.notes.join(" ")).toMatch(/top-up/i);
+  });
+
+  it("no top-up at 60+ when receipt status is unknown (conservative, with a conditional note)", () => {
+    const r = calculateSurvivor(maxContributorInputs(), {
+      enabled: true,
+      startYear: 2026,
+      survivorAge: 30,
+      hasDependentChildren: false,
+      survivorDisabled: false,
+      numEligibleChildren: 0,
+      survivorOwnBaseTier1Monthly: 0,
+      survivorOwnTier2Monthly: 0,
+    });
+    expect(r.deathBenefitTopUp).toBe(0);
+    expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+    expect(r.notes.join(" ")).toMatch(/top-up.*may apply/i);
+  });
+
+  it("top-up applies at 60+ when explicitly marked as never having received CPP/QPP benefits", () => {
+    const r = calculateSurvivor(maxContributorInputs(), {
+      enabled: true,
+      startYear: 2026,
+      survivorAge: 30,
+      hasDependentChildren: false,
+      survivorDisabled: false,
+      deceasedReceivedCppBenefits: false,
+      numEligibleChildren: 0,
+      survivorOwnBaseTier1Monthly: 0,
+      survivorOwnTier2Monthly: 0,
+    });
+    expect(r.deathBenefitTopUp).toBe(DEATH_BENEFIT_TOPUP_AMOUNT);
+    expect(r.deathBenefit).toBe(5000);
+  });
+
+  it("no top-up when the deceased received CPP/QPP benefits, even for deaths before 60", () => {
+    const history = [];
+    for (let y = 2005; y <= 2025; y++) {
+      history.push({ year: y, pensionableEarnings: YMPE_HISTORY[y] ?? 0 });
+    }
+    const r = calculateSurvivor(
+      maxContributorInputs({ birthYear: 1985, earningsHistory: history }),
+      {
+        enabled: true,
+        startYear: 2026,
+        survivorAge: 30,
+        hasDependentChildren: false,
+        survivorDisabled: false,
+        deceasedReceivedCppBenefits: true, // e.g. CPP disability
+        numEligibleChildren: 0,
+        survivorOwnBaseTier1Monthly: 0,
+        survivorOwnTier2Monthly: 0,
+      },
+    );
+    expect(r.deathBenefitTopUp).toBe(0);
+    expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+  });
+
+  it("no top-up for deaths before 2025", () => {
+    const history = [];
+    for (let y = 2005; y <= 2023; y++) {
+      history.push({ year: y, pensionableEarnings: YMPE_HISTORY[y] ?? 0 });
+    }
+    const r = calculateSurvivor(
+      maxContributorInputs({ birthYear: 1985, earningsHistory: history }),
+      {
+        enabled: true,
+        startYear: 2024,
+        survivorAge: 30,
+        hasDependentChildren: false,
+        survivorDisabled: false,
+        deceasedReceivedCppBenefits: false,
+        numEligibleChildren: 0,
+        survivorOwnBaseTier1Monthly: 0,
+        survivorOwnTier2Monthly: 0,
+      },
+    );
+    expect(r.deathBenefitTopUp).toBe(0);
+    expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
+  });
+
+  it("no top-up when a spouse is eligible for a survivor's pension", () => {
+    const history = [];
+    for (let y = 2005; y <= 2025; y++) {
+      history.push({ year: y, pensionableEarnings: YMPE_HISTORY[y] ?? 0 });
+    }
+    const r = calculateSurvivor(
+      maxContributorInputs({ birthYear: 1985, earningsHistory: history }),
+      {
+        enabled: true,
+        startYear: 2026,
+        survivorAge: 45, // eligible for survivor's pension
+        hasDependentChildren: false,
+        survivorDisabled: false,
+        deceasedReceivedCppBenefits: false,
+        numEligibleChildren: 0,
+        survivorOwnBaseTier1Monthly: 0,
+        survivorOwnTier2Monthly: 0,
+      },
+    );
+    expect(r.deathBenefitTopUp).toBe(0);
     expect(r.deathBenefit).toBe(DEATH_BENEFIT_AMOUNT);
   });
 

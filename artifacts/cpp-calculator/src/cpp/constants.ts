@@ -139,8 +139,23 @@ export const SURVIVOR_FLAT_RATE_HISTORY: Record<number, number> = {
   2026: 238.34,
 };
 
-/** One-time CPP death benefit (lump sum). Fixed at $2,500 for deaths after Dec 31, 2018 (CPP Act s. 57(1)(b)). */
+/** One-time CPP death benefit — basic amount. Fixed at $2,500 for deaths after Dec 31, 2018 (CPP Act s. 57(1)(b)). */
 export const DEATH_BENEFIT_AMOUNT = 2500;
+
+/**
+ * One-time CPP death benefit — top-up amount for deaths on or after
+ * January 1, 2025 (maximum total $5,000). The top-up is payable only when the
+ * deceased qualifies for the death benefit AND:
+ *  - never received a CPP/QPP retirement pension, disability benefit, or
+ *    post-retirement disability benefit, and
+ *  - has no surviving spouse or common-law partner eligible for a survivor's
+ *    pension.
+ * Source: canada.ca — CPP death benefit ("Step 2: How much could you receive").
+ */
+export const DEATH_BENEFIT_TOPUP_AMOUNT = 2500;
+
+/** First year of death for which the death-benefit top-up can apply. */
+export const DEATH_BENEFIT_TOPUP_START_YEAR = 2025;
 
 /** CPP children's benefit — flat monthly amount per eligible child (CPP Act s. 59). */
 export const CHILDREN_BENEFIT_HISTORY: Record<number, number> = {

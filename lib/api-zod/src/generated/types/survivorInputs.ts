@@ -17,6 +17,8 @@ export interface SurvivorInputs {
   survivorAge: number;
   hasDependentChildren: boolean;
   survivorDisabled: boolean;
+  /** Whether the deceased ever received a CPP/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown. */
+  deceasedReceivedCppBenefits?: boolean;
   /** @minimum 0 */
   numEligibleChildren: number;
   /** Survivor's own monthly base+Tier 1 CPP retirement (for combined-cap analysis). */

@@ -149,6 +149,12 @@ export const ListScenariosResponseItem = zod.object({
           ),
         hasDependentChildren: zod.boolean(),
         survivorDisabled: zod.boolean(),
+        deceasedReceivedCppBenefits: zod
+          .boolean()
+          .optional()
+          .describe(
+            "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+          ),
         numEligibleChildren: zod
           .number()
           .min(listScenariosResponseInputsSurvivorNumEligibleChildrenMin),
@@ -311,6 +317,12 @@ export const CreateScenarioBody = zod
             ),
           hasDependentChildren: zod.boolean(),
           survivorDisabled: zod.boolean(),
+          deceasedReceivedCppBenefits: zod
+            .boolean()
+            .optional()
+            .describe(
+              "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+            ),
           numEligibleChildren: zod
             .number()
             .min(createScenarioBodyInputsSurvivorNumEligibleChildrenMin),
@@ -466,6 +478,12 @@ export const GetScenarioResponse = zod.object({
           ),
         hasDependentChildren: zod.boolean(),
         survivorDisabled: zod.boolean(),
+        deceasedReceivedCppBenefits: zod
+          .boolean()
+          .optional()
+          .describe(
+            "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+          ),
         numEligibleChildren: zod
           .number()
           .min(getScenarioResponseInputsSurvivorNumEligibleChildrenMin),
@@ -631,6 +649,12 @@ export const UpdateScenarioBody = zod
             ),
           hasDependentChildren: zod.boolean(),
           survivorDisabled: zod.boolean(),
+          deceasedReceivedCppBenefits: zod
+            .boolean()
+            .optional()
+            .describe(
+              "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+            ),
           numEligibleChildren: zod
             .number()
             .min(updateScenarioBodyInputsSurvivorNumEligibleChildrenMin),
@@ -782,6 +806,12 @@ export const UpdateScenarioResponse = zod.object({
           ),
         hasDependentChildren: zod.boolean(),
         survivorDisabled: zod.boolean(),
+        deceasedReceivedCppBenefits: zod
+          .boolean()
+          .optional()
+          .describe(
+            "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+          ),
         numEligibleChildren: zod
           .number()
           .min(updateScenarioResponseInputsSurvivorNumEligibleChildrenMin),
@@ -982,6 +1012,12 @@ export const GetSharedScenarioResponse = zod
             ),
           hasDependentChildren: zod.boolean(),
           survivorDisabled: zod.boolean(),
+          deceasedReceivedCppBenefits: zod
+            .boolean()
+            .optional()
+            .describe(
+              "Whether the deceased ever received a CPP\/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.",
+            ),
           numEligibleChildren: zod
             .number()
             .min(getSharedScenarioResponseInputsSurvivorNumEligibleChildrenMin),

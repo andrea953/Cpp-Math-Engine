@@ -1265,6 +1265,40 @@ function SurvivorForm({ inputs, onChange }: InputsPanelProps) {
                 <p className="text-xs text-muted-foreground">Removes the under-45 reduction.</p>
               </div>
             </div>
+            <div className="rounded-md border bg-muted/30 p-3 md:col-span-2">
+              <Label htmlFor="survivor-deceased-received" className="text-sm">
+                Did the deceased ever receive CPP/QPP benefits?
+              </Label>
+              <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
+                A retirement pension, disability benefit, or post-retirement disability benefit.
+                &ldquo;No&rdquo; can add the $2,500 death-benefit top-up (deaths on or after
+                January 1, 2025) when no spouse is eligible for a survivor&rsquo;s pension.
+              </p>
+              <Select
+                value={
+                  survivor.deceasedReceivedCppBenefits === undefined
+                    ? "unknown"
+                    : survivor.deceasedReceivedCppBenefits
+                      ? "yes"
+                      : "no"
+                }
+                onValueChange={(v) =>
+                  set({
+                    deceasedReceivedCppBenefits:
+                      v === "unknown" ? undefined : v === "yes",
+                  })
+                }
+              >
+                <SelectTrigger id="survivor-deceased-received" className="max-w-[240px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                  <SelectItem value="yes">Yes — received benefits</SelectItem>
+                  <SelectItem value="no">No — never received benefits</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>

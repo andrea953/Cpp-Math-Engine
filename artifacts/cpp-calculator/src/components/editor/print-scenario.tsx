@@ -566,7 +566,12 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
           </tr>
           <tr>
             <th>One-time death benefit</th>
-            <td>{formatMoney(survivor.deathBenefit, true)}</td>
+            <td>
+              {formatMoney(survivor.deathBenefit, true)}
+              {survivor.deathBenefitTopUp > 0
+                ? ` (includes ${formatMoney(survivor.deathBenefitTopUp)} top-up)`
+                : ""}
+            </td>
           </tr>
           <tr>
             <th>Monthly children's benefit</th>

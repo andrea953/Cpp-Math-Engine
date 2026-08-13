@@ -329,6 +329,9 @@ components:
           type: boolean
         survivorDisabled:
           type: boolean
+        deceasedReceivedCppBenefits:
+          type: boolean
+          description: Whether the deceased ever received a CPP/QPP retirement pension, disability benefit, or post-retirement disability benefit (affects the 2025+ death-benefit top-up). Omit if unknown.
         numEligibleChildren:
           type: integer
           minimum: 0

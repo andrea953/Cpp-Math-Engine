@@ -169,7 +169,7 @@ describe("Safari / Firefox print page-count estimator drift guard", () => {
         "exampleLines": 50,
         "examples": 17,
         "formulas": 12,
-        "inlineMaths": 22,
+        "inlineMaths": 24,
         "listItems": 86,
         "pageContentPxExpr": "9.5 * 96",
         "pageMargin": "0.7in 0.6in 0.8in 0.6in",

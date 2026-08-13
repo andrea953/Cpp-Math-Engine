@@ -537,7 +537,8 @@ export function WhitePaper() {
                 Child Rearing Drop-Out (CRDO), and disability drop-out; runs the early/late take-up
                 adjustment from age 60 to 70 with monthly precision; projects Post-Retirement
                 Benefits (PRB) for clients still working; and models the survivor's pension,
-                children's benefit, and $2,500 death benefit — including the combined-benefit cap.
+                children's benefit, and death benefit ($2,500, or up to $5,000 with the 2025
+                top-up) — including the combined-benefit cap.
                 Every component is exposed as an auditable line item rather than a single headline
                 number.
               </p>
@@ -566,7 +567,7 @@ export function WhitePaper() {
                 </li>
                 <li>
                   Provide no way to model survivor's pension, the combined-benefit cap, or the
-                  $2,500 death benefit alongside the contributor's own retirement.
+                  death benefit alongside the contributor's own retirement.
                 </li>
                 <li>
                   Cannot compare scenarios (start at 60 vs 65 vs 70), show breakeven, or be shared
@@ -621,7 +622,7 @@ export function WhitePaper() {
                 </li>
                 <li>
                   <strong>Survivor + PRB built in.</strong> Survivor's pension (with the
-                  combined-benefit cap), children's benefit, $2,500 death benefit, and the
+                  combined-benefit cap), children's benefit, death benefit (up to $5,000), and the
                   Post-Retirement Benefit for clients still working are first-class outputs.
                 </li>
                 <li>
@@ -1900,7 +1901,11 @@ export function WhitePaper() {
                 </li>
                 <li>
                   <strong>Death benefit.</strong> A one-time lump sum of{" "}
-                  <InlineMath>$2,500</InlineMath>, fixed since 2019.
+                  <InlineMath>$2,500</InlineMath>, fixed since 2019. For deaths on or after
+                  January 1, 2025, a <InlineMath>$2,500</InlineMath> top-up (maximum{" "}
+                  <InlineMath>$5,000</InlineMath>) applies when the deceased never received a
+                  CPP/QPP retirement or disability pension and no surviving spouse or common-law
+                  partner is eligible for a survivor&apos;s pension.
                 </li>
               </ul>
               <p className="text-sm text-muted-foreground">
@@ -1940,8 +1945,9 @@ export function WhitePaper() {
                     .
                   </li>
                   <li>
-                    <strong>Death benefit</strong> ($2,500 for deaths after December 31, 2018) — s.
-                    57(1)(b). Plain-language:{" "}
+                    <strong>Death benefit</strong> ($2,500 for deaths after December 31, 2018;
+                    up to $5,000 with the top-up for eligible deaths on or after January 1, 2025)
+                    — s. 57(1)(b). Plain-language:{" "}
                     <SourceLink href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/cpp-death-benefit.html">
                       canada.ca — Death benefit
                     </SourceLink>

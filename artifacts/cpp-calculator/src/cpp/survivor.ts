@@ -3,7 +3,8 @@
  *
  * Models:
  *  - Survivor's pension (base + enhanced portions, age-tiered)
- *  - One-time death benefit ($2,500 since 2019)
+ *  - One-time death benefit ($2,500 since 2019; deaths on/after Jan 1, 2025
+ *    may include a $2,500 top-up, to a maximum of $5,000)
  *  - Children's benefit (per eligible dependent child)
  *  - Combined-benefit cap when the survivor is also receiving their own CPP retirement
  *
@@ -17,6 +18,8 @@
 
 import {
   DEATH_BENEFIT_AMOUNT,
+  DEATH_BENEFIT_TOPUP_AMOUNT,
+  DEATH_BENEFIT_TOPUP_START_YEAR,
   SURVIVOR_ENHANCED_RATE,
   SURVIVOR_FULL_RATE_AGE,
   SURVIVOR_MIN_ELIGIBLE_AGE,
@@ -40,6 +43,14 @@ export interface SurvivorInputs {
   hasDependentChildren: boolean;
   /** Whether the survivor is themselves disabled (CPP disability) at start. */
   survivorDisabled: boolean;
+  /**
+   * Whether the deceased ever received a CPP/QPP retirement pension,
+   * disability benefit, or post-retirement disability benefit. Drives the
+   * 2025+ death-benefit top-up. Omit/undefined = unknown; the engine then only
+   * assumes "never received" when death occurs before age 60 AND treats
+   * disability receipt as an undisclosed assumption.
+   */
+  deceasedReceivedCppBenefits?: boolean;
   /** Number of eligible dependent children of the deceased (each receives a children's benefit). */
   numEligibleChildren: number;
   /** Survivor's own monthly base+Tier 1 CPP retirement pension at start (for combined-cap analysis). 0 if not yet collecting. */
@@ -81,8 +92,12 @@ export interface SurvivorResult {
   /** Combined monthly: survivor's own retirement + survivor's pension */
   combinedMonthlyTotal: number;
 
-  /** One-time death benefit (lump sum, $2,500 since 2019) */
+  /** One-time death benefit (lump sum). Basic $2,500; deaths on/after Jan 1, 2025 may include a $2,500 top-up (max $5,000). */
   deathBenefit: number;
+  /** Basic portion of the death benefit ($2,500 since 2019). */
+  deathBenefitBasic: number;
+  /** Top-up portion of the death benefit ($2,500 for eligible deaths on/after Jan 1, 2025; otherwise 0). */
+  deathBenefitTopUp: number;
 
   /** Children's benefit per child (monthly) */
   childrensBenefitPerChild: number;
@@ -169,6 +184,8 @@ export function calculateSurvivor(
       survivorAnnualTotal: 0,
       combinedMonthlyTotal: 0,
       deathBenefit: 0,
+      deathBenefitBasic: 0,
+      deathBenefitTopUp: 0,
       childrensBenefitPerChild: getChildrensBenefit(survivor.startYear, indexingRate),
       childrensBenefitMonthlyTotal: 0,
       underAgeReductionFactor: 0,
@@ -256,9 +273,51 @@ export function calculateSurvivor(
     survivorMonthlyTotal;
 
   // ---------------------------------------------------------------------
-  // Death benefit (lump sum, $2,500)
+  // Death benefit (lump sum). Basic $2,500 for deaths after Dec 31, 2018.
+  // For deaths on/after Jan 1, 2025 a $2,500 top-up (max $5,000) applies when
+  // the deceased never received a CPP/QPP retirement pension, disability
+  // benefit, or post-retirement disability benefit AND no surviving
+  // spouse/common-law partner is eligible for a survivor's pension. This tool
+  // always models a surviving spouse, so the spouse condition is met only when
+  // that spouse is NOT eligible for any survivor's pension (under 35 with no
+  // dependent children and not disabled). Receipt status comes from the
+  // explicit `deceasedReceivedCppBenefits` input; when it is unknown we only
+  // infer "never received" for deaths before age 60 (no retirement pension is
+  // possible before 60) and disclose the assumed absence of disability receipt.
   // ---------------------------------------------------------------------
-  const deathBenefit = DEATH_BENEFIT_AMOUNT;
+  const deathBenefitBasic = DEATH_BENEFIT_AMOUNT;
+  const survivorIneligibleForPension =
+    survivor.survivorAge < SURVIVOR_MIN_ELIGIBLE_AGE &&
+    !survivor.hasDependentChildren &&
+    !survivor.survivorDisabled;
+  // "Never received" is a statement about actual benefit receipt, not age.
+  // Use the explicit input when provided. When unknown, only infer
+  // "never received" for deaths before 60 (a retirement pension is impossible
+  // before 60), disclosing that disability receipt is assumed absent.
+  const neverReceivedKnown = survivor.deceasedReceivedCppBenefits !== undefined;
+  const deceasedNeverReceived = neverReceivedKnown
+    ? !survivor.deceasedReceivedCppBenefits
+    : deathAge < 60;
+  let deathBenefitTopUp = 0;
+  if (
+    survivor.startYear >= DEATH_BENEFIT_TOPUP_START_YEAR &&
+    survivorIneligibleForPension &&
+    deceasedNeverReceived
+  ) {
+    deathBenefitTopUp = DEATH_BENEFIT_TOPUP_AMOUNT;
+    notes.push(
+      neverReceivedKnown
+        ? `Death benefit includes the $${DEATH_BENEFIT_TOPUP_AMOUNT.toLocaleString()} top-up for deaths on or after January 1, 2025 (deceased never received CPP/QPP retirement or disability benefits, and the survivor is not eligible for a survivor's pension).`
+        : `Death benefit includes the $${DEATH_BENEFIT_TOPUP_AMOUNT.toLocaleString()} top-up for deaths on or after January 1, 2025 (death before age 60 means no CPP retirement pension was possible, and the survivor is not eligible for a survivor's pension). Assumes the deceased never received a CPP/QPP disability benefit — confirm with the "received CPP/QPP benefits" setting.`,
+    );
+  } else if (survivor.startYear >= DEATH_BENEFIT_TOPUP_START_YEAR) {
+    notes.push(
+      !neverReceivedKnown && deathAge >= 60 && survivorIneligibleForPension
+        ? "Death benefit shown is the $2,500 basic amount. If the deceased never received CPP/QPP retirement or disability benefits, a $2,500 top-up (total $5,000) may apply — set the \"received CPP/QPP benefits\" option to confirm."
+        : "Death benefit shown is the $2,500 basic amount. The $2,500 top-up (deaths on/after Jan 1, 2025) does not apply when the deceased received CPP/QPP retirement or disability benefits or a spouse is eligible for a survivor's pension.",
+    );
+  }
+  const deathBenefit = deathBenefitBasic + deathBenefitTopUp;
 
   // ---------------------------------------------------------------------
   // Children's benefit
@@ -282,6 +341,8 @@ export function calculateSurvivor(
     survivorAnnualTotal,
     combinedMonthlyTotal,
     deathBenefit,
+    deathBenefitBasic,
+    deathBenefitTopUp,
     childrensBenefitPerChild,
     childrensBenefitMonthlyTotal,
     underAgeReductionFactor,

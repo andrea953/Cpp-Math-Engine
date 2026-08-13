@@ -461,7 +461,11 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
             icon={<Wallet className="h-4 w-4" />}
             label="Death benefit"
             primary={formatMoney(survivor.deathBenefit, true)}
-            secondary="one-time lump sum"
+            secondary={
+              survivor.deathBenefitTopUp > 0
+                ? `one-time lump sum · incl. ${formatMoney(survivor.deathBenefitTopUp)} top-up`
+                : "one-time lump sum"
+            }
           />
           <SurvivorTile
             icon={<Users className="h-4 w-4" />}
