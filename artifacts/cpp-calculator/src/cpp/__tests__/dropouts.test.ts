@@ -186,6 +186,19 @@ describe("Child-rearing drop-in (Enhanced CPP)", () => {
     expect(withClaim.enhancement.tier1DropInYears).toBe(3);
     // The drop-in raises the Tier 1 enhancement benefit.
     expect(withClaim.tier1Monthly).toBeGreaterThan(withoutClaim.tier1Monthly);
+
+    // Diagnostics expose the imputed amount for each protected year.
+    expect(withClaim.enhancement.dropInAmountsByYear.map((d) => d.year)).toEqual([
+      2020, 2021, 2022,
+    ]);
+    for (const d of withClaim.enhancement.dropInAmountsByYear) {
+      expect(d.amount).toBeGreaterThan(0);
+    }
+    // All three years share the same imputed value (avg of the 5 prior years).
+    const amounts = withClaim.enhancement.dropInAmountsByYear.map((d) => d.amount);
+    expect(new Set(amounts).size).toBe(1);
+    // No claim -> no drop-in diagnostics.
+    expect(withoutClaim.enhancement.dropInAmountsByYear).toEqual([]);
   });
 
   it("produces no imputed income when there were no earnings in the 5 years before birth", () => {

@@ -520,6 +520,9 @@ function calculateEnhancement(
       tier2IndexedEarningsSum: tier2Sum,
       tier1DropInYears,
       tier2DropInYears,
+      dropInAmountsByYear: [...dropInByYear.entries()]
+        .map(([year, amount]) => ({ year, amount }))
+        .sort((a, b) => a.year - b.year),
     },
   };
 }

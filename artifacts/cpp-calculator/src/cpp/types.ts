@@ -180,6 +180,13 @@ export interface EnhancementCalcDiagnostics {
   tier1DropInYears: number;
   /** Years where a drop-in (child-rearing or disability imputed income) replaced real income in Tier 2 */
   tier2DropInYears: number;
+  /**
+   * Imputed (drop-in) earnings per protected year, for the breakdown view.
+   * One entry per calendar year covered by a CRDO/disability window that has
+   * a positive imputed amount, whether or not the imputed value ended up
+   * exceeding real earnings for that year. Sorted ascending by year.
+   */
+  dropInAmountsByYear: { year: number; amount: number }[];
 }
 
 export interface CalculationResult {

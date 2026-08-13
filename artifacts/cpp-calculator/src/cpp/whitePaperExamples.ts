@@ -245,6 +245,61 @@ const CRDO_WITH_CLAIM = calculateCpp({
 }).byStartAge[0]!;
 
 // ---------------------------------------------------------------------------
+// Enhanced CPP child-rearing DROP-IN worked example
+//
+// The parent above took their caregiving break in 2000–2005 — before the 2019
+// enhancement existed — so their CRDO claim moves only base CPP. To show the
+// enhancement-era drop-in (CPP Act s. 53.3(1)), use a younger parent whose
+// caregiving window sits inside the Tier 1 era:
+//   - Born June 1990, retires at 65 in 2055.
+//   - YMPE-max work from 2010 (age 20), except a 5-year break Jan 2020 –
+//     Dec 2024 raising young children (zero pensionable earnings).
+//   - Because the 5 years before the break (2015–2019) were at YMPE-max, the
+//     drop-in imputes that average into each caregiving year, so those years
+//     contribute to the Tier 1 sums instead of being skipped.
+// ---------------------------------------------------------------------------
+const DROPIN_BIRTH_YEAR = 1990;
+const DROPIN_START_AGE = 65;
+const DROPIN_START_YEAR = DROPIN_BIRTH_YEAR + DROPIN_START_AGE; // 2055
+const DROPIN_WORK_START_YEAR = 2010;
+const DROPIN_GAP_START_YEAR = 2020;
+const DROPIN_GAP_END_YEAR = 2024;
+
+function buildDropInParentEarnings(): EarningsRecord[] {
+  const list: EarningsRecord[] = [];
+  for (let y = DROPIN_WORK_START_YEAR; y <= DROPIN_START_YEAR; y++) {
+    const earn =
+      y >= DROPIN_GAP_START_YEAR && y <= DROPIN_GAP_END_YEAR ? 0 : getYmpe(y, YMPE_GROWTH);
+    list.push({ year: y, pensionableEarnings: earn });
+  }
+  return list;
+}
+
+const DROPIN_SCENARIO_BASE: ScenarioInputs = {
+  birthYear: DROPIN_BIRTH_YEAR,
+  birthMonth: BIRTH_MONTH,
+  earningsHistory: buildDropInParentEarnings(),
+  dropoutPeriods: [],
+  assumptions: { ...DEFAULT_ASSUMPTIONS, stopWorkAge: DROPIN_START_AGE },
+  postRetirementBenefit: { continuesWorkingAfterStart: false },
+  startAges: [DROPIN_START_AGE],
+};
+
+const DROPIN_NO_CLAIM = calculateCpp(DROPIN_SCENARIO_BASE).byStartAge[0]!;
+const DROPIN_WITH_CLAIM = calculateCpp({
+  ...DROPIN_SCENARIO_BASE,
+  dropoutPeriods: [
+    {
+      kind: "crdo",
+      startYear: DROPIN_GAP_START_YEAR,
+      startMonth: 1,
+      endYear: DROPIN_GAP_END_YEAR,
+      endMonth: 12,
+    },
+  ],
+}).byStartAge[0]!;
+
+// ---------------------------------------------------------------------------
 // Disability drop-out worked example
 //
 // Same birth (June 1965) and start age (65 in 2030). Started YMPE-max work in
@@ -464,6 +519,32 @@ export const whitePaperExamples = {
     totalMonthlyWith: CRDO_WITH_CLAIM.totalMonthly,
     baseLift: CRDO_WITH_CLAIM.baseMonthly - CRDO_NO_CLAIM.baseMonthly,
     totalLift: CRDO_WITH_CLAIM.totalMonthly - CRDO_NO_CLAIM.totalMonthly,
+  },
+
+  /**
+   * Enhancement-era child-rearing drop-in worked example (CPP Act s. 53.3(1)).
+   * A 1990-born parent whose caregiving break sits inside the Tier 1 window,
+   * so the CRDO claim visibly lifts Tier 1 via imputed earnings.
+   */
+  crdoDropInExample: {
+    birthYear: DROPIN_BIRTH_YEAR,
+    startAge: DROPIN_START_AGE,
+    startYear: DROPIN_START_YEAR,
+    workStartYear: DROPIN_WORK_START_YEAR,
+    gapStartYear: DROPIN_GAP_START_YEAR,
+    gapEndYear: DROPIN_GAP_END_YEAR,
+    yearsOff: DROPIN_GAP_END_YEAR - DROPIN_GAP_START_YEAR + 1,
+    /** Imputed (drop-in) annual earnings credited to each caregiving year. */
+    imputedAnnual:
+      DROPIN_WITH_CLAIM.enhancement.dropInAmountsByYear[0]?.amount ?? 0,
+    dropInYears: DROPIN_WITH_CLAIM.enhancement.tier1DropInYears,
+    tier1YearsWithout: DROPIN_NO_CLAIM.enhancement.tier1ContributionYears,
+    tier1YearsWith: DROPIN_WITH_CLAIM.enhancement.tier1ContributionYears,
+    tier1MonthlyWithout: DROPIN_NO_CLAIM.tier1Monthly,
+    tier1MonthlyWith: DROPIN_WITH_CLAIM.tier1Monthly,
+    tier1Lift: DROPIN_WITH_CLAIM.tier1Monthly - DROPIN_NO_CLAIM.tier1Monthly,
+    baseLift: DROPIN_WITH_CLAIM.baseMonthly - DROPIN_NO_CLAIM.baseMonthly,
+    totalLift: DROPIN_WITH_CLAIM.totalMonthly - DROPIN_NO_CLAIM.totalMonthly,
   },
 
   /**

@@ -1047,6 +1047,19 @@ export function WhitePaper() {
                   contribution well below its eventual ceiling.
                 </div>
               </Example>
+              <p>
+                Unlike base CPP, the enhancement has no drop-out for zero-earning years. Instead,
+                caregiving years covered by a child-rearing (CRDO) claim receive a{" "}
+                <strong>drop-in</strong>: the engine credits each such year with an imputed income
+                equal to the average pensionable earnings of the five years before the window
+                started (CPP Act s. 53.3(1)), and uses the higher of real and imputed earnings in
+                the Tier 1 sums. A parallel rule applies to disability years. The worked drop-in
+                example lives in the{" "}
+                <a href="#wp-dropouts" className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:decoration-primary print:text-black print:no-underline">
+                  Drop-out provisions
+                </a>{" "}
+                section.
+              </p>
 
               <div className="mt-6 rounded-lg border border-border/60 bg-slate-50/70 px-4 py-3 text-sm text-muted-foreground print:border-slate-300 print:bg-white">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-primary/80 print:text-black">
@@ -1405,7 +1418,40 @@ export function WhitePaper() {
                   {fmt2(ex.crdoExample.baseLift)} / month (≈ {fmt2(ex.crdoExample.totalLift)} / mo
                   on the total) — the parental window is removed before the 17% drop-out is
                   computed, so more low-earning months get caught by the drop-out instead of
-                  pulling AMPE down.
+                  pulling AMPE down. Their break predates the 2019 enhancement, so the CRDO claim
+                  moves only base CPP — the enhancement-era drop-in below shows the Tier 1 side.
+                </div>
+              </Example>
+
+              <Example
+                label={`Parent client, born June ${ex.crdoDropInExample.birthYear}, ${ex.crdoDropInExample.yearsOff} caregiving years inside the enhancement era`}
+              >
+                <div className="text-xs text-muted-foreground">
+                  YMPE-max work from {ex.crdoDropInExample.workStartYear}, except{" "}
+                  {ex.crdoDropInExample.gapStartYear}–{ex.crdoDropInExample.gapEndYear} at home
+                  with young children (zero pensionable earnings); retires at{" "}
+                  {ex.crdoDropInExample.startAge} in {ex.crdoDropInExample.startYear}. Because the
+                  caregiving window sits inside the Tier 1 era, the child-rearing{" "}
+                  <strong>drop-in</strong> credits each of those years with the average
+                  pensionable earnings of the five years before the window.
+                </div>
+                <ExampleLine>
+                  imputed income per caregiving year = avg(
+                  {ex.crdoDropInExample.gapStartYear - 5}–{ex.crdoDropInExample.gapStartYear - 1}{" "}
+                  earnings) ≈ {fmt0(ex.crdoDropInExample.imputedAnnual)} / yr, dropped into{" "}
+                  {ex.crdoDropInExample.dropInYears} years
+                </ExampleLine>
+                <ExampleLine>
+                  tier 1 monthly without claim ≈ {fmt2(ex.crdoDropInExample.tier1MonthlyWithout)}{" "}
+                  → with claim ≈ {fmt2(ex.crdoDropInExample.tier1MonthlyWith)} (lift ≈{" "}
+                  {fmt2(ex.crdoDropInExample.tier1Lift)} / mo)
+                </ExampleLine>
+                <div className="text-xs text-muted-foreground">
+                  On top of the base-CPP uplift of ≈ {fmt2(ex.crdoDropInExample.baseLift)} / month
+                  from the drop-out, the drop-in adds ≈ {fmt2(ex.crdoDropInExample.tier1Lift)} /
+                  month of Tier 1 credit that would otherwise be lost — a total lift of ≈{" "}
+                  {fmt2(ex.crdoDropInExample.totalLift)} / month. The per-year imputed amounts are
+                  shown in the calculator's diagnostics breakdown.
                 </div>
               </Example>
 

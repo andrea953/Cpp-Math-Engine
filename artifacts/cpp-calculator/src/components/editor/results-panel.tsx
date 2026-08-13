@@ -1160,6 +1160,22 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                     <DiagRow label="Tier 2 contribution years" value={r.enhancement.tier2ContributionYears} />
                     <DiagRow label="Tier 2 accrual" value={formatPercent(r.enhancement.tier2AccrualFactor)} />
                     <DiagRow label="Tier 2 indexed earnings (sum)" value={formatMoney(deflate(r.enhancement.tier2IndexedEarningsSum, r.startYear))} />
+                    <DiagRow label="Tier 1 drop-in years" value={r.enhancement.tier1DropInYears} />
+                    <DiagRow label="Tier 2 drop-in years" value={r.enhancement.tier2DropInYears} />
+                    {r.enhancement.dropInAmountsByYear.length > 0 && (
+                      <div className="mt-2">
+                        <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
+                          Drop-in (imputed) earnings by year
+                        </div>
+                        {r.enhancement.dropInAmountsByYear.map((d) => (
+                          <DiagRow
+                            key={d.year}
+                            label={String(d.year)}
+                            value={formatMoney(d.amount, true)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </AccordionContent>
