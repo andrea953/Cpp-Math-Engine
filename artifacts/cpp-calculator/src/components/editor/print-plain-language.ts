@@ -106,3 +106,54 @@ const SURVIVOR_NOTE_TRANSLATIONS: Translation[] = [
 export function translateSurvivorNote(note: string): string {
   return translate(note, SURVIVOR_NOTE_TRANSLATIONS);
 }
+
+// ---------------------------------------------------------------------------
+// Death-benefit top-up explanation → client-friendly caption
+//
+// The engine's deathBenefitTopUpExplanation is second-person but still uses
+// program jargon ("CPP/QPP retirement or disability benefits", "monthly
+// survivor's pension would not be payable"). These rewrites keep the meaning
+// while using everyday wording for the client card and printed handout.
+// ---------------------------------------------------------------------------
+
+const DEATH_BENEFIT_TOPUP_TRANSLATIONS: Translation[] = [
+  {
+    match:
+      /^The extra \$([\d,]+) top-up only applies to deaths on or after January 1, 2025/,
+    rewrite: (m) =>
+      `Because this scenario looks at a death before 2025, the one-time payment is the standard $2,500 — the extra $${m[1]} only applies to deaths on or after January 1, 2025.`,
+  },
+  {
+    match:
+      /^The extra \$([\d,]+) top-up applies because you never received CPP\/QPP retirement or disability benefits/,
+    rewrite: (m) =>
+      `The one-time payment includes an extra $${m[1]} because no CPP or QPP payments were ever received and your spouse would not qualify for the monthly survivor's pension.`,
+  },
+  {
+    match:
+      /^The extra \$([\d,]+) top-up applies because a death before age 60/,
+    rewrite: (m) =>
+      `The one-time payment includes an extra $${m[1]} because a death before age 60 means no CPP pension was being paid and your spouse would not qualify for the monthly survivor's pension. This assumes no CPP or QPP disability payments were ever received — your planner can confirm this detail.`,
+  },
+  {
+    match:
+      /^The extra \$([\d,]+) top-up does not apply because your spouse qualifies for a monthly survivor's pension/,
+    rewrite: (m) =>
+      `The one-time payment is the standard $2,500. The extra $${m[1]} doesn't apply here because your spouse qualifies for the monthly survivor's pension.`,
+  },
+  {
+    match:
+      /^The extra \$([\d,]+) top-up does not apply because you already received/,
+    rewrite: (m) =>
+      `The one-time payment is the standard $2,500. The extra $${m[1]} doesn't apply here because CPP or QPP payments were already being received.`,
+  },
+  {
+    match: /^The extra \$([\d,]+) top-up may apply if you never received/,
+    rewrite: (m) =>
+      `An extra $${m[1]} could apply if no CPP or QPP payments were ever received — this estimate shows the standard $2,500 until your planner confirms that detail.`,
+  },
+];
+
+export function translateDeathBenefitTopUp(explanation: string): string {
+  return translate(explanation, DEATH_BENEFIT_TOPUP_TRANSLATIONS);
+}

@@ -25,6 +25,7 @@ import {
 } from "@/cpp";
 import { PrintApplicationChecklist } from "@/components/client/application-checklist";
 import {
+  translateDeathBenefitTopUp,
   translateSurvivorNote,
   translateWarning,
 } from "./print-plain-language";
@@ -624,7 +625,7 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
       </table>
       {survivor.deathBenefitTopUpExplanation ? (
         <p className="print-scenario-note">
-          {survivor.deathBenefitTopUpExplanation}
+          {translateDeathBenefitTopUp(survivor.deathBenefitTopUpExplanation)}
         </p>
       ) : null}
       {survivor.notes.length > 0 ? (

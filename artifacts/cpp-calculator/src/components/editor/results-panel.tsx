@@ -39,6 +39,7 @@ import {
 } from "@/cpp";
 import { Briefcase, HeartHandshake, Users, Wallet, Info } from "lucide-react";
 import {
+  translateDeathBenefitTopUp,
   translateSurvivorNote,
   translateWarning,
 } from "./print-plain-language";
@@ -527,7 +528,9 @@ function SurvivorCard({
             className="text-xs text-muted-foreground"
             data-testid="text-death-benefit-topup-explanation"
           >
-            {survivor.deathBenefitTopUpExplanation}
+            {clientView
+              ? translateDeathBenefitTopUp(survivor.deathBenefitTopUpExplanation)
+              : survivor.deathBenefitTopUpExplanation}
           </p>
         ) : null}
 

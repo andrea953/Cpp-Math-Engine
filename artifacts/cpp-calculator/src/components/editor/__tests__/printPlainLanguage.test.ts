@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  translateDeathBenefitTopUp,
   translateSurvivorNote,
   translateWarning,
 } from "../print-plain-language";
@@ -98,6 +99,64 @@ describe("translateSurvivorNote", () => {
   it("falls back to the original text for unknown notes", () => {
     expect(translateSurvivorNote("A brand new survivor note")).toBe(
       "A brand new survivor note",
+    );
+  });
+});
+
+describe("translateDeathBenefitTopUp", () => {
+  it("rewrites the pre-2025 explanation", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up only applies to deaths on or after January 1, 2025, so this estimate shows the $2,500 basic amount.",
+    );
+    expect(out).toContain("$2,500");
+    expect(out).toContain("January 1, 2025");
+    expect(out).not.toContain("basic amount");
+  });
+
+  it("rewrites the applies-because-never-received explanation without jargon", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up applies because you never received CPP/QPP retirement or disability benefits and your spouse would not qualify for a monthly survivor's pension.",
+    );
+    expect(out).toContain("$2,500");
+    expect(out).not.toContain("CPP/QPP");
+  });
+
+  it("rewrites the applies-before-60 explanation and defers to the planner", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up applies because a death before age 60 means no CPP retirement pension was received and your spouse would not qualify for a monthly survivor's pension (assumes no CPP/QPP disability benefits were received).",
+    );
+    expect(out).toContain("age 60");
+    expect(out.toLowerCase()).toContain("planner");
+    expect(out).not.toContain("CPP/QPP");
+  });
+
+  it("rewrites the spouse-qualifies explanation", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up does not apply because your spouse qualifies for a monthly survivor's pension.",
+    );
+    expect(out).toContain("$2,500");
+    expect(out.toLowerCase()).toContain("spouse");
+  });
+
+  it("rewrites the already-received explanation without jargon", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up does not apply because you already received CPP/QPP retirement or disability benefits.",
+    );
+    expect(out).not.toContain("CPP/QPP");
+    expect(out).toContain("$2,500");
+  });
+
+  it("rewrites the may-apply explanation and defers to the planner", () => {
+    const out = translateDeathBenefitTopUp(
+      "The extra $2,500 top-up may apply if you never received CPP/QPP retirement or disability benefits — this estimate shows the $2,500 basic amount until that is confirmed.",
+    );
+    expect(out.toLowerCase()).toContain("planner");
+    expect(out).not.toContain("CPP/QPP");
+  });
+
+  it("falls back to the original text for unknown explanations", () => {
+    expect(translateDeathBenefitTopUp("A brand new explanation")).toBe(
+      "A brand new explanation",
     );
   });
 });
