@@ -118,7 +118,7 @@
   --chart-4: 28 90% 68%;  /* peach */
   --chart-5: 335 78% 72%; /* pink */
 
-  --app-font-sans: 'Inter', sans-serif;
+  --app-font-sans: 'Roboto', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: 0.75rem; /* softer, modern rounded corners */
@@ -312,7 +312,7 @@
 
     @top-left {
       content: "Modern Cents CPP Calculator — Methodology";
-      font-family: 'Inter', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 9pt;
       font-weight: 500;
       /* Inline color (rather than var()) — @page margin boxes have spotty
@@ -324,7 +324,7 @@
 
     @bottom-right {
       content: var(--print-date) "Page " counter(page) " of " counter(pages);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 9pt;
       color: #555;
       padding-top: 0.18in;
@@ -345,7 +345,7 @@
   @page scenarioReport {
     @top-left {
       content: "Modern Cents · CPP Retirement Estimate";
-      font-family: 'Inter', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 9pt;
       font-weight: 500;
       color: #5a4dd0;
@@ -539,7 +539,7 @@
 
   .print-scenario {
     background: #ffffff !important;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 10.5pt;
     line-height: 1.45;
   }
@@ -589,7 +589,7 @@
     font-size: 9pt;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', sans-serif;
     /* Brand color on the brand line. Higher specificity than the broad
        `.print-scenario *` color reset above, so this wins. */
     color: var(--print-primary) !important;
@@ -626,7 +626,7 @@
   }
 
   .print-scenario .print-scenario-planner-note-label {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 8.5pt;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -741,7 +741,7 @@
   .print-scenario .print-scenario-table tbody th {
     width: 45%;
     font-weight: 600;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 9.5pt;
   }
 

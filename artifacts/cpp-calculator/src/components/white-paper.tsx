@@ -163,7 +163,7 @@ function useCrossBrowserPrintMargins(): void {
           top: `${p * PAGE_CONTENT_PX - 18}px`,
           paddingRight: "0.6in",
           textAlign: "right",
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "Roboto, sans-serif",
           fontSize: "9pt",
           color: "#555",
           background: "#fff",
@@ -184,7 +184,7 @@ function useCrossBrowserPrintMargins(): void {
             top: `${(p - 1) * PAGE_CONTENT_PX}px`,
             paddingLeft: "0.6in",
             textAlign: "left",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "Roboto, sans-serif",
             fontSize: "9pt",
             fontWeight: "500",
             // Brand-tinted running header to match Chrome's @page @top-left

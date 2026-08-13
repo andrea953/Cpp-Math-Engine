@@ -140,14 +140,14 @@ export function PrintScenario({
         </p>
       ) : (
         <>
+          <HowCppWorksSection />
+
           <HeadlineSummary
             optimal={optimal}
             earliest={earliest}
             latest={latest}
             toToday={toToday}
           />
-
-          <HowCppWorksSection />
 
           <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} toToday={toToday} />
 
