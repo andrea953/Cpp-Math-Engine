@@ -118,7 +118,7 @@ export default function SharedScenarioPage({ params }: SharedPageProps) {
                   </p>
                 )}
               </div>
-              <ResultsPanel inputs={debounced} scenarioTitle={data.title} />
+              <ResultsPanel inputs={debounced} scenarioTitle={data.title} clientView />
               <ApplicationChecklist inputs={debounced} />
               <p className="mt-8 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
                 Estimates only. Modern Cents CPP Calculator calculations are based on publicly

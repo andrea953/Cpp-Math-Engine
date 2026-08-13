@@ -38,6 +38,20 @@ import {
   type PostRetirementBenefit,
 } from "@/cpp";
 import { Briefcase, HeartHandshake, Users, Wallet, Info } from "lucide-react";
+import {
+  translateSurvivorNote,
+  translateWarning,
+} from "./print-plain-language";
+import {
+  comparisonChartData,
+  comparisonChartSeries,
+  prbHeadlineLabel,
+  prbSubtext,
+  resultsPanelSections,
+  survivorCardTitle,
+  survivorTileLabels,
+  warningsHeading,
+} from "./client-view-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +66,13 @@ import {
 interface ResultsPanelProps {
   inputs: ScenarioInputs;
   scenarioTitle: string;
+  /**
+   * When true, engine notes/warnings are run through the plain-language
+   * translation layer and family/PRB labels use the same friendly wording as
+   * the printed client report. Advisor-facing views leave this off to keep
+   * the technical text.
+   */
+  clientView?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,8 +117,9 @@ function useDisplay(): DisplayCtxValue {
   return useContext(DisplayCtx);
 }
 
-export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
+export function ResultsPanel({ inputs, scenarioTitle, clientView = false }: ResultsPanelProps) {
   const result = useMemo(() => calculateCpp(inputs), [inputs]);
+  const sections = resultsPanelSections(clientView);
 
   const todayYear = useMemo(() => new Date().getFullYear(), []);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(() => {
@@ -189,10 +211,10 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <div className="font-medium">Calculation warnings</div>
+            <div className="font-medium">{warningsHeading(clientView)}</div>
             <ul className="mt-1 list-inside list-disc text-xs">
               {result.warnings.map((w, i) => (
-                <li key={i}>{w}</li>
+                <li key={i}>{clientView ? translateWarning(w) : w}</li>
               ))}
             </ul>
           </div>
@@ -241,16 +263,20 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
               Future $
             </button>
           </div>
-          <Button variant="outline" size="sm" onClick={exportSummary}>
-            <Download className="mr-2 h-4 w-4" /> Summary CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportEarnings}>
-            <Download className="mr-2 h-4 w-4" /> Earnings CSV
-          </Button>
+          {sections.showCsvExports ? (
+            <>
+              <Button variant="outline" size="sm" onClick={exportSummary}>
+                <Download className="mr-2 h-4 w-4" /> Summary CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportEarnings}>
+                <Download className="mr-2 h-4 w-4" /> Earnings CSV
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
-      <ContributionCard inputs={inputs} />
+      {sections.showContributionCard ? <ContributionCard inputs={inputs} /> : null}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {sortedAges.map((r) => (
@@ -259,36 +285,45 @@ export function ResultsPanel({ inputs, scenarioTitle }: ResultsPanelProps) {
             result={r}
             isOptimal={optimal?.startAge === r.startAge}
             prb={inputs.postRetirementBenefit}
+            clientView={clientView}
           />
         ))}
       </div>
 
       <Tabs defaultValue="comparison" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-auto gap-1 p-1">
+        <TabsList
+          className={`grid w-full ${sections.showEarningsTab ? "grid-cols-3" : "grid-cols-2"} h-auto gap-1 p-1`}
+        >
           <TabsTrigger value="comparison" className="text-xs sm:text-sm py-1.5">
             <span className="hidden sm:inline">Monthly comparison</span>
             <span className="sm:hidden">Monthly</span>
           </TabsTrigger>
           <TabsTrigger value="breakeven" className="text-xs sm:text-sm py-1.5">Breakeven</TabsTrigger>
-          <TabsTrigger value="earnings" className="text-xs sm:text-sm py-1.5">
-            <span className="hidden sm:inline">Earnings vs YMPE</span>
-            <span className="sm:hidden">Earnings</span>
-          </TabsTrigger>
+          {sections.showEarningsTab ? (
+            <TabsTrigger value="earnings" className="text-xs sm:text-sm py-1.5">
+              <span className="hidden sm:inline">Earnings vs YMPE</span>
+              <span className="sm:hidden">Earnings</span>
+            </TabsTrigger>
+          ) : null}
         </TabsList>
         <TabsContent value="comparison" className="mt-3">
-          <ComparisonChart sortedAges={sortedAges} />
+          <ComparisonChart sortedAges={sortedAges} clientView={clientView} />
         </TabsContent>
         <TabsContent value="breakeven" className="mt-3">
           <BreakevenChart sortedAges={sortedAges} />
         </TabsContent>
-        <TabsContent value="earnings" className="mt-3">
-          <EarningsChart inputs={inputs} effectiveEarnings={result.effectiveEarnings} />
-        </TabsContent>
+        {sections.showEarningsTab ? (
+          <TabsContent value="earnings" className="mt-3">
+            <EarningsChart inputs={inputs} effectiveEarnings={result.effectiveEarnings} />
+          </TabsContent>
+        ) : null}
       </Tabs>
 
-      <DiagnosticsPanel sortedAges={sortedAges} />
+      {sections.showDiagnostics ? <DiagnosticsPanel sortedAges={sortedAges} /> : null}
 
-      {inputs.survivor?.enabled ? <SurvivorCard inputs={inputs} /> : null}
+      {inputs.survivor?.enabled ? (
+        <SurvivorCard inputs={inputs} clientView={clientView} />
+      ) : null}
     </div>
     </DisplayCtx.Provider>
   );
@@ -423,7 +458,13 @@ function ContributionTile({
 // Survivor benefit card
 // ---------------------------------------------------------------------------
 
-function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
+function SurvivorCard({
+  inputs,
+  clientView = false,
+}: {
+  inputs: ScenarioInputs;
+  clientView?: boolean;
+}) {
   const { deflate } = useDisplay();
   const survivor: SurvivorResult | null = useMemo(() => {
     if (!inputs.survivor?.enabled) return null;
@@ -446,20 +487,22 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <HeartHandshake className="h-5 w-5 text-[hsl(var(--chart-3))]" />
-          <CardTitle className="text-base">Survivor benefits ({survivor.startYear})</CardTitle>
+          <CardTitle className="text-base">
+            {survivorCardTitle(clientView, survivor.startYear)}
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <SurvivorTile
             icon={<HeartHandshake className="h-4 w-4" />}
-            label="Survivor's pension"
+            label={survivorTileLabels(clientView).pension}
             primary={formatMoney(d(survivor.survivorMonthlyTotal), true)}
             secondary={`per month · ${formatMoney(d(survivor.survivorAnnualTotal))} per year`}
           />
           <SurvivorTile
             icon={<Wallet className="h-4 w-4" />}
-            label="Death benefit"
+            label={survivorTileLabels(clientView).deathBenefit}
             primary={formatMoney(survivor.deathBenefit, true)}
             secondary={
               survivor.deathBenefitTopUp > 0
@@ -469,7 +512,7 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           />
           <SurvivorTile
             icon={<Users className="h-4 w-4" />}
-            label="Children's benefit"
+            label={survivorTileLabels(clientView).children}
             primary={formatMoney(d(survivor.childrensBenefitMonthlyTotal), true)}
             secondary={
               survivor.childrensBenefitMonthlyTotal > 0
@@ -488,6 +531,9 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
           </p>
         ) : null}
 
+        {/* The step-by-step calculation grid is actuary-speak; the printed
+            client report omits it, so the client view does too. */}
+        {clientView ? null : (
         <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-xs">
           <div className="font-semibold uppercase tracking-wide text-muted-foreground">Breakdown (monthly)</div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 tabular-nums">
@@ -533,6 +579,19 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
             ) : null}
           </div>
         </div>
+        )}
+
+        {clientView && survivor.combinedMonthlyTotal !== survivor.survivorMonthlyTotal ? (
+          <div className="rounded-md border bg-muted/30 p-3 text-xs">
+            <span className="text-muted-foreground">
+              Your spouse's total from CPP each month (their own pension plus
+              the amounts above):{" "}
+            </span>
+            <span className="font-semibold tabular-nums">
+              {formatMoney(d(survivor.combinedMonthlyTotal), true)}
+            </span>
+          </div>
+        ) : null}
 
         {survivor.notes.length > 0 ? (
           <div className="space-y-1.5">
@@ -542,7 +601,7 @@ function SurvivorCard({ inputs }: { inputs: ScenarioInputs }) {
                 className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-2.5 text-xs text-blue-900"
               >
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>{n}</span>
+                <span>{clientView ? translateSurvivorNote(n) : n}</span>
               </div>
             ))}
           </div>
@@ -602,10 +661,12 @@ function StartAgeCard({
   result,
   isOptimal,
   prb,
+  clientView = false,
 }: {
   result: StartAgeResult;
   isOptimal: boolean;
   prb?: PostRetirementBenefit;
+  clientView?: boolean;
 }) {
   const { deflate, indexingRate } = useDisplay();
   // All headline $ amounts are start-year nominal from the engine. Deflating
@@ -685,14 +746,14 @@ function StartAgeCard({
             <div className="flex items-baseline justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Briefcase className="h-3 w-3 shrink-0" />
-                Incl. PRB at age {prbStopAge}
+                {prbHeadlineLabel(clientView, prbStopAge)}
               </span>
               <span className="font-mono text-sm font-semibold tabular-nums">
                 {formatMoney(prbInclMonthly, true)}/mo
               </span>
             </div>
             <div className="mt-0.5 text-[10px] text-muted-foreground">
-              +{formatMoney(prbDeltaMonthly, true)}/mo from working to age {prbStopAge} after starting
+              {prbSubtext(clientView, formatMoney(prbDeltaMonthly, true), prbStopAge)}
             </div>
           </div>
         )}
@@ -739,6 +800,7 @@ function StartAgeCard({
                 <div className="text-[10px] text-muted-foreground">
                   Max at age {result.startAge} in {result.startYear}: {formatMoney(maxMonthlyAtStart, true)}/mo
                 </div>
+                {clientView ? null : (
                 <Collapsible open={breakdownOpen} onOpenChange={setBreakdownOpen}>
                   <CollapsibleTrigger
                     className="mt-1 flex w-full items-center justify-between gap-1 rounded text-[10px] text-muted-foreground hover:text-foreground"
@@ -774,6 +836,7 @@ function StartAgeCard({
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
+                )}
               </div>
               <div className="space-y-1">
                 <div className="flex items-baseline justify-between gap-2 text-xs">
@@ -798,6 +861,8 @@ function StartAgeCard({
           );
         })()}
 
+        {/* Base/Tier 1/Tier 2 jargon — advisor-only, like the print report. */}
+        {clientView ? null : (
         <div className="space-y-1.5">
           <div className="flex h-2 overflow-hidden rounded-full bg-muted">
             <div className="bg-[hsl(var(--chart-1))]" style={{ width: `${baseShare * 100}%` }} />
@@ -810,6 +875,7 @@ function StartAgeCard({
             <Legend2 color="chart-4" label="Tier 2" amount={tier2Monthly} />
           </div>
         </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -856,17 +922,27 @@ function Legend2({ color, label, amount }: { color: string; label: string; amoun
 // Charts
 // ---------------------------------------------------------------------------
 
-function ComparisonChart({ sortedAges }: { sortedAges: StartAgeResult[] }) {
+function ComparisonChart({
+  sortedAges,
+  clientView = false,
+}: {
+  sortedAges: StartAgeResult[];
+  clientView?: boolean;
+}) {
   const { deflate, mode, todayYear } = useDisplay();
+  const series = comparisonChartSeries(clientView);
   const data = useMemo(
     () =>
-      sortedAges.map((r) => ({
-        age: `Age ${r.startAge}`,
-        Base: Math.round(deflate(r.baseMonthly, r.startYear)),
-        "Tier 1": Math.round(deflate(r.tier1Monthly, r.startYear)),
-        "Tier 2": Math.round(deflate(r.tier2Monthly, r.startYear)),
-      })),
-    [sortedAges, deflate],
+      comparisonChartData(
+        clientView,
+        sortedAges.map((r) => ({
+          startAge: r.startAge,
+          base: deflate(r.baseMonthly, r.startYear),
+          tier1: deflate(r.tier1Monthly, r.startYear),
+          tier2: deflate(r.tier2Monthly, r.startYear),
+        })),
+      ),
+    [sortedAges, deflate, clientView],
   );
   const unitLabel = mode === "today" ? `today's $ (${todayYear})` : "start-year nominal $";
   return (
@@ -880,9 +956,14 @@ function ComparisonChart({ sortedAges }: { sortedAges: StartAgeResult[] }) {
             <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} tick={{ fontSize: 12 }} />
             <ChartTooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
             <Legend />
-            <Bar dataKey="Base" stackId="a" fill="hsl(var(--chart-1))" />
-            <Bar dataKey="Tier 1" stackId="a" fill="hsl(var(--chart-2))" />
-            <Bar dataKey="Tier 2" stackId="a" fill="hsl(var(--chart-4))" />
+            {series.map((name, i) => (
+              <Bar
+                key={name}
+                dataKey={name}
+                stackId="a"
+                fill={`hsl(var(--chart-${[1, 2, 4][i % 3]}))`}
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
