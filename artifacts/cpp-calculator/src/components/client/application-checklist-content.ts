@@ -32,7 +32,7 @@ export const CRDO_BLOCK: ChecklistBlock = {
 export const DISABILITY_BLOCK: ChecklistBlock = {
   heading: "Period of disability",
   intro:
-    "This estimate accounts for the months you received a CPP disability benefit: those months are removed from the base calculation and, for the enhanced portion of CPP, credited with an imputed income so they do not drag your pension down.",
+    "This estimate takes into account the months you received a CPP disability benefit. Those months are handled specially — they are set aside, or credited with typical earnings, so they don't pull your pension down.",
   items: [
     "If you received (or are receiving) a CPP disability benefit, Service Canada already has these periods on file and generally applies the adjustment automatically from your disability record.",
     "When you apply, confirm the disability period(s) shown on your record are correct and complete, and tell Service Canada if any period is missing or wrong.",
@@ -40,7 +40,7 @@ export const DISABILITY_BLOCK: ChecklistBlock = {
 };
 
 export const INTRO =
-  "This estimate assumes one or more special CPP provisions apply to your record. Some of these are not granted automatically, so here is what to take care of when you apply to Service Canada for your pension to match this estimate.";
+  "This estimate assumes one or more special CPP rules apply to you. Some of these are not applied automatically, so here is what to take care of when you apply to Service Canada — this helps make sure your actual pension matches this estimate.";
 
 export const CLOSING =
   "If anything here is unclear, your planner can walk you through it before you submit your application.";

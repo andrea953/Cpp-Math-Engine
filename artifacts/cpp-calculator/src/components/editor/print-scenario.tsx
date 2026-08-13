@@ -24,6 +24,10 @@ import {
   type SurvivorResult,
 } from "@/cpp";
 import { PrintApplicationChecklist } from "@/components/client/application-checklist";
+import {
+  translateSurvivorNote,
+  translateWarning,
+} from "./print-plain-language";
 
 interface PrintScenarioProps {
   inputs: ScenarioInputs;
@@ -159,10 +163,10 @@ export function PrintScenario({
 
           {result.warnings.length > 0 ? (
             <section className="print-scenario-section print-scenario-warnings">
-              <h2>Things to keep in mind</h2>
+              <h2>Good to know</h2>
               <ul>
                 {result.warnings.map((w, i) => (
-                  <li key={i}>{w}</li>
+                  <li key={i}>{translateWarning(w)}</li>
                 ))}
               </ul>
             </section>
@@ -270,12 +274,9 @@ function HeadlineSummary({
         needs — your planner can help you weigh these.
       </p>
       <p className="print-scenario-note">
-        Two figures are shown for each amount: the dollars of the year payments
-        would begin (including expected cost-of-living increases up to that
-        point), and the equivalent in today's dollars so options with different
-        start years can be compared on the same footing. "% of max at this age"
-        compares your estimate with the most someone starting CPP at that same
-        age could receive.
+        "In today's dollars" shows what each future amount would feel like in
+        today's prices, so you can compare options that start in different
+        years fairly.
       </p>
     </section>
   );
@@ -310,8 +311,8 @@ function MonthlyByAgeSection({
             <th>Year payments begin</th>
             <th className="num">Each month</th>
             <th className="num">In today's dollars</th>
-            <th className="num">% of max at this age</th>
             <th className="num">Each year</th>
+            <th className="num">Compared to the most possible*</th>
           </tr>
         </thead>
         <tbody>
@@ -338,6 +339,7 @@ function MonthlyByAgeSection({
                     formatMoney(toToday(r.totalMonthly, r.startYear), true)
                   )}
                 </td>
+                <td className="num">{formatMoney(r.totalAnnual)}</td>
                 <td className="num">
                   {isBest ? (
                     <strong>{formatPercent(r.percentOfMaximum)}</strong>
@@ -345,12 +347,15 @@ function MonthlyByAgeSection({
                     formatPercent(r.percentOfMaximum)
                   )}
                 </td>
-                <td className="num">{formatMoney(r.totalAnnual)}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
+      <p className="print-scenario-note">
+        *This compares your estimate with the most anyone starting CPP at that
+        same age could receive.
+      </p>
 
       <div className="print-scenario-chart">
         <BarChart
@@ -422,19 +427,20 @@ function PrbSection({
 
   return (
     <section className="print-scenario-section">
-      <h2>If you keep working after you start</h2>
+      <h2>If you keep working after payments start</h2>
       <p className="print-scenario-note">
-        If you keep working — and contributing to CPP — after your pension begins,
-        each year of work adds a Post-Retirement Benefit (PRB) on top of your
-        pension. It does not change your starting amount; it builds up year by year
-        while you work and then continues for the rest of your life.
+        If you keep working after your CPP payments begin, your pension grows a
+        little each year. Each extra year of work adds a small permanent
+        top-up (officially called a "post-retirement benefit") — it builds up
+        year by year while you work and then continues for the rest of your
+        life.
       </p>
       <table className="print-scenario-table print-scenario-table-list">
         <thead>
           <tr>
             <th>If you start at…</th>
-            <th className="num">At start</th>
-            <th className="num">Projected with PRB</th>
+            <th className="num">When payments start</th>
+            <th className="num">After the extra work</th>
             <th className="num">Extra each month</th>
           </tr>
         </thead>
@@ -456,9 +462,9 @@ function PrbSection({
         </tbody>
       </table>
       <p className="print-scenario-note">
-        The "projected with PRB" amount assumes you keep working and contributing
-        until the age shown, at the post-start earnings your planner entered. If you
-        stop sooner, your PRB will be smaller; if you work longer, it will be larger.
+        The "after the extra work" amount assumes you keep working until the age
+        shown, at the earnings your planner entered. If you stop sooner, the
+        top-up will be smaller; if you work longer, it will be larger.
       </p>
     </section>
   );
@@ -558,14 +564,14 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
       <table className="print-scenario-table">
         <tbody>
           <tr>
-            <th>Monthly survivor's pension</th>
+            <th>Monthly income for your spouse</th>
             <td>
               {formatMoney(survivor.survivorMonthlyTotal, true)} (
               {formatMoney(survivor.survivorAnnualTotal)}/year)
             </td>
           </tr>
           <tr>
-            <th>One-time death benefit</th>
+            <th>One-time payment to help with final costs</th>
             <td>
               {formatMoney(survivor.deathBenefit, true)}
               {survivor.deathBenefitTopUp > 0
@@ -574,11 +580,11 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
             </td>
           </tr>
           <tr>
-            <th>Monthly children's benefit</th>
+            <th>Monthly income for your children</th>
             <td>{formatMoney(survivor.childrensBenefitMonthlyTotal, true)}</td>
           </tr>
           <tr>
-            <th>Survivor's combined monthly total</th>
+            <th>Your spouse's total from CPP each month (their own pension plus the amounts above)</th>
             <td>{formatMoney(survivor.combinedMonthlyTotal, true)}</td>
           </tr>
         </tbody>
@@ -589,11 +595,14 @@ function FamilySection({ survivor }: { survivor: SurvivorResult }) {
         </p>
       ) : null}
       {survivor.notes.length > 0 ? (
-        <ul className="print-scenario-list">
-          {survivor.notes.map((n, i) => (
-            <li key={i}>{n}</li>
-          ))}
-        </ul>
+        <div className="print-scenario-subblock">
+          <h3>Good to know</h3>
+          <ul className="print-scenario-list">
+            {survivor.notes.map((n, i) => (
+              <li key={i}>{translateSurvivorNote(n)}</li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </section>
   );
