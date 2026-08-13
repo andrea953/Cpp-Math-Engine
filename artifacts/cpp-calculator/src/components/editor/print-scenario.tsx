@@ -146,6 +146,8 @@ export function PrintScenario({
             toToday={toToday}
           />
 
+          <HowCppWorksSection />
+
           <MonthlyByAgeSection sortedAges={sortedAges} optimal={optimal} toToday={toToday} />
 
           <PrbSection
@@ -278,6 +280,37 @@ function HeadlineSummary({
         today's prices, so you can compare options that start in different
         years fairly.
       </p>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// How CPP works — short plain-language explainer for clients
+// ---------------------------------------------------------------------------
+
+function HowCppWorksSection() {
+  return (
+    <section className="print-scenario-section">
+      <h2>How CPP works</h2>
+      <ul className="print-scenario-list">
+        <li>
+          The Canada Pension Plan (CPP) is a monthly pension you earned by
+          contributing from your paycheques during your working years.
+        </li>
+        <li>
+          The amount you receive is based on how much you earned and how many
+          years you contributed.
+        </li>
+        <li>
+          You choose when payments start — any age from 60 to 70. Starting
+          before 65 means a smaller monthly payment; waiting past 65 means a
+          larger one.
+        </li>
+        <li>
+          Once payments begin, they rise with the cost of living each year and
+          continue for the rest of your life.
+        </li>
+      </ul>
     </section>
   );
 }
