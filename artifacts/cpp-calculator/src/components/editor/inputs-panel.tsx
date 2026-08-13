@@ -43,6 +43,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  deceasedReceivedToSelectValue,
+  selectValueToDeceasedReceived,
+} from "./survivor-select-content";
 import { Badge } from "@/components/ui/badge";
 
 interface InputsPanelProps {
@@ -1275,17 +1279,10 @@ function SurvivorForm({ inputs, onChange }: InputsPanelProps) {
                 January 1, 2025) when no spouse is eligible for a survivor&rsquo;s pension.
               </p>
               <Select
-                value={
-                  survivor.deceasedReceivedCppBenefits === undefined
-                    ? "unknown"
-                    : survivor.deceasedReceivedCppBenefits
-                      ? "yes"
-                      : "no"
-                }
+                value={deceasedReceivedToSelectValue(survivor.deceasedReceivedCppBenefits)}
                 onValueChange={(v) =>
                   set({
-                    deceasedReceivedCppBenefits:
-                      v === "unknown" ? undefined : v === "yes",
+                    deceasedReceivedCppBenefits: selectValueToDeceasedReceived(v),
                   })
                 }
               >
