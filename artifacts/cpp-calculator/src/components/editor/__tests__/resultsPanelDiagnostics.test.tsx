@@ -29,7 +29,7 @@ function makeInputs(): ScenarioInputs {
 
 function renderDiagnostics(inputs: ScenarioInputs): string {
   const result = calculateCpp(inputs);
-  return renderToStaticMarkup(<DiagnosticsPanel sortedAges={[result.byStartAge[0]]} />);
+  return renderToStaticMarkup(<DiagnosticsPanel sortedAges={result.byStartAge} />);
 }
 
 function baseSection(markup: string): string {
@@ -107,5 +107,19 @@ describe("advisor diagnostics", () => {
 
     expect(base).toContain("Disability months dropped");
     expect(disabilityRow).toContain(">6</span>");
+  });
+
+  it("renders diagnostics and Base CPP details for every selected start age", () => {
+    const inputs: ScenarioInputs = {
+      ...makeInputs(),
+      startAges: [60, 65],
+    };
+
+    const markup = renderDiagnostics(inputs);
+
+    expect(markup.match(/<div data-state="closed" data-orientation="vertical"/g)).toHaveLength(2);
+    expect(markup).toContain("Age 60");
+    expect(markup).toContain("Age 65");
+    expect(markup.match(/Base CPP/g)).toHaveLength(2);
   });
 });
