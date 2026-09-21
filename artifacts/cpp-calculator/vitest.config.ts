@@ -1,9 +1,15 @@
 import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "src"),
+    },
+  },
   test: {
     environment: "node",
-    include: ["src/**/__tests__/**/*.test.ts"],
+    include: ["src/**/__tests__/**/*.test.{ts,tsx}"],
     // The cross-browser print e2e test boots its own Vite dev server
     // and a real Chromium via puppeteer-core; it is opted in via
     // `pnpm test:e2e` (see `vitest.e2e.config.ts`) so the default

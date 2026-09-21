@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, createContext, useContext } from "react";
+import React, { useState, useMemo, useEffect, createContext, useContext } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Bar,
@@ -1142,7 +1142,7 @@ function EarningsChart({
 // Diagnostics drawer
 // ---------------------------------------------------------------------------
 
-function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
+export function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
   const { deflate } = useDisplay();
   return (
     <Card>
@@ -1156,7 +1156,7 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
               <AccordionTrigger className="text-sm">
                 Age {r.startAge} · {formatMoney(deflate(r.totalMonthly, r.startYear), true)}/mo · adj {formatPercent(r.adjustmentFactor - 1, true)}
               </AccordionTrigger>
-              <AccordionContent>
+              <AccordionContent forceMount>
                 <div className="grid grid-cols-1 gap-4 text-xs md:grid-cols-2">
                   <div>
                     <div className="mb-2 font-semibold uppercase tracking-wide text-muted-foreground">Base CPP</div>

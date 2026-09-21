@@ -1,12 +1,12 @@
 ---
-name: cpp-calculator vitest alias limitation
-description: Why unit tests can't import React component modules that use @/ value imports, and the workaround.
+name: cpp-calculator vitest component setup
+description: Vitest component tests need the app alias and classic JSX runtime made explicit.
 ---
 
-In `artifacts/cpp-calculator`, the vitest config (`vitest.config.ts`, env `node`) does NOT resolve the `@/` path alias for **runtime/value** imports. Type-only imports (`import type { X } from "@/cpp"`) are fine because esbuild erases them before resolution.
+In `artifacts/cpp-calculator`, Vitest runs in the `node` environment and needs its own `@/` resolver for runtime/value imports; the app's Vite alias is not inherited automatically. Component modules rendered through `react-dom/server` also need React in scope because this test path uses the classic JSX runtime.
 
-**Symptom:** a `.test.ts` that imports a component module fails at collection with `Cannot find package '@/components/ui/card'` (a value import of a UI component), and the run reports "no tests".
+**Symptom:** importing a component from a test fails at collection with `Cannot find package '@/components/ui/card'`, or server-rendering JSX fails with `React is not defined`.
 
-**Why:** tests here use relative imports by convention; the alias is only wired in the Vite app build / tsconfig, not in vitest's resolver.
+**Why:** Vitest and the Vite app have separate config loading paths, and the TypeScript JSX setting is preserved for the app's Vite transform rather than selecting the automatic runtime for server-rendered tests.
 
-**How to apply:** to unit-test logic that lives next to React UI, extract the pure logic + copy into a React-free sibling module (e.g. `*-content.ts`) that has only type-only `@/` imports, keep the presentational component in the `.tsx`, and point the test at the content module. Don't try to import the `.tsx` from a test.
+**How to apply:** keep the alias in `vitest.config.ts`, import React explicitly in TSX modules exercised by SSR tests, and use `renderToStaticMarkup` for focused component output checks when a DOM runner is unnecessary.
