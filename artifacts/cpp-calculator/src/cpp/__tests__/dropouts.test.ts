@@ -194,6 +194,27 @@ describe("Disability drop-out", () => {
     expect(result.base.crdoMonthsDropped).toBe(12);
     expect(result.base.disabilityMonthsDropped).toBe(6);
   });
+
+  it("keeps non-overlapping disability months out of the CRDO year breakdown", () => {
+    const result = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 3 },
+            { kind: "disability", startYear: 1995, startMonth: 1, endYear: 1995, endMonth: 6 },
+          ],
+        },
+        [1990, 1991, 1995],
+      ),
+    ).byStartAge[0];
+
+    expect(result.base.crdoMonthsDroppedByYear).toEqual([
+      { year: 1990, months: 12 },
+      { year: 1991, months: 3 },
+    ]);
+    expect(result.base.crdoMonthsDroppedByYear.map((entry) => entry.year)).not.toContain(1995);
+    expect(result.base.disabilityMonthsDropped).toBe(6);
+  });
 });
 
 describe("Child-rearing drop-in (Enhanced CPP)", () => {

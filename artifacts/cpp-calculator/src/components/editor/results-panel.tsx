@@ -1164,7 +1164,7 @@ export function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] 
                     <DiagRow label="CRDO months dropped" value={r.base.crdoMonthsDropped} />
                     <div className="mt-2">
                       <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
-                        CRDO months set aside by year
+                        CRDO months set aside by year (CRDO only)
                       </div>
                       {r.base.crdoMonthsDroppedByYear.length > 0 ? (
                         r.base.crdoMonthsDroppedByYear.map((d) => (

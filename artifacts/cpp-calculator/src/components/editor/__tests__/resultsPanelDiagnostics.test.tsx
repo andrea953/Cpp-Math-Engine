@@ -75,4 +75,37 @@ describe("advisor diagnostics", () => {
     expect(base).toContain("No CRDO months were set aside for this start age.");
     expect(markup).not.toContain("Drop-in (imputed) earnings by year");
   });
+
+  it("keeps disability totals separate from CRDO year rows in a mixed scenario", () => {
+    const inputs = makeInputs();
+    const withMixedPeriods: ScenarioInputs = {
+      ...inputs,
+      dropoutPeriods: [
+        { kind: "crdo", startYear: 1990, startMonth: 1, endYear: 1991, endMonth: 3 },
+        { kind: "disability", startYear: 1995, startMonth: 1, endYear: 1995, endMonth: 6 },
+      ],
+      earningsHistory: inputs.earningsHistory.map((record) =>
+        record.year === 1990 || record.year === 1991 || record.year === 1995
+          ? { ...record, pensionableEarnings: 0 }
+          : record,
+      ),
+    };
+
+    const markup = renderDiagnostics(withMixedPeriods);
+    const base = baseSection(markup);
+    const crdoBreakdownStart = base.indexOf("CRDO months set aside by year (CRDO only)");
+    const disabilityRowStart = base.indexOf("Disability months dropped");
+    const crdoBreakdown = base.slice(crdoBreakdownStart, disabilityRowStart);
+    const disabilityRow = base.slice(disabilityRowStart, disabilityRowStart + 180);
+
+    expect(crdoBreakdown).toContain("CRDO months set aside by year (CRDO only)");
+    expect(crdoBreakdown).toContain("1990");
+    expect(crdoBreakdown).toContain("12 months");
+    expect(crdoBreakdown).toContain("1991");
+    expect(crdoBreakdown).toContain("3 months");
+    expect(crdoBreakdown).not.toContain("1995");
+
+    expect(base).toContain("Disability months dropped");
+    expect(disabilityRow).toContain(">6</span>");
+  });
 });
