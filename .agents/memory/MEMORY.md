@@ -4,3 +4,4 @@
 - [cpp-calculator vitest aliases](cpp-calculator-vitest-aliases.md) — tests can't value-import @/ component modules; extract pure logic to a React-free *-content.ts and test that.
 - [Drop-in candidates vs applied](dropin-candidates-vs-applied.md) — dropInAmountsByYear lists candidate imputed amounts; client-facing credit claims must use applied-credit diagnostics only.
 - [CPP child-rearing](cpp-child-rearing.md) — one CRDO entry drives base beneficial drop-out AND enhanced drop-in (s.53.3(1)/53.4(1)); Tier 2 needs above-YMPE earnings to test.
+- [pnpm workspace audit fixes](pnpm-workspace-audit-fixes.md) — nested pnpm audit fixes target the shared workspace configuration; regenerate and verify the root lockfile once.

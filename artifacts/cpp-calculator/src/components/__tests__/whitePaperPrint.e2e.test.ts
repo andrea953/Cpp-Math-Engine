@@ -120,7 +120,7 @@ async function countPdfPages(pdfBytes: Uint8Array): Promise<number> {
   });
   const doc = await loadingTask.promise;
   const n = doc.numPages;
-  await doc.destroy();
+  await doc.destroy?.();
   return n;
 }
 
