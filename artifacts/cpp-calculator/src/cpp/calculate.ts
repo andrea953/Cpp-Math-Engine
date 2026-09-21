@@ -285,6 +285,7 @@ function calculateBase(
   // post-65 drop-out below: sort eligible months ascending and drop while the
   // lowest is strictly below the running mean.
   let crdoMonthsDropped = 0;
+  let crdoMonthsDroppedByYear: { year: number; months: number }[] = [];
   let indexedPoints = indexedAll;
   if (indexedAll.some((p) => p.inCrdo)) {
     const crdoSorted = indexedAll
@@ -303,6 +304,17 @@ function calculateBase(
       runningCount -= 1;
     }
     crdoMonthsDropped = droppedIdx.size;
+    if (crdoMonthsDropped > 0) {
+      const droppedByYear = new Map<number, number>();
+      for (const idx of droppedIdx) {
+        const year = indexedAll[idx].year;
+        droppedByYear.set(year, (droppedByYear.get(year) ?? 0) + 1);
+      }
+      crdoMonthsDroppedByYear = Array.from(droppedByYear, ([year, months]) => ({
+        year,
+        months,
+      })).sort((a, b) => a.year - b.year);
+    }
     if (crdoMonthsDropped > 0) {
       indexedPoints = indexedAll.filter((_, idx) => !droppedIdx.has(idx));
     }
@@ -377,6 +389,7 @@ function calculateBase(
   const diag: BaseCalcDiagnostics = {
     contributoryPeriodMonths: points.length,
     crdoMonthsDropped,
+    crdoMonthsDroppedByYear,
     disabilityMonthsDropped,
     post65DropoutMonths,
     generalDropoutMonths,

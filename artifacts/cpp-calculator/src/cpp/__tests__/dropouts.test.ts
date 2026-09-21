@@ -87,6 +87,14 @@ describe("CRDO (Child Rearing Drop-Out) — beneficial-only", () => {
     ).byStartAge[0];
 
     expect(withCrdo.base.crdoMonthsDropped).toBe(36);
+    expect(withCrdo.base.crdoMonthsDroppedByYear).toEqual([
+      { year: 1990, months: 12 },
+      { year: 1991, months: 12 },
+      { year: 1992, months: 12 },
+    ]);
+    expect(
+      withCrdo.base.crdoMonthsDroppedByYear.reduce((sum, entry) => sum + entry.months, 0),
+    ).toBe(withCrdo.base.crdoMonthsDropped);
     // The CRDO claim raises the base benefit (removing the zero months).
     expect(withCrdo.baseMonthly).toBeGreaterThan(baseline.baseMonthly);
 
@@ -121,7 +129,28 @@ describe("CRDO (Child Rearing Drop-Out) — beneficial-only", () => {
     ).byStartAge[0];
 
     expect(withCrdo.base.crdoMonthsDropped).toBe(0);
+    expect(withCrdo.base.crdoMonthsDroppedByYear).toEqual([]);
     expect(withCrdo.baseMonthly).toBeCloseTo(baseline.baseMonthly, 6);
+  });
+
+  it("reports partial CRDO years with the exact number of months dropped", () => {
+    const gapYears = Array.from({ length: 20 }, (_, i) => 1990 + i);
+    const result = calculateCpp(
+      zeroOut(
+        {
+          dropoutPeriods: [
+            { kind: "crdo", startYear: 1990, startMonth: 3, endYear: 1991, endMonth: 8 },
+          ],
+        },
+        gapYears,
+      ),
+    ).byStartAge[0];
+
+    expect(result.base.crdoMonthsDropped).toBe(18);
+    expect(result.base.crdoMonthsDroppedByYear).toEqual([
+      { year: 1990, months: 10 },
+      { year: 1991, months: 8 },
+    ]);
   });
 });
 
@@ -143,6 +172,10 @@ describe("Disability drop-out", () => {
     // CRDO claims the months; disabilityMonthsDropped should only count
     // months that are NOT also in CRDO (i.e. zero here).
     expect(result.base.crdoMonthsDropped).toBe(24);
+    expect(result.base.crdoMonthsDroppedByYear).toEqual([
+      { year: 1990, months: 12 },
+      { year: 1991, months: 12 },
+    ]);
     expect(result.base.disabilityMonthsDropped).toBe(0);
   });
 

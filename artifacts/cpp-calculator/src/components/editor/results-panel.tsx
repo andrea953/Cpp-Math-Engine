@@ -1162,6 +1162,24 @@ function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] }) {
                     <div className="mb-2 font-semibold uppercase tracking-wide text-muted-foreground">Base CPP</div>
                     <DiagRow label="Contributory months" value={r.base.contributoryPeriodMonths} />
                     <DiagRow label="CRDO months dropped" value={r.base.crdoMonthsDropped} />
+                    <div className="mt-2">
+                      <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
+                        CRDO months set aside by year
+                      </div>
+                      {r.base.crdoMonthsDroppedByYear.length > 0 ? (
+                        r.base.crdoMonthsDroppedByYear.map((d) => (
+                          <DiagRow
+                            key={d.year}
+                            label={String(d.year)}
+                            value={`${d.months} ${d.months === 1 ? "month" : "months"}`}
+                          />
+                        ))
+                      ) : (
+                        <p className="py-1 text-muted-foreground">
+                          No CRDO months were set aside for this start age.
+                        </p>
+                      )}
+                    </div>
                     <DiagRow label="Disability months dropped" value={r.base.disabilityMonthsDropped} />
                     <DiagRow label="General 17% drop-out months" value={r.base.generalDropoutMonths} />
                     <DiagRow label="Post-65 drop-out months" value={r.base.post65DropoutMonths} />

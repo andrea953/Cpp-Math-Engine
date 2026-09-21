@@ -138,10 +138,12 @@ export interface StartAgeResult {
 }
 
 export interface BaseCalcDiagnostics {
-  /** Months in contributory period (after CRDO/disability dropouts but before general 17% dropout) */
+  /** Total months in the contributory period before any drop-out provisions. */
   contributoryPeriodMonths: number;
   /** Months dropped under CRDO (beneficial-only: only below-average months in the window) */
   crdoMonthsDropped: number;
+  /** CRDO months actually dropped, grouped by calendar year and sorted ascending. */
+  crdoMonthsDroppedByYear: { year: number; months: number }[];
   /** Months dropped under disability dropout */
   disabilityMonthsDropped: number;
   /**
