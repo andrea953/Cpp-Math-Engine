@@ -2,7 +2,7 @@ import { useListScenarios, useCreateScenario, useDeleteScenario, useDuplicateSce
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Plus, MoreVertical, Copy, Trash2, Calendar, Users, Calculator, GitCompare } from "lucide-react";
+import { Plus, MoreVertical, Copy, Trash2, Calendar, Users, Calculator, GitCompare, Search, X } from "lucide-react";
 import { buildDefaultInputs } from "@/cpp";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
@@ -10,6 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getListScenariosQueryKey } from "@workspace/api-client-react";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { filterScenarios } from "./dashboard-search";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -20,6 +22,8 @@ export default function Dashboard() {
   const duplicateScenario = useDuplicateScenario();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredScenarios = filterScenarios(scenarios, searchQuery);
 
   const handleCreate = () => {
     createScenario.mutate({
@@ -66,7 +70,7 @@ export default function Dashboard() {
   // several scenarios — different stop-work ages, start ages, etc.
   const groups = (() => {
     const map = new Map<string, typeof scenarios>();
-    for (const s of scenarios) {
+    for (const s of filteredScenarios) {
       const key = s.clientName?.trim() || "";
       const list = map.get(key) ?? [];
       list.push(s);
@@ -114,6 +118,34 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {!isLoading && scenarios.length > 0 && (
+        <div className="relative max-w-xl">
+          <Search
+            aria-hidden="true"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            aria-label="Search clients and scenarios"
+            placeholder="Search by client, scenario, or birth year"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            className="pl-9 pr-10"
+          />
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Clear search"
+              className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-2">
           {[1,2,3].map(i => (
@@ -133,8 +165,28 @@ export default function Dashboard() {
             <Button onClick={handleCreate}>Create Scenario</Button>
           </CardContent>
         </Card>
+      ) : filteredScenarios.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center border-dashed px-6 py-12 text-center">
+          <CardContent className="p-0">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Search className="h-5 w-5" />
+            </div>
+            <h3 className="font-semibold">No matching clients or scenarios</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try another name, scenario title, or birth year.
+            </p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => setSearchQuery("")}>
+              Clear search
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
+          {searchQuery.trim() && (
+            <p className="text-sm text-muted-foreground" aria-live="polite">
+              Showing {filteredScenarios.length} of {scenarios.length} scenarios
+            </p>
+          )}
           {groups.map(({ client, list }) => (
             <div key={client || "__ungrouped__"} className="space-y-1.5">
               <div className="flex items-center justify-between px-1">
