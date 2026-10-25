@@ -1201,8 +1201,11 @@ export function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] 
                     {r.enhancement.dropInAmountsByYear.length > 0 && (
                       <div className="mt-2">
                         <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
-                          Drop-in (imputed) earnings by year
+                          Potential imputed earnings by year
                         </div>
+                        <p className="mb-1 text-muted-foreground">
+                          Candidate amounts only—not necessarily credited. Tier 1 starts in 2019 and Tier 2 in 2024; eligible years use the higher of actual or imputed earnings, never a lower amount.
+                        </p>
                         {r.enhancement.dropInAmountsByYear.map((d) => (
                           <DiagRow
                             key={d.year}
@@ -1212,6 +1215,24 @@ export function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] 
                         ))}
                       </div>
                     )}
+                    <div className="mt-2">
+                      <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
+                        CRDO drop-in credits actually applied
+                      </div>
+                      {r.enhancement.appliedCaregivingDropIns.length > 0 ? (
+                        r.enhancement.appliedCaregivingDropIns.map((d) => (
+                          <DiagRow
+                            key={d.year}
+                            label={String(d.year)}
+                            value={formatMoney(d.amount, true)}
+                          />
+                        ))
+                      ) : (
+                        <p className="py-1 text-muted-foreground">
+                          No child-rearing drop-in credits were applied for this start age.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </AccordionContent>

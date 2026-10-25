@@ -63,9 +63,15 @@ describe("advisor diagnostics", () => {
     expect(base).toContain("3 months");
     expect(base).not.toContain("Drop-in (imputed) earnings by year");
 
-    expect(enhancement).toContain("Drop-in (imputed) earnings by year");
+    expect(enhancement).toContain("Potential imputed earnings by year");
+    expect(enhancement).toContain("Candidate amounts only—not necessarily credited.");
+    expect(enhancement).toContain("Tier 1 starts in 2019 and Tier 2 in 2024");
     expect(enhancement).toContain("1990");
     expect(enhancement).toContain("1991");
+    expect(enhancement).toContain("CRDO drop-in credits actually applied");
+    expect(enhancement).toContain(
+      "No child-rearing drop-in credits were applied for this start age.",
+    );
   });
 
   it("clearly states when no CRDO months were set aside", () => {
@@ -73,7 +79,8 @@ describe("advisor diagnostics", () => {
     const base = baseSection(markup);
 
     expect(base).toContain("No CRDO months were set aside for this start age.");
-    expect(markup).not.toContain("Drop-in (imputed) earnings by year");
+    expect(markup).not.toContain("Potential imputed earnings by year");
+    expect(markup).toContain("No child-rearing drop-in credits were applied for this start age.");
   });
 
   it("keeps disability totals separate from CRDO year rows in a mixed scenario", () => {
@@ -107,6 +114,35 @@ describe("advisor diagnostics", () => {
 
     expect(base).toContain("Disability months dropped");
     expect(disabilityRow).toContain(">6</span>");
+  });
+
+  it("separates potential amounts from child-rearing credits actually applied", () => {
+    const inputs = makeInputs();
+    const crdoYears = new Set([2020, 2021, 2022]);
+    const withCrdo: ScenarioInputs = {
+      ...inputs,
+      dropoutPeriods: [
+        { kind: "crdo", startYear: 2020, startMonth: 1, endYear: 2022, endMonth: 12 },
+      ],
+      earningsHistory: inputs.earningsHistory.map((record) =>
+        crdoYears.has(record.year) ? { ...record, pensionableEarnings: 0 } : record,
+      ),
+    };
+
+    const markup = renderDiagnostics(withCrdo);
+    const potentialStart = markup.indexOf("Potential imputed earnings by year");
+    const appliedStart = markup.indexOf("CRDO drop-in credits actually applied");
+    const potential = markup.slice(potentialStart, appliedStart);
+    const applied = markup.slice(appliedStart);
+
+    expect(potential).toContain("Candidate amounts only—not necessarily credited.");
+    expect(potential).toContain("2020");
+    expect(potential).toContain("2021");
+    expect(potential).toContain("2022");
+    expect(applied).toContain("2020");
+    expect(applied).toContain("2021");
+    expect(applied).toContain("2022");
+    expect(applied).not.toContain("No child-rearing drop-in credits were applied");
   });
 
   it("renders diagnostics and Base CPP details for every selected start age", () => {
