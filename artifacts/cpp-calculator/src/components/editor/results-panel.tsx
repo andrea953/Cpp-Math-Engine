@@ -1233,6 +1233,29 @@ export function DiagnosticsPanel({ sortedAges }: { sortedAges: StartAgeResult[] 
                         </p>
                       )}
                     </div>
+                    <div className="mt-2">
+                      <div className="mb-1 font-semibold uppercase tracking-wide text-muted-foreground">
+                        Disability drop-in credits actually applied
+                      </div>
+                      <p className="mb-1 text-muted-foreground">
+                        70% of average pensionable earnings in the six years before disability onset,
+                        credited only when higher than actual earnings. The enhancement calculation
+                        is annual, so a partial-year period can affect the full calendar year.
+                      </p>
+                      {r.enhancement.appliedDisabilityDropIns.length > 0 ? (
+                        r.enhancement.appliedDisabilityDropIns.map((d) => (
+                          <DiagRow
+                            key={d.year}
+                            label={String(d.year)}
+                            value={formatMoney(d.amount, true)}
+                          />
+                        ))
+                      ) : (
+                        <p className="py-1 text-muted-foreground">
+                          No disability drop-in credits were applied for this start age.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </AccordionContent>

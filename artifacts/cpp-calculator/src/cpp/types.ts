@@ -198,6 +198,11 @@ export interface EnhancementCalcDiagnostics {
    * credited". Sorted ascending by year.
    */
   appliedCaregivingDropIns: { year: number; amount: number }[];
+  /**
+   * Disability drop-in credits that were actually applied to this start-age
+   * result, using the same eligibility rules as the caregiving diagnostics.
+   */
+  appliedDisabilityDropIns: { year: number; amount: number }[];
 }
 
 export interface CalculationResult {

@@ -145,6 +145,29 @@ describe("advisor diagnostics", () => {
     expect(applied).not.toContain("No child-rearing drop-in credits were applied");
   });
 
+  it("shows disability drop-in amounts actually applied separately", () => {
+    const inputs = makeInputs();
+    const disabilityYears = new Set([2022, 2023, 2024, 2025]);
+    const withDisability: ScenarioInputs = {
+      ...inputs,
+      dropoutPeriods: [
+        { kind: "disability", startYear: 2022, startMonth: 1, endYear: 2025, endMonth: 12 },
+      ],
+      earningsHistory: inputs.earningsHistory.map((record) =>
+        disabilityYears.has(record.year) ? { ...record, pensionableEarnings: 0 } : record,
+      ),
+    };
+
+    const markup = renderDiagnostics(withDisability);
+    const appliedStart = markup.indexOf("Disability drop-in credits actually applied");
+    const applied = markup.slice(appliedStart);
+
+    expect(appliedStart).toBeGreaterThanOrEqual(0);
+    expect(applied).toContain("70% of average pensionable earnings in the six years");
+    for (const year of disabilityYears) expect(applied).toContain(String(year));
+    expect(applied).not.toContain("No disability drop-in credits were applied");
+  });
+
   it("renders diagnostics and Base CPP details for every selected start age", () => {
     const inputs: ScenarioInputs = {
       ...makeInputs(),

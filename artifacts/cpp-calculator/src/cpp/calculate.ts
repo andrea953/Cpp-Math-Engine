@@ -553,6 +553,10 @@ function calculateEnhancement(
         .filter((y) => dropInKindByYear.get(y) === "crdo")
         .map((y) => ({ year: y, amount: dropInByYear.get(y) ?? 0 }))
         .sort((a, b) => a.year - b.year),
+      appliedDisabilityDropIns: [...appliedDropInYears]
+        .filter((y) => dropInKindByYear.get(y) === "disability")
+        .map((y) => ({ year: y, amount: dropInByYear.get(y) ?? 0 }))
+        .sort((a, b) => a.year - b.year),
     },
   };
 }

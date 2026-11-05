@@ -449,6 +449,8 @@ describe("Disability drop-in (Enhanced CPP)", () => {
 
     // All three zero-earning disability years get imputed income dropped in.
     expect(withClaim.enhancement.tier1DropInYears).toBe(3);
+    expect(withClaim.enhancement.appliedDisabilityDropIns.map((d) => d.year)).toEqual(gapYears);
+    expect(withClaim.enhancement.appliedDisabilityDropIns.every((d) => d.amount > 0)).toBe(true);
     expect(withClaim.tier1Monthly).toBeGreaterThan(withoutClaim.tier1Monthly);
   });
 
@@ -493,6 +495,7 @@ describe("Disability drop-in (Enhanced CPP)", () => {
     ).byStartAge[0];
 
     expect(withClaim.enhancement.tier2DropInYears).toBe(2);
+    expect(withClaim.enhancement.appliedDisabilityDropIns.map((d) => d.year)).toEqual([2024, 2025]);
     expect(withoutClaim.tier2Monthly).toBe(0);
     expect(withClaim.tier2Monthly).toBeGreaterThan(0);
   });
