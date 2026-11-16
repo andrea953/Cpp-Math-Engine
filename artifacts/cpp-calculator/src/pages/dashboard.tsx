@@ -206,7 +206,8 @@ export default function Dashboard() {
                   variant="outline"
                   size="sm"
                   className="shrink-0"
-                  onClick={() => setLocation(`/scenarios/${latestScenario.id}`)}
+                  onClick={() => setLocation(`/clients/${latestScenario.id}`)}
+                  data-testid={`button-open-client-${rowKey}`}
                 >
                   Open
                 </Button>
@@ -230,7 +231,7 @@ export default function Dashboard() {
                           {scenario.title}
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
-                          <DropdownMenuItem onSelect={() => setLocation(`/scenarios/${scenario.id}`)}>
+                          <DropdownMenuItem onSelect={() => setLocation(`/clients/${scenario.id}`)}>
                             Open scenario
                           </DropdownMenuItem>
                           <DropdownMenuCheckboxItem

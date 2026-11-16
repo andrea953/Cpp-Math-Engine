@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useActiveAnchor } from "@/lib/client-session";
 import { useSearch, Link } from "wouter";
 import { useQueries } from "@tanstack/react-query";
 import {
@@ -32,6 +33,9 @@ import { Badge } from "@/components/ui/badge";
 
 export default function Compare() {
   const search = useSearch();
+  const anchor = useActiveAnchor();
+  const backHref = anchor ? `/clients/${anchor}` : "/scenarios";
+  const backLabel = anchor ? "Back to client" : "Back to scenarios";
   const ids = useMemo(() => {
     const params = new URLSearchParams(search);
     const raw = params.get("ids") ?? "";
@@ -66,11 +70,11 @@ export default function Compare() {
         <p className="text-sm text-muted-foreground">
           No scenarios selected. Select two or more scenarios from the dashboard to compare.
         </p>
-        <Link href="/scenarios">
-          <Button variant="outline" className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to scenarios
-          </Button>
-        </Link>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={backHref} data-testid="link-compare-back-empty">
+            <ArrowLeft className="mr-2 h-4 w-4" /> {backLabel}
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -88,11 +92,11 @@ export default function Compare() {
   return (
     <div className="container mx-auto p-3 sm:p-4 lg:p-6">
       <div className="mb-4 flex items-center gap-2 sm:gap-3">
-        <Link href="/scenarios">
-          <Button variant="ghost" size="icon" className="shrink-0">
+        <Button asChild variant="ghost" size="icon" className="shrink-0">
+          <Link href={backHref} aria-label={backLabel} data-testid="link-compare-back">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Compare scenarios</h1>
           <p className="text-xs text-muted-foreground">

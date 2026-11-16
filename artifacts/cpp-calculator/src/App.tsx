@@ -12,6 +12,10 @@ import Home from "./pages/home";
 import Dashboard from "./pages/dashboard";
 import ScenarioEditor from "./pages/scenario-editor";
 import Compare from "./pages/compare";
+import ClientWorkspace from "./pages/client-workspace";
+import { ClientIndexGate } from "./components/client-guard";
+import { useGuardedLocation } from "./hooks/use-guarded-location";
+import { setActiveAnchor, setEditorDirty } from "./lib/client-session";
 import SharedScenarioPage from "./pages/shared";
 import NotFound from "@/pages/not-found";
 
@@ -90,6 +94,8 @@ function ClerkQueryClientCacheInvalidator() {
         prevUserIdRef.current !== userId
       ) {
         queryClient.clear();
+        setEditorDirty(false);
+        setActiveAnchor(null);
       }
       prevUserIdRef.current = userId;
     });
@@ -110,6 +116,19 @@ function HomeRedirect() {
       </Show>
     </>
   );
+}
+
+function GatedDashboard() {
+  return (
+    <ClientIndexGate>
+      <Dashboard />
+    </ClientIndexGate>
+  );
+}
+
+// Remount per scenario id so stale inputs never carry across scenarios.
+function KeyedEditor({ params }: { params: { id?: string } }) {
+  return <ScenarioEditor key={params.id} params={params} />;
 }
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
@@ -154,9 +173,10 @@ function ClerkProviderWithRoutes() {
             {(params) => <SharedScenarioPage params={params} />}
           </Route>
 
-          <ProtectedRoute path="/scenarios" component={Dashboard} />
+          <ProtectedRoute path="/scenarios" component={GatedDashboard} />
+          <ProtectedRoute path="/clients/:id" component={ClientWorkspace} />
           <ProtectedRoute path="/scenarios/new" component={ScenarioEditor} />
-          <ProtectedRoute path="/scenarios/:id" component={ScenarioEditor} />
+          <ProtectedRoute path="/scenarios/:id" component={KeyedEditor} />
           <ProtectedRoute path="/compare" component={Compare} />
           
           <Route component={NotFound} />
@@ -169,7 +189,7 @@ function ClerkProviderWithRoutes() {
 function App() {
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={300}>
-      <WouterRouter base={basePath}>
+      <WouterRouter base={basePath} hook={useGuardedLocation}>
         <ClerkProviderWithRoutes />
       </WouterRouter>
       <Toaster />

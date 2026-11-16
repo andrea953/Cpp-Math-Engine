@@ -30,7 +30,8 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 
 ### Modern Cents CPP Calculator — `artifacts/cpp-calculator`
 A planner-grade Canada Pension Plan calculator for financial advisors.
-- **Routes**: `/` (marketing + white paper / redirect), `/sign-in`, `/sign-up`, `/scenarios` (dashboard), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`, `/shared/:token` (public read-only client view, no auth)
+- **Routes**: `/` (marketing + white paper / redirect), `/sign-in`, `/sign-up`, `/scenarios` (client index), `/clients/:id` (client workspace anchored by a scenario ID), `/scenarios/new`, `/scenarios/:id` (editor), `/compare?ids=...`, `/shared/:token` (public read-only client view, no auth)
+- **Client meetings**: the workspace lists only the anchor's client scenarios, matching trimmed, case-insensitive client names; unnamed scenarios are isolated. Editor/header/comparison return links stay with the client. Showing all clients requires explicit confirmation; a tab-session anchor-ID guard prevents the index mounting after Back or reload. Unsaved editor changes are guarded during in-app navigation and browser history changes. This is a screen-sharing safeguard, not an authorization boundary.
 - **Home page**: hero + 3 feature cards above the fold, followed by an in-page white paper (Part 1 — positioning, Part 2 — methodology) with a sticky table of contents and closing CTA band. Component lives at `src/components/white-paper.tsx`.
 - **Auth**: Clerk (cookie-based; api-server proxies to Clerk middleware)
 - **Engine**: Pure-client TypeScript CPP engine in `src/cpp/` — base + Tier 1 + Tier 2 enhancement, CRDO, disability dropout, general 17% dropout, AMPE/AYMPE, breakeven projection, PRB, and full survivor-side benefits (survivor's pension with combined-benefit cap, $2,500 death benefit, children's benefit). Constants tables for YMPE 1966–2026, YAMPE 2024–2026, survivor flat rate and children's benefit 2019–2026.

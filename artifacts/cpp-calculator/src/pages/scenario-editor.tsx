@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Calculator, Columns2, Copy, Printer, Save, Share2, Trash2, User } from "lucide-react";
+import { ArrowLeft, ChevronDown, Calculator, Columns2, Copy, Printer, Save, Share2, Trash2, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetScenario,
@@ -8,6 +8,7 @@ import {
   useCreateScenario,
   useDeleteScenario,
   useDuplicateScenario,
+  useListScenarios,
   getListScenariosQueryKey,
   getGetScenarioQueryKey,
 } from "@workspace/api-client-react";
@@ -20,6 +21,15 @@ import { ResultsPanel } from "@/components/editor/results-panel";
 import { ShareDialog } from "@/components/editor/share-dialog";
 import { PrintScenario } from "@/components/editor/print-scenario";
 import { printWithTitle } from "@/lib/print";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { emptyClientWorkspaceKey, scenariosForClient, setActiveAnchor, setEditorDirty, useActiveAnchor } from "@/lib/client-session";
 
 interface ScenarioEditorProps {
   params: { id?: string };
@@ -32,7 +42,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: scenario, isLoading } = useGetScenario(id ?? "", {
+  const { data: scenario, isLoading, isError, refetch } = useGetScenario(id ?? "", {
     query: { enabled: !!id, queryKey: getGetScenarioQueryKey(id ?? "") },
   });
 
@@ -59,14 +69,40 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
     window.localStorage.setItem("cpp:editor-pane-mode", paneMode);
   }, [paneMode]);
 
+  // Opening a scenario (including old deep links) pins this tab to its client.
   useEffect(() => {
-    if (scenario) {
+    if (id) setActiveAnchor(id);
+  }, [id]);
+  const anchor = useActiveAnchor();
+  const workspaceHref = anchor ? `/clients/${anchor}` : id ? `/clients/${id}` : "/scenarios";
+  const { data: allScenarios } = useListScenarios();
+  const siblings = useMemo(
+    () => (scenario && allScenarios ? scenariosForClient(scenario, allScenarios) : []),
+    [scenario, allScenarios],
+  );
+
+  // Initialize from server once per scenario id; later refetches never clobber edits.
+  const initializedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (scenario && scenario.id === id && initializedFor.current !== id) {
+      initializedFor.current = id;
       setTitle(scenario.title);
       setClientName(scenario.clientName ?? "");
       setInputs(scenario.inputs as unknown as ScenarioInputs);
       setDirty(false);
     }
-  }, [scenario]);
+  }, [scenario, id]);
+
+  useEffect(() => {
+    setEditorDirty(dirty);
+    return () => setEditorDirty(false);
+  }, [dirty]);
+
+  function navigateSafely(to: string) {
+    if (dirty && !window.confirm("Discard unsaved changes to this scenario?")) return;
+    setEditorDirty(false);
+    setLocation(to);
+  }
 
   useEffect(() => {
     if (!dirty) return;
@@ -104,6 +140,9 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
           onSuccess: (created) => {
             queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
             toast({ title: "Scenario created" });
+            setDirty(false);
+            setEditorDirty(false);
+            setActiveAnchor(created.id);
             setLocation(`/scenarios/${created.id}`);
           },
           onError: () => toast({ title: "Could not save", variant: "destructive" }),
@@ -134,34 +173,66 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
           toast({ title: "Scenario deleted" });
-          setLocation("/scenarios");
+          queryClient.removeQueries({ queryKey: getGetScenarioQueryKey(id) });
+          setDirty(false);
+          setEditorDirty(false);
+          const next = siblings.find((s) => s.id !== id);
+          if (!next) {
+            queryClient.setQueryData(emptyClientWorkspaceKey(id), {
+              clientName: scenario?.clientName?.trim() ?? "",
+            });
+          }
+          if (anchor === id) setActiveAnchor(next ? next.id : id);
+          setLocation(anchor === id && next ? `/clients/${next.id}` : workspaceHref);
         },
+        onError: () => toast({ title: "Could not delete", variant: "destructive" }),
       },
     );
   }
 
   function handleDuplicate() {
     if (!id) return;
+    if (dirty && !window.confirm("The copy is made from the last saved version. Discard unsaved changes and open the copy?")) return;
     duplicateMutation.mutate(
       { id },
       {
         onSuccess: (copy) => {
           queryClient.invalidateQueries({ queryKey: getListScenariosQueryKey() });
           toast({ title: "Duplicated" });
+          setEditorDirty(false);
           setLocation(`/scenarios/${copy.id}`);
         },
+        onError: () => toast({ title: "Could not duplicate", variant: "destructive" }),
       },
     );
   }
 
   const saving = updateMutation.isPending || createMutation.isPending;
+  const busy = saving || deleteMutation.isPending || duplicateMutation.isPending;
 
-  if (id && isLoading) {
+  if (id && (isLoading || (scenario && initializedFor.current !== id))) {
     return (
       <div className="container mx-auto p-6">
         <div className="space-y-3">
           <div className="h-8 w-64 animate-pulse rounded bg-muted" />
           <div className="h-96 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
+  if (id && (isError || !scenario)) {
+    return (
+      <div className="container mx-auto space-y-4 p-6" role="alert">
+        <h1 className="text-xl font-semibold">Could not load this scenario</h1>
+        <p className="text-sm text-muted-foreground">
+          It may have been removed, or the connection was interrupted. Other clients remain hidden.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => refetch()} data-testid="button-editor-retry">Retry</Button>
+          <Button onClick={() => navigateSafely(workspaceHref)} data-testid="button-error-workspace">
+            Return to client workspace
+          </Button>
         </div>
       </div>
     );
@@ -176,9 +247,10 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
             variant="ghost"
             size="icon"
             className="shrink-0"
-            onClick={() => setLocation("/scenarios")}
-            title="Back to scenarios"
-            aria-label="Back to scenarios"
+            onClick={() => navigateSafely(workspaceHref)}
+            title="Back to client workspace"
+            aria-label="Back to client workspace"
+            data-testid="button-back-workspace"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -188,6 +260,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
               onChange={(e) => setClientNameAndDirty(e.target.value)}
               className="h-9 w-full min-w-0 sm:w-44 border-transparent text-sm font-medium focus-visible:border-input"
               placeholder="Client name"
+              aria-label="Client name"
               data-testid="input-client-name"
             />
             <Input
@@ -195,8 +268,39 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
               onChange={(e) => setTitleAndDirty(e.target.value)}
               className="h-9 w-full min-w-0 sm:w-72 border-transparent text-base sm:text-lg font-semibold tracking-tight focus-visible:border-input"
               placeholder="Scenario title"
+              aria-label="Scenario title"
+              data-testid="input-scenario-title"
             />
           </div>
+          {!isNew && siblings.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="shrink-0" data-testid="button-switch-scenario" aria-label="Switch to another scenario for this client">
+                  <span className="hidden md:inline">Scenarios ({siblings.length})</span>
+                  <span className="md:hidden">{siblings.length}</span>
+                  <ChevronDown className="ml-1 h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-[70vh] w-64 overflow-y-auto">
+                <DropdownMenuLabel>This client</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {siblings.map((s) => (
+                  <DropdownMenuItem
+                    key={s.id}
+                    disabled={s.id === id}
+                    onSelect={() => navigateSafely(`/scenarios/${s.id}`)}
+                    data-testid={`menu-switch-scenario-${s.id}`}
+                  >
+                    <span className="truncate">{s.title}{s.id === id ? " (current)" : ""}</span>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => navigateSafely(workspaceHref)} data-testid="menu-open-workspace">
+                  Open client workspace
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {dirty && <span className="hidden sm:inline text-xs text-muted-foreground shrink-0">Unsaved changes</span>}
         </div>
         <div className="flex items-center justify-end gap-1.5 sm:gap-2">
@@ -256,8 +360,9 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleDuplicate}
-                disabled={duplicateMutation.isPending}
+                disabled={busy}
                 title="Duplicate"
+                data-testid="button-duplicate-scenario"
               >
                 <Copy className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Duplicate</span>
@@ -266,6 +371,8 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleDelete}
+                disabled={busy}
+                data-testid="button-delete-scenario"
                 className="text-destructive hover:text-destructive"
                 title="Delete"
               >
@@ -274,7 +381,7 @@ export default function ScenarioEditor({ params }: ScenarioEditorProps) {
               </Button>
             </>
           )}
-          <Button size="sm" onClick={handleSave} disabled={saving || (!isNew && !dirty)}>
+          <Button size="sm" onClick={handleSave} disabled={busy || (!isNew && !dirty)} data-testid="button-save-scenario">
             <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : isNew ? "Create" : "Save"}
           </Button>
         </div>
