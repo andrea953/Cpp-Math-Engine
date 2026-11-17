@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useActiveAnchor } from "@/lib/client-session";
 import { useSearch, Link } from "wouter";
 import { useQueries } from "@tanstack/react-query";
@@ -30,10 +30,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toTodaysDollars } from "./compare-values";
 
 export default function Compare() {
   const search = useSearch();
   const anchor = useActiveAnchor();
+  const todayYear = useMemo(() => new Date().getFullYear(), []);
+  const [valueBasis, setValueBasis] = useState<"future" | "today">("future");
   const backHref = anchor ? `/clients/${anchor}` : "/scenarios";
   const backLabel = anchor ? "Back to client" : "Back to scenarios";
   const ids = useMemo(() => {
@@ -100,14 +103,14 @@ export default function Compare() {
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Compare scenarios</h1>
           <p className="text-xs text-muted-foreground">
-            {computed.length} scenarios · totals shown in start-year dollars
+            {computed.length} scenarios · monthly estimates show both future and today’s dollars
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-4">
         {computed.map((c, i) => (
-          <ScenarioColumn key={c.id} index={i} title={c.title} inputs={c.inputs} result={c.result} />
+          <ScenarioColumn key={c.id} index={i} title={c.title} inputs={c.inputs} result={c.result} todayYear={todayYear} />
         ))}
       </div>
       <div
@@ -115,18 +118,52 @@ export default function Compare() {
         style={{ gridTemplateColumns: `repeat(${computed.length}, minmax(0, 1fr))` }}
       >
         {computed.map((c, i) => (
-          <ScenarioColumn key={`lg-${c.id}`} index={i} title={c.title} inputs={c.inputs} result={c.result} />
+          <ScenarioColumn key={`lg-${c.id}`} index={i} title={c.title} inputs={c.inputs} result={c.result} todayYear={todayYear} />
         ))}
       </div>
 
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
-            <TrendingUp className="h-4 w-4" /> Cumulative lifetime benefit (one line per scenario × start age)
+            <TrendingUp className="h-4 w-4" /> Cumulative lifetime benefit
           </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Today’s-dollar totals use each scenario’s assumed indexing rate to remove inflation. They are not a discounted present value.
+          </p>
         </CardHeader>
         <CardContent>
-          <CombinedBreakeven computed={computed} />
+          <div className="mb-4 flex flex-wrap items-center gap-2" aria-label="Cumulative value display">
+            <Button
+              type="button"
+              size="sm"
+              variant={valueBasis === "future" ? "default" : "outline"}
+              aria-pressed={valueBasis === "future"}
+              data-testid="button-compare-future-dollars"
+              onClick={() => setValueBasis("future")}
+            >
+              Future dollars
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={valueBasis === "today" ? "default" : "outline"}
+              aria-pressed={valueBasis === "today"}
+              data-testid="button-compare-todays-dollars"
+              onClick={() => setValueBasis("today")}
+            >
+              Today’s dollars ({todayYear})
+            </Button>
+          </div>
+          <p
+            className="mb-2 text-xs text-muted-foreground"
+            aria-live="polite"
+            data-testid="text-compare-value-basis"
+          >
+            {valueBasis === "future"
+              ? "Chart values are cumulative projected dollars, including future indexing."
+              : `Chart values are cumulative benefits expressed in ${todayYear} dollars.`}
+          </p>
+          <CombinedBreakeven computed={computed} valueBasis={valueBasis} todayYear={todayYear} />
         </CardContent>
       </Card>
 
@@ -140,15 +177,16 @@ function ScenarioColumn({
   title,
   inputs,
   result,
+  todayYear,
 }: {
   index: number;
   title: string;
   inputs: ScenarioInputs;
   result: CalculationResult;
+  todayYear: number;
 }) {
   const sorted = [...result.byStartAge].sort((a, b) => a.startAge - b.startAge);
   const colorVar = `hsl(var(--chart-${(index % 5) + 1}))`;
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -169,10 +207,21 @@ function ScenarioColumn({
                 {formatPercent(r.adjustmentFactor - 1)}
               </Badge>
             </div>
-            <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+            <div
+              className="mt-1 font-mono text-2xl font-semibold tabular-nums"
+              data-testid={`text-future-monthly-${r.startAge}`}
+            >
               {formatMoney(r.totalMonthly, true)}
             </div>
-            <div className="text-xs text-muted-foreground">/ month</div>
+            <div className="text-xs text-muted-foreground">
+              per month · future dollars in {r.startYear}
+            </div>
+            <div className="mt-2 rounded bg-muted/50 px-2 py-1.5 text-xs">
+              <span className="text-muted-foreground">In today’s dollars ({todayYear}): </span>
+              <span className="font-semibold tabular-nums" data-testid={`text-todays-monthly-${r.startAge}`}>
+                {formatMoney(toTodaysDollars(r.totalMonthly, r.startYear, todayYear, inputs.assumptions.indexingRate), true)}/mo
+              </span>
+            </div>
             <div className="mt-2 grid grid-cols-3 text-[11px] tabular-nums">
               <div>
                 <div className="text-muted-foreground">Base</div>
@@ -196,17 +245,34 @@ function ScenarioColumn({
 
 function CombinedBreakeven({
   computed,
+  valueBasis,
+  todayYear,
 }: {
-  computed: { id: string; title: string; result: CalculationResult }[];
+  computed: { id: string; title: string; inputs: ScenarioInputs; result: CalculationResult }[];
+  valueBasis: "future" | "today";
+  todayYear: number;
 }) {
   const series: { key: string; color: string; data: { age: number; v: number }[] }[] = [];
   computed.forEach((c, ci) => {
     const sorted = [...c.result.byStartAge].sort((a, b) => a.startAge - b.startAge);
     sorted.forEach((r) => {
+      let todayCumulative = 0;
       series.push({
         key: `${c.title} · ${r.startAge}`,
         color: `hsl(var(--chart-${(ci % 5) + 1}))`,
-        data: r.cumulativeByAge.map((p) => ({ age: p.age, v: Math.round(p.cumulativeNominal) })),
+        data: r.cumulativeByAge.map((p) => {
+          if (valueBasis === "future") {
+            return { age: p.age, v: Math.round(p.cumulativeNominal) };
+          }
+          const yearAtAge = r.startYear + (p.age - r.startAge);
+          todayCumulative += toTodaysDollars(
+            p.annualNominal,
+            yearAtAge,
+            todayYear,
+            c.inputs.assumptions.indexingRate,
+          );
+          return { age: p.age, v: Math.round(todayCumulative) };
+        }),
       });
     });
   });
@@ -241,6 +307,7 @@ function CombinedBreakeven({
             strokeWidth={2}
             strokeDasharray={i % 3 === 1 ? "5 3" : i % 3 === 2 ? "2 2" : undefined}
             dot={false}
+            isAnimationActive={false}
           />
         ))}
       </LineChart>
