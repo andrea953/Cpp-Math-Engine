@@ -5,6 +5,7 @@
 - [Drop-in candidates vs applied](dropin-candidates-vs-applied.md) — dropInAmountsByYear lists candidate imputed amounts; client-facing credit claims must use applied-credit diagnostics only.
 - [CPP child-rearing](cpp-child-rearing.md) — one CRDO entry drives base beneficial drop-out AND enhanced drop-in (s.53.3(1)/53.4(1)); Tier 2 needs above-YMPE earnings to test.
 - [pnpm workspace audit fixes](pnpm-workspace-audit-fixes.md) — nested pnpm audit fixes target the shared workspace configuration; regenerate and verify the root lockfile once.
+- [Security fork safeguards](security-fork-guards.md) — repeated pattern groups need a safe-subset guard, not a denylist of known ReDoS strings.
 - [Client index layout](client-index-layout.md) — keep one alphabetical row per client with a scenario count; avoid nested scenario group sections.
 - [Client meeting navigation](client-meeting-navigation.md) — browser-history guards must withhold the router snapshot until discard is accepted, not just intercept editor buttons.
 - [2027 CPP and plan limits](cpp-base-rate-reduction.md) — apply 2027 CPP thresholds and rates; keep registered-plan limits tied to their tax years.
